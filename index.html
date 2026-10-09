@@ -1771,6 +1771,21 @@
   }
   .etiqueta-preview .etq-rodape .ped { font-weight: 800; }
   .etiqueta-preview .etq-rodape .transp { text-transform: uppercase; }
+    /* BLOCO 18: TEMA CLARO/ESCURO */
+  .tema-btn {
+    min-width: 130px;
+    justify-content: center;
+  }
+  .tema-btn.ativo {
+    background: linear-gradient(135deg, var(--neon), var(--neon-alt));
+    color: #fff;
+    border-color: var(--neon);
+    box-shadow: 0 0 16px var(--neon-glow);
+  }
+  .tema-btn.ativo:hover {
+    box-shadow: 0 0 28px var(--neon-glow-strong);
+  }
+
 
   /* BLOCO 16: NOTIFICAÇÕES WHATSAPP */
   .msg-modelo-item {
