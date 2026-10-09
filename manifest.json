@@ -2,7 +2,7 @@
   "name": "MAX Representação",
   "short_name": "MAX Representação",
   "description": "Sistema de Estoque — MAX Representação",
-  "start_url": "./INDEX.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
