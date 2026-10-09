@@ -3493,6 +3493,73 @@ function aplicarConfig() {
   document.getElementById("cfgWhatsapp").value = getWhatsapp();
   document.getElementById("cfgWhatsappApp").value = getWhatsappApp();
 }
+  // ============================================
+// BLOCO 18: TEMA CLARO/ESCURO (PARTE A)
+// ============================================
+
+// Chave de armazenamento
+const TEMA_STORAGE_KEY = "max_tema_preferido";
+
+// Retorna o tema salvo ('auto', 'claro', 'escuro')
+function getTemaPreferido() {
+  return localStorage.getItem(TEMA_STORAGE_KEY) || "auto";
+}
+
+// Salva o tema escolhido
+function setTemaPreferido(tema) {
+  if (!["auto", "claro", "escuro"].includes(tema)) tema = "auto";
+  localStorage.setItem(TEMA_STORAGE_KEY, tema);
+}
+
+// Detecta se o sistema operacional está em modo escuro
+function sistemaPrefereEscuro() {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
+// Aplica o tema ao <body> (Parte A: só classe CSS, sem cores ainda)
+function aplicarTema() {
+  const preferido = getTemaPreferido();
+  document.body.classList.remove("tema-auto", "tema-claro", "tema-escuro");
+  document.body.classList.add("tema-" + preferido);
+
+  // Parte B vai usar isso pra aplicar cores
+  const temaEfetivo = preferido === "auto"
+    ? (sistemaPrefereEscuro() ? "escuro" : "claro")
+    : preferido;
+
+  document.body.dataset.temaEfetivo = temaEfetivo;
+
+  // Atualiza botões ativos
+  atualizarBotoesTema(preferido);
+}
+
+// Marca o botão do tema atual como ativo
+function atualizarBotoesTema(preferido) {
+  document.querySelectorAll(".tema-btn").forEach(btn => {
+    if (btn.dataset.tema === preferido) {
+      btn.classList.add("ativo");
+    } else {
+      btn.classList.remove("ativo");
+    }
+  });
+}
+
+// Handlers dos botões de tema
+document.querySelectorAll(".tema-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const tema = btn.dataset.tema;
+    setTemaPreferido(tema);
+    aplicarTema();
+    const nomes = { auto: "Automático", claro: "Claro", escuro: "Escuro" };
+    toast("Tema: " + nomes[tema]);
+  });
+});
+
+// Detecta mudança de tema do sistema (só se preferido = auto)
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+  if (getTemaPreferido() === "auto") aplicarTema();
+});
+
 document.getElementById("btnSalvarEstoqueMin").onclick = () => {
   const v = parseInt(document.getElementById("cfgEstoqueMinimo").value);
   if (isNaN(v) || v < 0) return toast("Valor inválido", "error");
