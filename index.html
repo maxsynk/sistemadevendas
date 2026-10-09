@@ -1772,6 +1772,241 @@
   .etiqueta-preview .etq-rodape .ped { font-weight: 800; }
   .etiqueta-preview .etq-rodape .transp { text-transform: uppercase; }
     /* BLOCO 18: TEMA CLARO/ESCURO */
+    /* ============================================ */
+  /* MODO CLARO — Variáveis de tema                */
+  /* ============================================ */
+  body.tema-claro,
+  body.tema-auto[data-tema-efetivo="claro"] {
+    --bg-main: #f5f5f7;
+    --bg-deep: #e8e8ec;
+    --bg-sidebar: #ffffff;
+    --bg-card: #ffffff;
+    --border: #d8d8e0;
+
+    --text-primary: #1a1726;
+    --text-secondary: #5a5568;
+    --text-dim: #8a8598;
+
+    --neon: #7c3aed;
+    --neon-alt: #c026d3;
+    --neon-cyan: #0284c7;
+    --neon-glow: rgba(124, 58, 237, 0.25);
+    --neon-glow-strong: rgba(124, 58, 237, 0.5);
+
+    --success: #16a34a;
+    --warning: #d97706;
+    --error: #dc2626;
+    --info: #0284c7;
+  }
+
+  /* Fundo do body no modo claro */
+  body.tema-claro,
+  body.tema-auto[data-tema-efetivo="claro"] {
+    background: linear-gradient(180deg, #f5f5f7 0%, #e8e8ec 100%);
+    color: var(--text-primary);
+  }
+
+  /* Sidebar overlay no modo claro */
+  body.tema-claro .sidebar-overlay,
+  body.tema-auto[data-tema-efetivo="claro"] .sidebar-overlay {
+    background: rgba(0,0,0,0.3);
+  }
+
+  /* Login screen no modo claro */
+  body.tema-claro .login-screen,
+  body.tema-auto[data-tema-efetivo="claro"] .login-screen {
+    background: radial-gradient(circle at 50% 40%, rgba(124,58,237,0.08) 0%, transparent 50%),
+                radial-gradient(circle at 50% 100%, rgba(192,38,211,0.05) 0%, transparent 60%),
+                #f5f5f7;
+  }
+
+  body.tema-claro .login-box,
+  body.tema-auto[data-tema-efetivo="claro"] .login-box {
+    background: rgba(255,255,255,0.95);
+    box-shadow: 0 0 60px rgba(124,58,237,0.15), 0 20px 60px rgba(0,0,0,0.08);
+  }
+
+  body.tema-claro .login-logo span,
+  body.tema-auto[data-tema-efetivo="claro"] .login-logo span {
+    color: var(--text-primary);
+    text-shadow: none;
+  }
+
+  body.tema-claro .login-input,
+  body.tema-auto[data-tema-efetivo="claro"] .login-input {
+    background: #ffffff;
+    border-color: #d8d8e0;
+  }
+
+  body.tema-claro .login-input::placeholder,
+  body.tema-auto[data-tema-efetivo="claro"] .login-input::placeholder {
+    color: var(--text-dim);
+  }
+
+  /* Topbar no modo claro */
+  body.tema-claro .topbar,
+  body.tema-auto[data-tema-efetivo="claro"] .topbar {
+    background: rgba(255,255,255,0.85);
+    border-bottom-color: rgba(124,58,237,0.1);
+  }
+
+  /* Cards e containers */
+  body.tema-claro .card,
+  body.tema-auto[data-tema-efetivo="claro"] .card {
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+  }
+
+  body.tema-claro .produto-item,
+  body.tema-claro .pedido-item,
+  body.tema-claro .usuario-item,
+  body.tema-claro .backup-item,
+  body.tema-claro .mov-item,
+  body.tema-claro .transp-item,
+  body.tema-claro .carrinho-item,
+  body.tema-claro .audit-item,
+  body.tema-claro .detalhe-secao,
+  body.tema-claro .msg-modelo-item,
+  body.tema-auto[data-tema-efetivo="claro"] .produto-item,
+  body.tema-auto[data-tema-efetivo="claro"] .pedido-item,
+  body.tema-auto[data-tema-efetivo="claro"] .usuario-item,
+  body.tema-auto[data-tema-efetivo="claro"] .backup-item,
+  body.tema-auto[data-tema-efetivo="claro"] .mov-item,
+  body.tema-auto[data-tema-efetivo="claro"] .transp-item,
+  body.tema-auto[data-tema-efetivo="claro"] .carrinho-item,
+  body.tema-auto[data-tema-efetivo="claro"] .audit-item,
+  body.tema-auto[data-tema-efetivo="claro"] .detalhe-secao,
+  body.tema-auto[data-tema-efetivo="claro"] .msg-modelo-item {
+    background: #ffffff;
+    border-color: #d8d8e0;
+  }
+
+  /* Hero (logo do topo) */
+  body.tema-claro .hero-logo span,
+  body.tema-auto[data-tema-efetivo="claro"] .hero-logo span {
+    color: var(--text-primary);
+  }
+
+  /* Inputs e selects */
+  body.tema-claro .form-row input,
+  body.tema-claro .form-row select,
+  body.tema-claro .form-row textarea,
+  body.tema-claro .login-input,
+  body.tema-claro .campo-bip,
+  body.tema-claro .busca-pedidos input,
+  body.tema-claro .rel-filtros .campo input,
+  body.tema-claro .rel-filtros .campo select,
+  body.tema-claro .combo-item,
+  body.tema-auto[data-tema-efetivo="claro"] .form-row input,
+  body.tema-auto[data-tema-efetivo="claro"] .form-row select,
+  body.tema-auto[data-tema-efetivo="claro"] .form-row textarea,
+  body.tema-auto[data-tema-efetivo="claro"] .login-input,
+  body.tema-auto[data-tema-efetivo="claro"] .campo-bip,
+  body.tema-auto[data-tema-efetivo="claro"] .busca-pedidos input,
+  body.tema-auto[data-tema-efetivo="claro"] .rel-filtros .campo input,
+  body.tema-auto[data-tema-efetivo="claro"] .rel-filtros .campo select,
+  body.tema-auto[data-tema-efetivo="claro"] .combo-item {
+    background: #ffffff;
+    border-color: #d8d8e0;
+    color: var(--text-primary);
+  }
+
+  /* Botões secundários */
+  body.tema-claro .btn-secondary,
+  body.tema-auto[data-tema-efetivo="claro"] .btn-secondary {
+    background: #ffffff;
+    border-color: #d8d8e0;
+    color: var(--text-primary);
+  }
+
+  body.tema-claro .btn-secondary:hover,
+  body.tema-auto[data-tema-efetivo="claro"] .btn-secondary:hover {
+    border-color: var(--neon);
+  }
+
+  /* Dropdown de combos */
+  body.tema-claro .combo-lista,
+  body.tema-auto[data-tema-efetivo="claro"] .combo-lista {
+    background: #ffffff;
+    box-shadow: 0 0 30px rgba(124,58,237,0.2), 0 10px 30px rgba(0,0,0,0.1);
+  }
+
+  /* Modais */
+  body.tema-claro .modal-box,
+  body.tema-auto[data-tema-efetivo="claro"] .modal-box {
+    background: #ffffff;
+    box-shadow: 0 0 60px rgba(124,58,237,0.2), 0 20px 60px rgba(0,0,0,0.15);
+  }
+
+  body.tema-claro .modal,
+  body.tema-auto[data-tema-efetivo="claro"] .modal {
+    background: rgba(0,0,0,0.5);
+  }
+
+  /* Sidebar drawer */
+  body.tema-claro .sidebar-drawer,
+  body.tema-auto[data-tema-efetivo="claro"] .sidebar-drawer {
+    background: #ffffff;
+    box-shadow: -20px 0 60px rgba(0,0,0,0.1);
+  }
+
+  /* Toast no modo claro continua igual (já é vibrante) */
+
+  /* Tabelas de relatório */
+  body.tema-claro .rel-tabela,
+  body.tema-auto[data-tema-efetivo="claro"] .rel-tabela {
+    background: #ffffff;
+  }
+
+  body.tema-claro .rel-tabela tbody tr:hover,
+  body.tema-auto[data-tema-efetivo="claro"] .rel-tabela tbody tr:hover {
+    background: rgba(124,58,237,0.04);
+  }
+
+  /* Grades de estoque/entrada */
+  body.tema-claro .estoque-grade,
+  body.tema-claro .grade-entrada-item,
+  body.tema-claro .grade-item,
+  body.tema-claro .grade-escolha-item,
+  body.tema-auto[data-tema-efetivo="claro"] .estoque-grade,
+  body.tema-auto[data-tema-efetivo="claro"] .grade-entrada-item,
+  body.tema-auto[data-tema-efetivo="claro"] .grade-item,
+  body.tema-auto[data-tema-efetivo="claro"] .grade-escolha-item {
+    background: #ffffff;
+  }
+
+  /* Dashboard cards */
+  body.tema-claro .dash-card,
+  body.tema-claro .dash-grafico,
+  body.tema-claro .dash-top-lista,
+  body.tema-claro .dash-alertas,
+  body.tema-claro .dash-pendentes,
+  body.tema-auto[data-tema-efetivo="claro"] .dash-card,
+  body.tema-auto[data-tema-efetivo="claro"] .dash-grafico,
+  body.tema-auto[data-tema-efetivo="claro"] .dash-top-lista,
+  body.tema-auto[data-tema-efetivo="claro"] .dash-alertas,
+  body.tema-auto[data-tema-efetivo="claro"] .dash-pendentes {
+    background: #ffffff;
+    border-color: #d8d8e0;
+  }
+
+  /* Blocos diversos */
+  body.tema-claro .bipagem-box,
+  body.tema-claro .acoes-rapidas,
+  body.tema-claro .barra-total,
+  body.tema-auto[data-tema-efetivo="claro"] .bipagem-box,
+  body.tema-auto[data-tema-efetivo="claro"] .acoes-rapidas,
+  body.tema-auto[data-tema-efetivo="claro"] .barra-total {
+    background: #ffffff;
+    border-color: #d8d8e0;
+  }
+
+  /* Login info no modo claro */
+  body.tema-claro .login-info code,
+  body.tema-auto[data-tema-efetivo="claro"] .login-info code {
+    background: rgba(124,58,237,0.08);
+  }
+
   .tema-btn {
     min-width: 130px;
     justify-content: center;
