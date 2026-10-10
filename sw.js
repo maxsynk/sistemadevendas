@@ -5,8 +5,9 @@
 
 const CACHE_NOME = "max-representacao-v1.2";
 const ARQUIVOS_CACHE = [
+const ARQUIVOS_CACHE = [
   "./",
-  "./INDEX.html",
+  "./index.html",
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png"
