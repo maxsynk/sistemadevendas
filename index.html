@@ -6489,6 +6489,7 @@ async function carregarClientes() {
       const c = clientesCache.find(x => x.id === parseInt(b.dataset.zap));
       if (c) abrirWhatsApp(c.telefone, `Olá ${c.nome}!`);
     });
+    aplicarFiltroClientes();
   } catch (e) { wrap.innerHTML = `<div class="empty"><h2>Erro</h2></div>`; }
 }
 function abrirEdicaoCliente(id) {
