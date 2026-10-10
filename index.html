@@ -5847,6 +5847,7 @@ async function carregarProdutos() {
     wrap.querySelectorAll("[data-editar]").forEach(btn => btn.onclick = () => abrirEdicao(parseInt(btn.dataset.editar)));
     wrap.querySelectorAll("[data-excluir]").forEach(btn => btn.onclick = () => excluirProduto(parseInt(btn.dataset.excluir)));
     wrap.querySelectorAll("[data-imprimir]").forEach(btn => btn.onclick = () => imprimirCodigo(parseInt(btn.dataset.imprimir)));
+    aplicarFiltroProdutos();
   } catch (e) {
     wrap.innerHTML = `<div class="empty"><h2>Erro</h2><p style="color:var(--error)">${e.message}</p></div>`;
   }
