@@ -2094,7 +2094,301 @@
       gap: 6px;
       flex-wrap: nowrap;
     }
-    
+
+      /* ============================================ */
+  /* MELHORIAS MOBILE — Sub-bloco M4: Modais      */
+  /* ============================================ */
+  @media (max-width: 700px) {
+    /* Modal: ocupar quase toda a tela */
+    .modal {
+      padding: 10px;
+      align-items: flex-start;
+    }
+    .modal-box {
+      padding: 20px 16px;
+      border-radius: 16px;
+      max-width: 100%;
+      width: 100%;
+      margin: 0;
+    }
+    .modal-box.modal-lg {
+      max-width: 100%;
+    }
+    .modal-box h3 {
+      font-size: 15px;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .modal-box h4 {
+      font-size: 12px;
+      letter-spacing: 1.2px;
+      margin: 18px 0 10px;
+    }
+
+    /* Ações do modal: botões empilhados */
+    .modal-actions {
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 20px;
+      padding-top: 16px;
+    }
+    .modal-actions .btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    /* Timeline no celular: já tinha flex-direction column */
+    .timeline {
+      padding: 10px;
+      gap: 6px;
+    }
+    .timeline-passo {
+      min-width: 0;
+      font-size: 11px;
+      padding: 10px 6px;
+    }
+
+    /* Detalhe do pedido */
+    .detalhe-secao {
+      padding: 14px 12px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+    .detalhe-secao h5 {
+      font-size: 11px;
+      margin-bottom: 10px;
+    }
+    .detalhe-row {
+      font-size: 13px;
+      padding: 10px 0;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .detalhe-row .valor {
+      text-align: right;
+      word-break: break-word;
+      max-width: 60%;
+    }
+    .detalhe-item {
+      grid-template-columns: 50px 1fr auto;
+      gap: 10px;
+      padding: 10px;
+    }
+    .detalhe-item img,
+    .detalhe-item .vazio {
+      width: 50px;
+      height: 50px;
+    }
+    .detalhe-item .info .nome {
+      font-size: 13px;
+    }
+    .detalhe-item .info .detalhes {
+      font-size: 10px;
+      line-height: 1.4;
+    }
+    .detalhe-item .qtd {
+      font-size: 13px;
+    }
+    .detalhe-item .subtotal {
+      grid-column: 1 / -1;
+      text-align: right;
+      font-size: 13px;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Aviso de pagamento */
+    .aviso-pagamento {
+      padding: 14px 12px;
+      gap: 10px;
+      font-size: 12px;
+      flex-wrap: wrap;
+    }
+    .aviso-pagamento i {
+      font-size: 20px;
+    }
+    .aviso-pagamento .txt .titulo {
+      font-size: 13px;
+    }
+    .aviso-pagamento .txt .detalhes {
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    /* Comprovante preview */
+    .comprovante-preview {
+      max-height: 280px;
+    }
+
+    /* Modal de escolha de numeração */
+    .modal-escolha-produto-info {
+      flex-direction: column;
+      text-align: center;
+      padding: 14px 12px;
+      gap: 14px;
+    }
+    .modal-escolha-produto-info img,
+    .modal-escolha-produto-info .vazio {
+      width: 90px;
+      height: 90px;
+    }
+    .modal-escolha-produto-info .txt .nome {
+      font-size: 16px;
+    }
+    .modal-escolha-produto-info .txt .cod {
+      font-size: 11px;
+    }
+
+    /* Grade de escolha numeração: 3 colunas */
+    .grade-escolha-item {
+      padding: 14px 8px;
+    }
+    .grade-escolha-item .num {
+      font-size: 22px;
+      margin-bottom: 4px;
+    }
+    .grade-escolha-item .disp {
+      font-size: 11px;
+    }
+
+    /* Ajustes de estoque (editar produto) */
+    #ajustesWrap {
+      padding: 12px !important;
+    }
+    #ajustesWrap h4 {
+      font-size: 12px;
+      margin-bottom: 10px !important;
+    }
+    #ajustesLista > div {
+      grid-template-columns: 1fr !important;
+      gap: 8px !important;
+      padding: 12px !important;
+    }
+    #ajustesLista .ajuste-input {
+      width: 100% !important;
+      padding: 12px !important;
+      font-size: 16px !important;
+    }
+
+    /* Aviso de estoque */
+    .aviso-estoque {
+      font-size: 12px;
+      padding: 12px;
+      line-height: 1.5;
+    }
+
+    /* Dropzone (restaurar backup) */
+    .dropzone {
+      padding: 28px 16px;
+      border-radius: 12px;
+    }
+    .dropzone .icon {
+      font-size: 36px;
+      margin-bottom: 10px;
+    }
+    .dropzone .texto {
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .dropzone .sub {
+      font-size: 11px;
+    }
+
+    /* Arquivo selecionado */
+    .arquivo-selecionado {
+      padding: 12px 14px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .arquivo-selecionado .info {
+      flex: 1 1 100%;
+      order: 2;
+    }
+    .arquivo-selecionado .btn-sm {
+      width: 100%;
+      justify-content: center;
+      order: 3;
+    }
+
+    /* Aviso de restauração (backup) */
+    .aviso-restauracao {
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+    .aviso-restauracao h4 {
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    .aviso-restauracao p {
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
+    /* Permissões grid (novo usuário) */
+    .permissoes-grid {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .permissao-item {
+      padding: 14px 12px;
+    }
+    .permissao-item .txt {
+      font-size: 13px;
+    }
+    .permissao-item .txt small {
+      font-size: 11px;
+    }
+
+    /* Etiqueta preview */
+    .etiqueta-info-box {
+      padding: 12px 14px;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .etiqueta-preview-wrap {
+      max-width: 100%;
+    }
+    .etiqueta-preview {
+      padding: 12px 14px;
+    }
+    .etiqueta-preview .etq-linha-nf .lbl {
+      min-width: 70px;
+      font-size: 11px;
+    }
+    .etiqueta-preview .etq-linha-nf .valor {
+      font-size: 15px;
+    }
+    .etiqueta-preview .etq-nome {
+      font-size: 16px;
+    }
+    .etiqueta-preview .etq-linha {
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .etiqueta-preview .etq-cep {
+      font-size: 13px;
+    }
+    .etiqueta-preview .etq-tel {
+      font-size: 12px;
+    }
+    .etiqueta-preview .etq-ponto-ref {
+      font-size: 12px;
+      padding: 8px 10px;
+    }
+    .etiqueta-preview .etq-rodape {
+      font-size: 11px;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    /* Foto upload no modal de pagamento */
+    .foto-upload-area {
+      padding: 22px 16px;
+    }
+  }
+
       /* ============================================ */
   /* MELHORIAS MOBILE — Sub-bloco M3: Formulários */
   /* ============================================ */
