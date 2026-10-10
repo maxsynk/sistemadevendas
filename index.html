@@ -3200,9 +3200,14 @@
         </div>
       </div>
 
-      <div class="bipagem-box">
+            <div class="bipagem-box">
         <div class="titulo"><i class="fas fa-barcode"></i> Bipar código de barras</div>
-        <input type="text" class="campo-bip" id="campoBip" placeholder="Bipe ou digite o código..." autocomplete="off">
+        <div class="bip-linha">
+          <input type="text" class="campo-bip" id="campoBip" placeholder="Bipe ou digite o código..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="text">
+          <button type="button" class="btn-bip-buscar" id="btnBipBuscar" title="Buscar código">
+            <i class="fas fa-search"></i> Buscar
+          </button>
+        </div>
         <div class="dica"><i class="fas fa-info-circle"></i> Bipe o código completo. Se bipar só SHOES-0001, o sistema pergunta a numeração.</div>
         <div class="feedback" id="bipFeedback"></div>
         <div class="foto-bipada" id="fotoBipada">
