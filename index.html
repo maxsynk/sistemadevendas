@@ -2094,6 +2094,188 @@
       gap: 6px;
       flex-wrap: nowrap;
     }
+    
+  /* ============================================ */
+  /* MELHORIAS MOBILE — Sub-bloco M2: Dashboard   */
+  /* ============================================ */
+  @media (max-width: 700px) {
+    /* Cards do dashboard: 1 por linha (empilhado) */
+    .dash-cards {
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .dash-card {
+      padding: 14px 16px;
+      border-radius: 10px;
+    }
+    .dash-card .lbl {
+      font-size: 10px;
+      margin-bottom: 6px;
+    }
+    .dash-card .val {
+      font-size: 22px;
+    }
+    .dash-card .sub {
+      font-size: 11px;
+    }
+    .dash-card .variacao {
+      font-size: 10px;
+      padding: 2px 6px;
+    }
+
+    /* Topbar do dashboard (título + filtro dias) */
+    .dash-topbar {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .dash-topbar h3 {
+      font-size: 13px;
+      text-align: center;
+    }
+    .dash-filtros {
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .dash-filtros select {
+      font-size: 12px;
+      padding: 8px 12px;
+    }
+
+    /* Gráfico de vendas */
+    .dash-grafico {
+      padding: 14px 12px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+    }
+    .dash-grafico h4 {
+      flex-direction: column;
+      gap: 6px;
+      align-items: flex-start;
+      font-size: 11px;
+      margin-bottom: 12px;
+    }
+    .dash-grafico h4 .total {
+      font-size: 16px;
+      align-self: flex-end;
+    }
+    .dash-barras {
+      height: 160px;
+      gap: 4px;
+    }
+    .dash-barra-wrap {
+      min-width: 32px;
+    }
+    .dash-barra-valor {
+      font-size: 9px;
+    }
+    .dash-barra-dia {
+      font-size: 8px;
+      margin-top: 4px;
+    }
+    .dash-barra-pedidos {
+      font-size: 8px;
+    }
+
+    /* Top 5 Produtos / Top 5 Clientes: empilhar */
+    .dash-duas-colunas {
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .dash-top-lista {
+      padding: 14px 12px;
+      border-radius: 10px;
+    }
+    .dash-top-lista h4 {
+      font-size: 11px;
+      margin-bottom: 10px;
+    }
+    .dash-top-item {
+      grid-template-columns: auto auto 1fr auto;
+      gap: 8px;
+      padding: 8px;
+      border-radius: 8px;
+    }
+    .dash-top-item .pos {
+      width: 24px;
+      height: 24px;
+      font-size: 11px;
+    }
+    .dash-top-item .foto-mini {
+      width: 34px;
+      height: 34px;
+      font-size: 12px;
+    }
+    .dash-top-item .info .nome {
+      font-size: 12px;
+    }
+    .dash-top-item .info .det {
+      font-size: 10px;
+    }
+    .dash-top-item .valor {
+      font-size: 12px;
+    }
+
+    /* Alertas de Estoque */
+    .dash-alertas {
+      padding: 14px 12px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+    }
+    .dash-alertas h4 {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      font-size: 11px;
+    }
+    .dash-alertas h4 .badge {
+      font-size: 10px;
+      padding: 2px 8px;
+    }
+    .dash-alertas .toggle-lista {
+      width: 100%;
+      margin-top: 10px;
+      font-size: 10px;
+      padding: 10px;
+    }
+    .dash-alerta-item {
+      font-size: 11px;
+      padding: 6px 8px;
+      gap: 8px;
+    }
+    .dash-alerta-item .num {
+      font-size: 11px;
+      padding: 2px 8px;
+    }
+
+    /* Pedidos Pendentes */
+    .dash-pendentes {
+      padding: 14px 12px;
+      border-radius: 10px;
+    }
+    .dash-pendentes h4 {
+      font-size: 11px;
+      margin-bottom: 10px;
+    }
+    .dash-pendentes-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .dash-pendente-card {
+      padding: 10px 8px;
+      border-radius: 8px;
+    }
+    .dash-pendente-card .lbl {
+      font-size: 9px;
+      margin-bottom: 4px;
+    }
+    .dash-pendente-card .val {
+      font-size: 18px;
+    }
+  }
 
     /* Status pill: só a bolinha no celular */
     .status-pill {
