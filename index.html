@@ -5176,22 +5176,23 @@ document.querySelectorAll(".modal").forEach(m => {
 
 // ENTRADA
 async function carregarEntradaProdutos() {
-  const sel = document.getElementById("entradaProduto");
-  const v = sel.value;
-  sel.innerHTML = '<option value="">— Selecione —</option>';
-  try {
-    const res = await api("/produtos");
-    const data = await res.json();
-    if (data.success) {
-      data.produtos.forEach(p => {
-        const opt = document.createElement("option");
-        opt.value = p.id;
-        opt.textContent = `${p.modelo} — ${p.cor}${p.codigo_barras ? ` (${p.codigo_barras})` : ""}`;
-        sel.appendChild(opt);
-      });
-      if (v && data.produtos.find(p => String(p.id) === v)) sel.value = v;
-    }
-  } catch {}
+  // Garante que produtosCache tá carregado
+  if (produtosCache.length === 0) {
+    try {
+      const res = await api("/produtos");
+      const data = await res.json();
+      if (data.success) produtosCache = data.produtos;
+    } catch {}
+  }
+  // Limpa o campo de busca (vai começar do zero)
+  const input = document.getElementById("entradaProdutoBusca");
+  if (input) input.value = "";
+  const wrap = document.getElementById("entradaGradeWrap");
+  if (wrap) wrap.style.display = "none";
+  const vazio = document.getElementById("entradaVazio");
+  if (vazio) vazio.style.display = "block";
+  const fotoInfo = document.getElementById("entradaFotoInfo");
+  if (fotoInfo) fotoInfo.classList.remove("show");
 }
 document.getElementById("entradaProduto").addEventListener("change", async (e) => {
   const pid = e.target.value;
