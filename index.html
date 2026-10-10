@@ -2095,6 +2095,233 @@
       flex-wrap: nowrap;
     }
     
+      /* ============================================ */
+  /* MELHORIAS MOBILE — Sub-bloco M3: Formulários */
+  /* ============================================ */
+  @media (max-width: 700px) {
+    /* Formulários: campos maiores e mais espaçados */
+    .form-row {
+      margin-bottom: 18px;
+    }
+    .form-row label {
+      font-size: 12px;
+      letter-spacing: 1.2px;
+      margin-bottom: 6px;
+    }
+    .form-row input,
+    .form-row select,
+    .form-row textarea {
+      padding: 15px 16px;
+      font-size: 16px; /* ≥16px evita zoom automático no iPhone */
+      border-radius: 12px;
+    }
+    .form-row textarea {
+      min-height: 90px;
+    }
+
+    /* Grid de formulário: 1 coluna no celular */
+    .form-grid {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+    .form-grid-codigo {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    .form-grid-codigo .btn-gerar {
+      width: 100%;
+      justify-content: center;
+      padding: 14px 18px;
+      font-size: 13px;
+    }
+
+    /* Botões: maiores pra tocar */
+    .btn {
+      padding: 14px 22px;
+      font-size: 13px;
+      border-radius: 12px;
+      min-height: 46px;
+    }
+    .btn-sm {
+      padding: 10px 16px;
+      font-size: 12px;
+      min-height: 40px;
+    }
+    .btn-xs {
+      padding: 8px 12px;
+      font-size: 11px;
+    }
+    .btn-gerar {
+      padding: 14px 18px;
+      font-size: 13px;
+    }
+
+    /* Botões de ação em linha: empilham no celular */
+    .card .btn + .btn,
+    .modal-actions .btn {
+      margin-top: 0;
+    }
+
+    /* Foto upload: área maior */
+    .foto-upload-area {
+      padding: 28px 20px;
+      border-radius: 14px;
+    }
+    .foto-upload-area .icon {
+      font-size: 42px;
+    }
+    .foto-upload-area .texto {
+      font-size: 14px;
+    }
+    .foto-upload-area .sub {
+      font-size: 12px;
+    }
+
+    /* Preview da foto: maior */
+    .foto-preview img {
+      max-width: 220px;
+      max-height: 220px;
+    }
+    .foto-preview .btn-remover {
+      width: 32px;
+      height: 32px;
+      font-size: 14px;
+    }
+
+    /* Barcode preview */
+    .barcode-preview {
+      padding: 16px 12px;
+      overflow-x: auto;
+      max-width: 100%;
+    }
+    .barcode-preview svg {
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* Badge próximo código */
+    .proximo-codigo-badge {
+      padding: 10px 14px;
+      font-size: 12px;
+      width: 100%;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .proximo-codigo-badge strong {
+      font-size: 14px;
+    }
+
+    /* Grade de numeração: 2 colunas no celular (já é flex, ajusta) */
+    .grade-wrap {
+      grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+      gap: 8px;
+    }
+    .grade-item {
+      padding: 14px 8px;
+    }
+    .grade-item .num {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    .grade-item .check {
+      font-size: 11px;
+    }
+
+    /* Grade entrada: 2 colunas */
+    .grade-entrada-item {
+      padding: 14px 10px;
+    }
+    .grade-entrada-item .num {
+      font-size: 22px;
+    }
+    .grade-entrada-item .estoque-atual {
+      font-size: 11px;
+      margin-bottom: 10px;
+    }
+    .grade-entrada-item input.qtd-entrada,
+    .grade-entrada-item input.qtd-pedido {
+      font-size: 20px;
+      padding: 14px 8px;
+    }
+    .grade-entrada-item .btn-add-num {
+      padding: 12px 8px;
+      font-size: 12px;
+    }
+
+    /* Ações rápidas (preencher tudo) */
+    .acoes-rapidas {
+      padding: 12px;
+      gap: 8px;
+    }
+    .acoes-rapidas .label {
+      width: 100%;
+      text-align: center;
+      font-size: 11px;
+    }
+    .acoes-rapidas input {
+      flex: 1;
+      min-width: 80px;
+      padding: 12px 14px;
+      font-size: 16px;
+    }
+
+    /* Barra total: ajustar no celular */
+    .barra-total {
+      padding: 14px 16px;
+      flex-direction: column;
+      gap: 12px;
+      text-align: center;
+    }
+    .barra-total .resumo {
+      justify-content: center;
+      gap: 18px;
+    }
+    .barra-total .item {
+      font-size: 12px;
+    }
+    .barra-total .item strong {
+      font-size: 20px;
+    }
+    .barra-total .btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    /* Combo digitável: lista maior */
+    .combo-lista {
+      max-height: 300px;
+    }
+    .combo-item {
+      padding: 14px 16px;
+      font-size: 14px;
+    }
+
+    /* Campos de busca */
+    .busca-pedidos {
+      flex-direction: column;
+      gap: 8px;
+    }
+    .busca-pedidos input {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 16px;
+    }
+    .busca-pedidos .btn-sm {
+      width: 100%;
+      justify-content: center;
+    }
+
+    /* Filtros de pedidos: quebrar melhor */
+    .filtros-pedidos {
+      padding: 10px;
+      gap: 6px;
+    }
+    .filtro-btn {
+      padding: 10px 14px;
+      font-size: 11px;
+    }
+  }
+
   /* ============================================ */
   /* MELHORIAS MOBILE — Sub-bloco M2: Dashboard   */
   /* ============================================ */
