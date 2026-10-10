@@ -2084,6 +2084,187 @@
     margin: 0 1px;
   }
 
+    /* ============================================ */
+  /* MELHORIAS MOBILE — Sub-bloco M1: Topbar      */
+  /* ============================================ */
+  @media (max-width: 700px) {
+    /* Topbar mais compacto */
+    .topbar {
+      padding: 10px 12px;
+      gap: 6px;
+      flex-wrap: nowrap;
+    }
+
+    /* Status pill: só a bolinha no celular */
+    .status-pill {
+      padding: 8px;
+      border-radius: 50%;
+      min-width: 32px;
+      height: 32px;
+      justify-content: center;
+    }
+    .status-pill .label {
+      display: none;
+    }
+    .status-pill .dot {
+      width: 10px;
+      height: 10px;
+    }
+
+    /* User pill: só avatar + badge */
+    .user-pill {
+      padding: 4px 8px;
+      gap: 6px;
+      font-size: 11px;
+    }
+    .user-pill .label-nome {
+      display: none;
+    }
+    .user-pill i {
+      font-size: 16px;
+    }
+    .user-pill .perfil-badge {
+      font-size: 9px;
+      padding: 2px 6px;
+    }
+
+    /* Botões do topo: só ícones */
+    .btn-text {
+      padding: 10px;
+      min-width: 40px;
+      justify-content: center;
+      font-size: 0;
+      gap: 0;
+    }
+    .btn-text i {
+      font-size: 15px;
+    }
+    .btn-text span {
+      display: none;
+    }
+
+    /* Instalar App: destaque */
+    .btn-text.install {
+      padding: 10px;
+      min-width: 40px;
+    }
+    .btn-text.install i {
+      font-size: 15px;
+    }
+
+    /* Hamburger: maior pra tocar */
+    .hamburger {
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+    }
+    .hamburger span {
+      width: 22px;
+      height: 2.5px;
+    }
+
+    /* Spacer: flexível (empurra os botões pra direita) */
+    .topbar .spacer {
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* Hero (logo MAX REPRESENTAÇÃO): menor */
+    .hero {
+      padding: 16px 12px 12px;
+    }
+    .hero-logo {
+      font-size: 24px;
+      letter-spacing: 3px;
+      margin-bottom: 4px;
+    }
+    .hero-sub {
+      font-size: 9px;
+      letter-spacing: 5px;
+    }
+
+    /* Tabs: maior pra tocar, scroll suave */
+    .tabs {
+      padding: 0 8px;
+      gap: 2px;
+    }
+    .tab {
+      padding: 12px 14px;
+      font-size: 11px;
+      gap: 6px;
+    }
+    .tab i {
+      font-size: 13px;
+    }
+
+    /* Content: menos padding lateral */
+    .content {
+      padding: 0 12px 60px;
+    }
+
+    /* Cards: menos padding */
+    .card {
+      padding: 16px;
+      margin-bottom: 14px;
+      border-radius: 12px;
+    }
+    .card h3 {
+      font-size: 12px;
+      letter-spacing: 1.5px;
+      margin-bottom: 14px;
+    }
+
+    /* Backup banner: adaptar */
+    .backup-banner {
+      margin: 0 12px 12px;
+      padding: 12px 14px;
+      gap: 10px;
+    }
+    .backup-banner .icon {
+      width: 36px;
+      height: 36px;
+      font-size: 16px;
+    }
+    .backup-banner .txt .titulo {
+      font-size: 13px;
+    }
+    .backup-banner .txt .sub {
+      font-size: 11px;
+    }
+    .backup-banner .acoes {
+      width: 100%;
+      justify-content: flex-end;
+    }
+
+    /* Sidebar drawer: ajustar largura no celular */
+    .sidebar-drawer {
+      width: 280px;
+    }
+
+    /* Install modal: ajustar */
+    .install-modal-box {
+      padding: 24px 20px;
+    }
+    .install-modal-box h2 {
+      font-size: 17px;
+    }
+    .install-modal-box p,
+    .install-modal-box ol {
+      font-size: 12px;
+    }
+
+    /* Update banner: adaptar */
+    .update-banner {
+      flex-direction: column;
+      padding: 12px 16px;
+      gap: 10px;
+      text-align: center;
+    }
+    .update-banner .txt-upd {
+      min-width: 0;
+    }
+  }
+
   @media (max-width: 700px) {
     .tabs { padding: 0 12px; }
     .tab { padding: 12px 14px; font-size: 11px; }
