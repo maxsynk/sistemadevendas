@@ -2419,7 +2419,18 @@
     .foto-upload-area {
       padding: 22px 16px;
     }
-  }
+        /* Foto upload no modal de pagamento */
+    .foto-upload-area {
+      padding: 22px 16px;
+    }
+
+    /* Cards de cadastro começam colapsados no mobile */
+    .card-collapsible[data-collapse-id="cadastro_produto"]:not(.open) .card-body,
+    .card-collapsible[data-collapse-id="cadastro_cliente"]:not(.open) .card-body {
+      max-height: 0;
+      padding: 0 24px;
+    }
+  }    ← ← ← o } que fecha o @media do M4 fica DEPOIS do bloco novo
 
       /* ============================================ */
   /* MELHORIAS MOBILE — Sub-bloco M3: Formulários */
