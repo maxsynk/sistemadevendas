@@ -2259,9 +2259,12 @@
   <div class="aba" id="aba-entrada">
     <div class="card">
       <h3><i class="fas fa-arrow-down"></i> Entrada de Mercadoria</h3>
-      <div class="form-row">
+            <div class="form-row">
         <label>Produto *</label>
-        <select id="entradaProduto"><option value="">— Selecione —</option></select>
+        <div class="combo-wrap">
+          <input type="text" id="entradaProdutoBusca" placeholder="Digite o modelo, cor ou código..." autocomplete="off">
+          <div class="combo-lista" id="entradaProdutoLista"></div>
+        </div>
       </div>
       <div class="entrada-foto-info" id="entradaFotoInfo">
         <div id="entradaFotoWrap"></div>
