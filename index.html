@@ -5345,11 +5345,19 @@ document.getElementById("btnLimparEntrada").onclick = () => {
   document.getElementById("preencherTudo").value = "";
 };
 document.getElementById("btnConfirmarEntrada").onclick = async () => {
-  // Pega o produto selecionado (o input guarda o nome, então usamos o primeiro item da grade)
-  const gradeWrap = document.getElementById("gradeEntradaWrap");
+  // Verifica se há um produto selecionado (grade visível e com itens)
+  const gradeWrap = document.getElementById("entradaGradeWrap");
   if (gradeWrap.style.display === "none" || gradeWrap.querySelectorAll(".grade-entrada-item").length === 0) {
     return toast("Selecione um produto", "error");
   }
+
+  // Descobre o produto atual pelo texto do campo de busca
+  const textoBusca = document.getElementById("entradaProdutoBusca").value.trim();
+  const produtoAtual = produtosCache.find(p =>
+    textoBusca.startsWith(`${p.modelo} — ${p.cor}`)
+  );
+  if (!produtoAtual) return toast("Produto não identificado. Selecione novamente.", "error");
+
   const itens = [];
   document.querySelectorAll("#gradeEntradaWrap .qtd-entrada").forEach(inp => {
     const v = parseInt(inp.value) || 0;
@@ -5358,6 +5366,7 @@ document.getElementById("btnConfirmarEntrada").onclick = async () => {
   if (itens.length === 0) return toast("Nada digitado", "error");
   const total = itens.reduce((s, i) => s + i.quantidade, 0);
   if (!confirm(`Entrada de ${total} pares em ${itens.length} numeração(ões)?`)) return;
+
   const btn = document.getElementById("btnConfirmarEntrada");
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
@@ -5369,7 +5378,8 @@ document.getElementById("btnConfirmarEntrada").onclick = async () => {
     const d = await res.json();
     if (!d.success) throw new Error(d.error);
     toast(`✅ ${total} pares adicionados!`);
-    await renderizarGradeEntrada(pid);
+    // Recarrega a grade do produto atual (usa o produto descoberto acima)
+    await renderizarGradeEntrada(produtoAtual.id);
     await carregarUltimasEntradas();
     await carregarDashboard();
     await carregarProdutos();
