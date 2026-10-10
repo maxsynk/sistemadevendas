@@ -1009,6 +1009,38 @@
     display: flex; align-items: center; gap: 6px;
   }
   .bipagem-box .titulo i { font-size: 12px; }
+    .bipagem-box .bip-linha {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    align-items: center;
+  }
+  .bipagem-box .btn-bip-buscar {
+    padding: 11px 16px;
+    background: linear-gradient(135deg, var(--info), #0284c7);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .bipagem-box .btn-bip-buscar:hover {
+    box-shadow: 0 0 20px rgba(56,189,248,0.6);
+    transform: translateY(-1px);
+  }
+  .bipagem-box .btn-bip-buscar:active {
+    transform: translateY(0);
+  }
+
   .bipagem-box .campo-bip {
     width: 100%; padding: 11px 14px;
     background: rgba(0,0,0,0.4); border: 1px solid var(--info);
