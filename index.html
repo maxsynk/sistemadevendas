@@ -6418,6 +6418,32 @@ document.getElementById("btnSalvarCliente").onclick = async () => {
     await carregarClientes();
   } catch (e) { toast("Erro: " + e.message, "error"); }
 };
+  // ============================================
+// BUSCA DE CLIENTES CADASTRADOS
+// ============================================
+let filtroTextoClientes = "";
+
+function aplicarFiltroClientes() {
+  const wrap = document.getElementById("listaClientes");
+  if (!wrap) return;
+  const lista = wrap.querySelectorAll(".pedido-item");
+  const f = filtroTextoClientes.toLowerCase().trim();
+  lista.forEach(item => {
+    const texto = item.textContent.toLowerCase();
+    item.style.display = (!f || texto.includes(f)) ? "" : "none";
+  });
+}
+
+document.getElementById("buscaClientes").addEventListener("input", (e) => {
+  filtroTextoClientes = e.target.value;
+  aplicarFiltroClientes();
+});
+document.getElementById("btnLimparBuscaClientes").addEventListener("click", () => {
+  document.getElementById("buscaClientes").value = "";
+  filtroTextoClientes = "";
+  aplicarFiltroClientes();
+});
+
 async function carregarClientes() {
   const wrap = document.getElementById("listaClientes");
   wrap.innerHTML = '<div class="loader"></div>';
