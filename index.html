@@ -5194,17 +5194,80 @@ async function carregarEntradaProdutos() {
   const fotoInfo = document.getElementById("entradaFotoInfo");
   if (fotoInfo) fotoInfo.classList.remove("show");
 }
-document.getElementById("entradaProduto").addEventListener("change", async (e) => {
-  const pid = e.target.value;
+// ============================================
+// ENTRADA — Combo digitável com autocomplete
+// ============================================
+const comboEntradaInput = document.getElementById("entradaProdutoBusca");
+const comboEntradaLista = document.getElementById("entradaProdutoLista");
+
+comboEntradaInput.addEventListener("focus", () => mostrarComboEntrada(comboEntradaInput.value));
+comboEntradaInput.addEventListener("input", () => mostrarComboEntrada(comboEntradaInput.value));
+
+comboEntradaInput.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    comboEntradaLista.classList.remove("show");
+    comboEntradaInput.blur();
+  }
+  // Enter seleciona o primeiro item da lista (se só tiver 1)
+  if (e.key === "Enter") {
+    e.preventDefault();
+    const primeiro = comboEntradaLista.querySelector(".combo-item:not([style*='cursor:default'])");
+    if (primeiro && comboEntradaLista.classList.contains("show")) {
+      primeiro.click();
+    }
+  }
+});
+
+function mostrarComboEntrada(filtro) {
+  const f = filtro.trim().toLowerCase();
+  const lista = produtosCache.filter(p => {
+    if (!f) return true; // campo vazio → mostra todos
+    const modelo = (p.modelo || "").toLowerCase();
+    const cor = (p.cor || "").toLowerCase();
+    const codigo = (p.codigo_barras || "").toLowerCase();
+    return modelo.includes(f) || cor.includes(f) || codigo.includes(f);
+  });
+
+  comboEntradaLista.innerHTML = "";
+
+  if (lista.length === 0) {
+    comboEntradaLista.innerHTML = `<div class="combo-item" style="color:var(--text-dim);cursor:default">Nenhum produto encontrado</div>`;
+  } else {
+    for (const p of lista.slice(0, 30)) {
+      const item = document.createElement("div");
+      item.className = "combo-item";
+      item.textContent = `${p.modelo} — ${p.cor}${p.codigo_barras ? ` (${p.codigo_barras})` : ""}`;
+      item.dataset.produtoId = p.id;
+      item.onclick = async () => {
+        comboEntradaInput.value = `${p.modelo} — ${p.cor}`;
+        comboEntradaLista.classList.remove("show");
+        await selecionarProdutoEntrada(p.id);
+      };
+      comboEntradaLista.appendChild(item);
+    }
+  }
+
+  comboEntradaLista.classList.add("show");
+}
+
+async function selecionarProdutoEntrada(produtoId) {
   const wrap = document.getElementById("entradaGradeWrap");
   const vazio = document.getElementById("entradaVazio");
   const fotoInfo = document.getElementById("entradaFotoInfo");
-  if (!pid) { wrap.style.display = "none"; vazio.style.display = "block"; fotoInfo.classList.remove("show"); return; }
+
   wrap.style.display = "block";
   vazio.style.display = "none";
-  await mostrarFotoEntrada(parseInt(pid));
-  await renderizarGradeEntrada(parseInt(pid));
+
+  await mostrarFotoEntrada(produtoId);
+  await renderizarGradeEntrada(produtoId);
   await carregarUltimasEntradas();
+}
+
+// Fecha a lista ao clicar fora
+document.addEventListener("click", (e) => {
+  if (!comboEntradaInput.contains(e.target) && !comboEntradaLista.contains(e.target)) {
+    comboEntradaLista.classList.remove("show");
+  }
 });
 async function mostrarFotoEntrada(produtoId) {
   const p = produtosCache.find(x => x.id === produtoId);
