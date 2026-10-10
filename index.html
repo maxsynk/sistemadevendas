@@ -8356,7 +8356,235 @@ document.getElementById("btnResetConfig").onclick = () => {
   }
 })();
 
-</script>
+// ============================================
+// BLOCO 21: BIPAR COM CÂMERA
+// ============================================
+let cameraStream = null;
+let cameraZxingReader = null;
+let cameraBipando = false;
+let cameraContadorItens = 0;
+
+// Abre o modal e inicia a câmera
+async function abrirCameraBip() {
+  const modal = document.getElementById("modalCamera");
+  const video = document.getElementById("cameraVideo");
+  const loading = document.getElementById("cameraLoading");
+  const status = document.getElementById("cameraStatus");
+  const statusText = document.getElementById("cameraStatusText");
+  const ultimo = document.getElementById("cameraUltimo");
+  const contador = document.getElementById("cameraContador");
+
+  // Reseta o estado visual
+  cameraContadorItens = 0;
+  contador.textContent = "0";
+  ultimo.style.display = "none";
+  loading.classList.remove("hidden");
+  status.className = "camera-status";
+  statusText.textContent = "Aguardando código...";
+
+  modal.classList.add("active");
+
+  // Verifica suporte
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    loading.classList.add("hidden");
+    status.className = "camera-status error";
+    statusText.textContent = "Câmera não suportada neste navegador.";
+    return;
+  }
+  if (typeof ZXing === "undefined") {
+    loading.classList.add("hidden");
+    status.className = "camera-status error";
+    statusText.textContent = "Biblioteca ZXing não carregou. Recarregue a página.";
+    return;
+  }
+
+  try {
+    // Pede a câmera traseira (facingMode: environment)
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: "environment" },
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      }
+    });
+
+    video.srcObject = cameraStream;
+    await video.play();
+
+    loading.classList.add("hidden");
+    statusText.textContent = "Aponte para o código de barras...";
+
+    // Inicia a leitura
+    iniciarLeituraZXing();
+  } catch (err) {
+    loading.classList.add("hidden");
+    status.className = "camera-status error";
+    if (err.name === "NotAllowedError") {
+      statusText.textContent = "Permissão de câmera negada. Libere o acesso e tente de novo.";
+    } else if (err.name === "NotFoundError") {
+      statusText.textContent = "Nenhuma câmera encontrada neste dispositivo.";
+    } else {
+      statusText.textContent = "Erro ao abrir câmera: " + err.message;
+    }
+  }
+}
+
+// Inicia o leitor ZXing
+function iniciarLeituraZXing() {
+  const video = document.getElementById("cameraVideo");
+
+  // Cria o leitor ZXing
+  cameraZxingReader = new ZXing.BrowserMultiFormatReader();
+
+  cameraBipando = true;
+
+  // Loop contínuo de leitura
+  const codeReader = cameraZxingReader;
+  codeReader.decodeFromVideoElement(video, (result, err) => {
+    if (!cameraBipando) return;
+    if (result) {
+      const codigo = result.getText();
+      // Debounce: ignora leituras repetidas do mesmo código nos próximos 1.5s
+      if (cameraUltimoCodigo === codigo && (Date.now() - cameraUltimoTempo) < 1500) return;
+      cameraUltimoCodigo = codigo;
+      cameraUltimoTempo = Date.now();
+      processarCodigoBipado(codigo);
+    }
+    // Erros de "não encontrado" são silenciados (é o normal quando não tem código na frente)
+  });
+}
+
+// Variáveis de debounce
+let cameraUltimoCodigo = "";
+let cameraUltimoTempo = 0;
+
+// Processa um código bipado pela câmera
+async function processarCodigoBipado(codigo) {
+  const status = document.getElementById("cameraStatus");
+  const statusText = document.getElementById("cameraStatusText");
+  const ultimo = document.getElementById("cameraUltimo");
+  const ultimoInfo = document.getElementById("cameraUltimoInfo");
+  const contador = document.getElementById("cameraContador");
+
+  try {
+    const res = await api("/variacoes/buscar?codigo=" + encodeURIComponent(codigo));
+    const data = await res.json();
+
+    if (!data.success) {
+      tocarSomErro();
+      status.className = "camera-status error";
+      statusText.textContent = "❌ Código não encontrado: " + codigo;
+      setTimeout(() => {
+        status.className = "camera-status";
+        statusText.textContent = "Aponte para o código de barras...";
+      }, 2000);
+      return;
+    }
+
+    if (data.tipo === "variacao") {
+      const v = data.variacao;
+      if (data.disponivel <= 0) {
+        tocarSomErro();
+        status.className = "camera-status error";
+        statusText.textContent = `❌ Sem estoque (Nº ${v.numeracao})`;
+        setTimeout(() => {
+          status.className = "camera-status";
+          statusText.textContent = "Aponte para o código de barras...";
+        }, 2000);
+        return;
+      }
+      // Sucesso!
+      tocarSomOk();
+      status.className = "camera-status success";
+      statusText.textContent = `✅ ${v.modelo} ${v.cor} Nº ${v.numeracao}`;
+
+      // Atualiza "último bipado"
+      ultimoInfo.innerHTML = `<strong>${v.modelo} — ${v.cor}</strong><br>Nº ${v.numeracao} · Cód: ${v.codigo_barras || codigo}`;
+      ultimo.style.display = "block";
+
+      // Adiciona ao carrinho
+      adicionarAoCarrinho({
+        variacao_id: v.id, numeracao: v.numeracao, quantidade: 1,
+        preco_unitario: parseFloat(v.preco_venda_atacado || 0),
+        produto_id: v.produto_id, modelo: v.modelo, cor: v.cor,
+        foto_url: v.foto_url || null, estoque_disponivel: data.disponivel,
+      });
+
+      // Atualiza contador
+      cameraContadorItens++;
+      contador.textContent = cameraContadorItens;
+
+      // Volta status ao normal depois de 1.5s
+      setTimeout(() => {
+        status.className = "camera-status";
+        statusText.textContent = "Aponte para o código de barras...";
+      }, 1500);
+
+    } else if (data.tipo === "produto") {
+      // Código do produto sem numeração — abre o modal de escolha
+      tocarSomOk();
+      status.className = "camera-status success";
+      statusText.textContent = `🔍 Escolha a numeração de ${data.produto.modelo}`;
+      // Fecha a câmera e abre o modal de escolha
+      fecharCameraBip();
+      abrirModalEscolhaNumeracao(data.produto, data.variacoes);
+    }
+  } catch (e) {
+    tocarSomErro();
+    status.className = "camera-status error";
+    statusText.textContent = "❌ Erro: " + e.message;
+    setTimeout(() => {
+      status.className = "camera-status";
+      statusText.textContent = "Aponte para o código de barras...";
+    }, 2000);
+  }
+}
+
+// Para a câmera e fecha o modal
+function fecharCameraBip() {
+  cameraBipando = false;
+
+  // Para o stream da câmera
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(t => t.stop());
+    cameraStream = null;
+  }
+
+  // Para o leitor ZXing
+  if (cameraZxingReader) {
+    try { cameraZxingReader.reset(); } catch (e) {}
+    cameraZxingReader = null;
+  }
+
+  // Limpa o vídeo
+  const video = document.getElementById("cameraVideo");
+  if (video) video.srcObject = null;
+
+  // Fecha o modal
+  document.getElementById("modalCamera").classList.remove("active");
+}
+
+// Botão "Bipar com Câmera"
+document.getElementById("btnBipCamera").addEventListener("click", abrirCameraBip);
+
+// Botão "Fechar" (X) do modal
+document.getElementById("btnCameraFechar").addEventListener("click", fecharCameraBip);
+
+// Botão "Finalizar"
+document.getElementById("btnCameraFinalizar").addEventListener("click", () => {
+  fecharCameraBip();
+  if (cameraContadorItens > 0) {
+    toast(`✅ ${cameraContadorItens} ${cameraContadorItens === 1 ? "item bipado" : "itens bipados"}!`);
+  }
+});
+
+// Fecha a câmera se apertar Esc
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && document.getElementById("modalCamera").classList.contains("active")) {
+    fecharCameraBip();
+  }
+});
+
 
 </body>
 </html>
