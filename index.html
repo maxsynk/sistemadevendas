@@ -6581,12 +6581,11 @@ function mostrarFeedback(msg, tipo) {
   bipFeedback.className = "feedback show " + tipo;
   setTimeout(() => { bipFeedback.classList.remove("show"); }, 3500);
 }
-campoBip.addEventListener("keydown", async (e) => {
-  if (e.key !== "Enter") return;
-  e.preventDefault();
+// Função centralizada de busca por código
+async function buscarCodigoBip() {
   const codigo = campoBip.value.trim();
   if (!codigo) return;
-  campoBip.value = "";
+
   try {
     const res = await api("/variacoes/buscar?codigo=" + encodeURIComponent(codigo));
     const data = await res.json();
@@ -6596,6 +6595,54 @@ campoBip.addEventListener("keydown", async (e) => {
       fotoBipada.classList.remove("show");
       return;
     }
+    // Se achou, limpa o campo
+    campoBip.value = "";
+
+    if (data.tipo === "variacao") {
+      const v = data.variacao;
+      if (data.disponivel <= 0) {
+        tocarSomErro();
+        mostrarFeedback(`❌ Sem estoque (Nº ${v.numeracao})`, "erro");
+        return;
+      }
+      tocarSomOk();
+      mostrarFeedback(`✅ ${v.modelo} ${v.cor} Nº ${v.numeracao} — +1 par`, "ok");
+      if (v.foto_url) {
+        document.getElementById("fotoBipadaImg").src = v.foto_url;
+        document.getElementById("fotoBipadaImg").style.display = "block";
+      } else {
+        document.getElementById("fotoBipadaImg").style.display = "none";
+      }
+      document.getElementById("fotoBipadaNome").textContent = `${v.modelo} — ${v.cor}`;
+      document.getElementById("fotoBipadaNum").textContent = `Nº ${v.numeracao} · Cód: ${v.codigo_barras || codigo}`;
+      document.getElementById("fotoBipadaDisp").textContent = `Disponível: ${data.disponivel}`;
+      fotoBipada.classList.add("show");
+      adicionarAoCarrinho({
+        variacao_id: v.id, numeracao: v.numeracao, quantidade: 1,
+        preco_unitario: parseFloat(v.preco_venda_atacado || 0),
+        produto_id: v.produto_id, modelo: v.modelo, cor: v.cor,
+        foto_url: v.foto_url || null, estoque_disponivel: data.disponivel,
+      });
+    } else if (data.tipo === "produto") {
+      tocarSomOk();
+      mostrarFeedback(`🔍 Escolha a numeração.`, "ok");
+      abrirModalEscolhaNumeracao(data.produto, data.variacoes);
+    }
+  } catch (e) {
+    tocarSomErro();
+    mostrarFeedback("❌ Erro: " + e.message, "erro");
+  }
+}
+
+// Enter dispara busca
+campoBip.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter") return;
+  e.preventDefault();
+  buscarCodigoBip();
+});
+
+// Botão Buscar dispara busca
+document.getElementById("btnBipBuscar").addEventListener("click", buscarCodigoBip);
     if (data.tipo === "variacao") {
       const v = data.variacao;
       if (data.disponivel <= 0) {
