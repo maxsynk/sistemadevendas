@@ -5765,6 +5765,32 @@ function renderizarEstoqueGrade(produtoId) {
   return html;
 }
 
+  // ============================================
+// BUSCA DE PRODUTOS CADASTRADOS
+// ============================================
+let filtroTextoProdutos = "";
+
+function aplicarFiltroProdutos() {
+  const wrap = document.getElementById("listaProdutos");
+  if (!wrap) return;
+  const lista = wrap.querySelectorAll(".produto-item");
+  const f = filtroTextoProdutos.toLowerCase().trim();
+  lista.forEach(item => {
+    const texto = item.textContent.toLowerCase();
+    item.style.display = (!f || texto.includes(f)) ? "" : "none";
+  });
+}
+
+document.getElementById("buscaProdutos").addEventListener("input", (e) => {
+  filtroTextoProdutos = e.target.value;
+  aplicarFiltroProdutos();
+});
+document.getElementById("btnLimparBuscaProdutos").addEventListener("click", () => {
+  document.getElementById("buscaProdutos").value = "";
+  filtroTextoProdutos = "";
+  aplicarFiltroProdutos();
+});
+
 // LISTAR PRODUTOS
 async function carregarProdutos() {
   const wrap = document.getElementById("listaProdutos");
