@@ -3912,6 +3912,56 @@
   </div>
 </div>
 
+  <!-- MODAL BIPAR COM CÂMERA -->
+<div class="modal" id="modalCamera">
+  <div class="modal-box" style="max-width:640px">
+    <h3 style="margin-bottom:12px"><i class="fas fa-camera"></i> Bipar com Câmera</h3>
+    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;line-height:1.6">
+      Aponte a câmera para o código de barras. Os códigos bipados vão sendo <strong>adicionados automaticamente ao carrinho</strong>. Continue bipando ou clique em <strong>Finalizar</strong> quando terminar.
+    </p>
+
+    <!-- Container do vídeo da câmera -->
+    <div class="camera-wrap">
+      <video id="cameraVideo" autoplay playsinline muted></video>
+      <div class="camera-overlay">
+        <div class="camera-mira"></div>
+      </div>
+      <div class="camera-loading" id="cameraLoading">
+        <i class="fas fa-spinner fa-spin"></i>
+        <span>Abrindo câmera...</span>
+      </div>
+    </div>
+
+    <!-- Status / feedback -->
+    <div class="camera-status" id="cameraStatus">
+      <i class="fas fa-info-circle"></i>
+      <span id="cameraStatusText">Aguardando código...</span>
+    </div>
+
+    <!-- Último código bipado -->
+    <div class="camera-ultimo" id="cameraUltimo" style="display:none">
+      <div class="camera-ultimo-titulo">✅ Último bipado:</div>
+      <div class="camera-ultimo-info" id="cameraUltimoInfo"></div>
+    </div>
+
+    <!-- Contador -->
+    <div class="camera-contador">
+      <span>Total bipado:</span>
+      <strong id="cameraContador">0</strong>
+      <span>itens</span>
+    </div>
+
+    <!-- Ações -->
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn btn-secondary" id="btnCameraFechar">
+        <i class="fas fa-times"></i> Fechar
+      </button>
+      <button class="btn btn-success" id="btnCameraFinalizar">
+        <i class="fas fa-check"></i> Finalizar
+      </button>
+    </div>
+  </div>
+</div>
 <!-- BANNER DE ATUALIZAÇÃO PWA (NOVO BLOCO 17) -->
 <div class="update-banner" id="updateBanner">
   <i class="fas fa-sync-alt icon-upd"></i>
