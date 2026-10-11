@@ -8433,27 +8433,27 @@ async function abrirCameraBip() {
 
 // Inicia o leitor ZXing
 function iniciarLeituraZXing() {
-  const video = document.getElementById("cameraVideo");
-
-  // Cria o leitor ZXing
-  cameraZxingReader = new ZXing.BrowserMultiFormatReader();
+  // Cria o leitor ZXing (nova biblioteca @zxing/browser)
+  cameraZxingReader = new ZXingBrowser.BrowserMultiFormatReader();
 
   cameraBipando = true;
 
-  // Loop contínuo de leitura
-  const codeReader = cameraZxingReader;
-  codeReader.decodeFromVideoElement(video, (result, err) => {
-    if (!cameraBipando) return;
-    if (result) {
-      const codigo = result.getText();
-      // Debounce: ignora leituras repetidas do mesmo código nos próximos 1.5s
-      if (cameraUltimoCodigo === codigo && (Date.now() - cameraUltimoTempo) < 1500) return;
-      cameraUltimoCodigo = codigo;
-      cameraUltimoTempo = Date.now();
-      processarCodigoBipado(codigo);
+  // Loop contínuo de leitura — usa decodeFromVideoDevice
+  cameraZxingReader.decodeFromVideoDevice(
+    null,
+    "cameraVideo",
+    (result, err) => {
+      if (!cameraBipando) return;
+      if (result) {
+        const codigo = result.getText();
+        // Debounce: ignora leituras repetidas do mesmo código nos próximos 1.5s
+        if (cameraUltimoCodigo === codigo && (Date.now() - cameraUltimoTempo) < 1500) return;
+        cameraUltimoCodigo = codigo;
+        cameraUltimoTempo = Date.now();
+        processarCodigoBipado(codigo);
+      }
     }
-    // Erros de "não encontrado" são silenciados (é o normal quando não tem código na frente)
-  });
+  );
 }
 
 // Variáveis de debounce
@@ -8546,16 +8546,18 @@ async function processarCodigoBipado(codigo) {
 function fecharCameraBip() {
   cameraBipando = false;
 
-  // Para o stream da câmera
-  if (cameraStream) {
-    cameraStream.getTracks().forEach(t => t.stop());
-    cameraStream = null;
+  // Para o leitor ZXing (que agora gerencia a câmera internamente)
+  if (cameraZxingReader) {
+    try {
+      if (typeof cameraZxingReader.reset === "function") cameraZxingReader.reset();
+    } catch (e) {}
+    cameraZxingReader = null;
   }
 
-  // Para o leitor ZXing
-  if (cameraZxingReader) {
-    try { cameraZxingReader.reset(); } catch (e) {}
-    cameraZxingReader = null;
+  // Para o stream da câmera (fallback, caso exista)
+  if (cameraStream) {
+    try { cameraStream.getTracks().forEach(t => t.stop()); } catch (e) {}
+    cameraStream = null;
   }
 
   // Limpa o vídeo
