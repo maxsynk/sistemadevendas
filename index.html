@@ -5884,8 +5884,13 @@ function atualizarPreviewCadastro() {
 function atualizarPreviewEdicao() {
   const c = document.getElementById("editCodigo").value.trim().toUpperCase();
   const w = document.getElementById("previewEdicao");
-  if (c) { renderizarBarcode("svgEdicao", c); w.classList.remove("vazio"); } else w.classList.add("vazio");
-}
+if (c) {
+    w.innerHTML = "";
+    gerarCodigoVisual(w, c, { width: 2, height: 60 });
+    w.classList.remove("vazio");
+} else {
+    w.classList.add("vazio");
+}  
 async function pegarProximoCodigo() {
   try {
     const res = await api("/produtos/proximo-codigo");
