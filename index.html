@@ -30,7 +30,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>  
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.4/umd/zxing-browser.min.js"></script>  
@@ -5840,12 +5839,6 @@ async function carregarProximoCodigo() {
   }
 }
 
-// CÓDIGO DE BARRAS
-function renderizarBarcode(elId, codigo) {
-  const el = document.getElementById(elId);
-  if (!el || !codigo) return;
-  try { JsBarcode(el, codigo, { format: "CODE128", width: 2, height: 60, displayValue: true, fontSize: 14, margin: 8 }); } catch (e) {}
-}
 // ============================================
 // GERAÇÃO DE QR CODE
 // Gera QR Code com o texto passado
