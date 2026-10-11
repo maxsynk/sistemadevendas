@@ -5899,7 +5899,14 @@ function gerarCodigoVisual(elemento, texto, opcoes = {}) {
 function atualizarPreviewCadastro() {
   const c = document.getElementById("prodCodigo").value.trim().toUpperCase();
   const w = document.getElementById("previewCadastro");
-  if (c) { renderizarBarcode("svgCadastro", c); w.classList.remove("vazio"); } else w.classList.add("vazio");
+  if (c) {
+    // Limpa o conteúdo antes de gerar
+    w.innerHTML = "";
+    gerarCodigoVisual(w, c, { width: 2, height: 60 });
+    w.classList.remove("vazio");
+  } else {
+    w.classList.add("vazio");
+  }
 }
 function atualizarPreviewEdicao() {
   const c = document.getElementById("editCodigo").value.trim().toUpperCase();
