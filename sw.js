@@ -1,10 +1,9 @@
 // ============================================
-// MAX REPRESENTAÇÃO — SERVICE WORKER v1.0
+// MAX REPRESENTAÇÃO — SERVICE WORKER v1.3
 // PWA: cache da interface pra funcionar offline
 // ============================================
 
-const CACHE_NOME = "max-representacao-v1.2";
-const ARQUIVOS_CACHE = [
+const CACHE_NOME = "max-representacao-v1.3";
 const ARQUIVOS_CACHE = [
   "./",
   "./index.html",
@@ -48,7 +47,7 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
-  // NÃO cacheia chamadas da API (sempre precisa de dados frescos)
+  // NÃO cacheia chamadas da API
   if (url.pathname.startsWith("/login") ||
       url.pathname.startsWith("/produtos") ||
       url.pathname.startsWith("/variacoes") ||
@@ -62,15 +61,13 @@ self.addEventListener("fetch", (event) => {
       url.pathname.startsWith("/foto/") ||
       url.pathname.startsWith("/etiqueta/") ||
       url.hostname !== self.location.hostname) {
-    // Deixa passar direto pra rede (sem cache)
     return;
   }
 
-  // Estratégia cache-first para o resto (interface)
+  // Estratégia cache-first para o resto
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) {
-        // Está no cache — retorna e atualiza em background
         fetch(event.request).then((response) => {
           if (response && response.status === 200) {
             caches.open(CACHE_NOME).then((cache) => {
@@ -81,9 +78,7 @@ self.addEventListener("fetch", (event) => {
         return cached;
       }
 
-      // Não está no cache — busca da rede
       return fetch(event.request).then((response) => {
-        // Guarda cópia no cache (só se for GET e sucesso)
         if (event.request.method === "GET" && response.status === 200) {
           const responseClone = response.clone();
           caches.open(CACHE_NOME).then((cache) => {
@@ -92,9 +87,8 @@ self.addEventListener("fetch", (event) => {
         }
         return response;
       }).catch(() => {
-        // Se falhar (offline) e for navegação, mostra o INDEX.html do cache
         if (event.request.mode === "navigate") {
-          return caches.match("./INDEX.html");
+          return caches.match("./index.html");
         }
       });
     })
