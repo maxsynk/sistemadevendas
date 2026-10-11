@@ -5846,56 +5846,29 @@ function renderizarBarcode(elId, codigo) {
   if (!el || !codigo) return;
   try { JsBarcode(el, codigo, { format: "CODE128", width: 2, height: 60, displayValue: true, fontSize: 14, margin: 8 }); } catch (e) {}
 }
-  // ============================================
-// PARTE B — GERAÇÃO UNIVERSAL DE CÓDIGO VISUAL
-// Detecta automaticamente se é QR Code ou código de barras 1D
+// ============================================
+// GERAÇÃO DE QR CODE
+// Gera QR Code com o texto passado
 // ============================================
 function gerarCodigoVisual(elemento, texto, opcoes = {}) {
   if (!elemento || !texto) return;
 
-  const textoUpper = String(texto).trim().toUpperCase();
+  elemento.innerHTML = "";
+  const canvas = document.createElement("canvas");
+  elemento.appendChild(canvas);
   
-  // Se for SHOES-XXXX → código de barras 1D (compatibilidade)
-  // Qualquer outra coisa → QR Code
-  const ehCodigoBarras1D = /^SHOES-\d+$/.test(textoUpper);
-
-  if (ehCodigoBarras1D) {
-    // Código de barras 1D — limpa o elemento e adiciona SVG
-    elemento.innerHTML = "";
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    elemento.appendChild(svg);
-    
-    try {
-      JsBarcode(svg, textoUpper, {
-        format: "CODE128",
-        width: opcoes.width || 2,
-        height: opcoes.height || 60,
-        displayValue: opcoes.displayValue !== false,
-        fontSize: opcoes.fontSize || 14,
-        margin: opcoes.margin || 8,
-      });
-    } catch (e) {
-      console.error("[gerarCodigoVisual] Erro no código de barras:", e.message);
-    }
-  } else {
-    // QR Code — limpa o elemento e adiciona canvas
-    elemento.innerHTML = "";
-    const canvas = document.createElement("canvas");
-    elemento.appendChild(canvas);
-    
-    QRCode.toCanvas(canvas, textoUpper, {
-      width: opcoes.qrSize || 200,
-      margin: opcoes.qrMargin || 1,
-      color: {
-        dark: "#000000",
-        light: "#ffffff",
-      },
-      errorCorrectionLevel: "M",
-    }, (err) => {
-      if (err) console.error("[gerarCodigoVisual] Erro no QR Code:", err);
-    });
-  }
-}
+  QRCode.toCanvas(canvas, String(texto).trim().toUpperCase(), {
+    width: opcoes.qrSize || 200,
+    margin: opcoes.qrMargin || 1,
+    color: {
+      dark: "#000000",
+      light: "#ffffff",
+    },
+    errorCorrectionLevel: "M",
+  }, (err) => {
+    if (err) console.error("[gerarCodigoVisual] Erro no QR Code:", err);
+  });
+}  
 function atualizarPreviewCadastro() {
   const c = document.getElementById("prodCodigo").value.trim().toUpperCase();
   const w = document.getElementById("previewCadastro");
