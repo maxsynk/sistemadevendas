@@ -522,7 +522,7 @@ function mostrarTelaSucesso() {
 
   const btnZap = document.getElementById("btnEnviarZapSucesso");
   if (btnZap) {
-    btnZap.onclick = () => window.open(d.urlZap, "_blank");
+  btnZap.onclick = () => abrirWhatsApp(d.msg);  
   }
   const btnFechar = document.getElementById("btnFecharSucesso");
   if (btnFechar) {
