@@ -1,5 +1,5 @@
 // ============================================
-// MAX REPRESENTAÇÃO — MINI SITE v3.0
+// MAX REPRESENTAÇÃO — MINI SITE v3.1
 // script.js
 // ============================================
 
@@ -433,9 +433,6 @@ async function confirmarFechamento() {
 
     chavePedidoGerada = data.chave;
 
-    // Monta mensagem do WhatsApp (pro VENDEDOR)
-    const WHATSAPP_VENDEDOR = "5537991021468";
-
     let msg = `*NOVO PEDIDO — Site MAX Representação*\n\n`;
     msg += `Chave: ${data.chave}\n`;
     msg += `Nome: ${nome}\n`;
@@ -469,7 +466,6 @@ async function confirmarFechamento() {
       totalPares: data.total_pares,
       valorEstimado: data.valor_estimado,
       msg: msg,
-      urlZap: `https://wa.me/${WHATSAPP_VENDEDOR}?text=${encodeURIComponent(msg)}`,
     };
 
     mostrarTelaSucesso();
@@ -522,7 +518,8 @@ function mostrarTelaSucesso() {
 
   const btnZap = document.getElementById("btnEnviarZapSucesso");
   if (btnZap) {
-  btnZap.onclick = () => abrirWhatsApp(d.msg);  
+    // Usa a função abrirWhatsApp que tenta WhatsApp Desktop primeiro
+    btnZap.onclick = () => abrirWhatsApp(d.msg);
   }
   const btnFechar = document.getElementById("btnFecharSucesso");
   if (btnFechar) {
@@ -531,7 +528,7 @@ function mostrarTelaSucesso() {
 }
 
 // ============================================
-// WHATSAPP (Desktop first)
+// WHATSAPP — Tenta Desktop primeiro, cai pra Web se falhar
 // ============================================
 function abrirWhatsApp(mensagem) {
   const texto = encodeURIComponent(mensagem);
