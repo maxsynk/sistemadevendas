@@ -4,59 +4,41 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MAX Representação — Catálogo</title>
-
-<!-- Favicon (usa o mesmo M do sistema) -->
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23a855f7'/><text x='50' y='68' font-size='60' font-weight='900' text-anchor='middle' fill='white' font-family='Arial'>M</text></svg>">
-
 <meta name="theme-color" content="#a855f7">
 <meta name="description" content="Catálogo de calçados atacado — MAX Representação">
-
-<!-- Fontes -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-
-<!-- Ícones -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-<!-- CSS -->
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- ============================================ -->
-<!-- HEADER FIXO                                  -->
-<!-- ============================================ -->
-<header class="header" id="header">
+<!-- HEADER -->
+<header class="header">
   <div class="header-inner">
-    <a href="#" class="logo" id="logo">
+    <a href="#" class="logo">
       <span class="logo-mark">M</span>
-      <span class="logo-text" id="logoText">MAX <b>REPRESENTAÇÃO</b></span>
+      <span class="logo-text">MAX <b>REPRESENTAÇÃO</b></span>
     </a>
-
-    <nav class="menu-topo" id="menuTopo">
+    <nav class="menu-topo">
       <button class="menu-btn active" data-cat="todos">
         <i class="fas fa-th-large"></i> Todos
       </button>
-      <!-- FASE 2: categorias dinâmicas entram aqui -->
     </nav>
-
     <button class="tema-toggle" id="temaToggle" title="Mudar tema" aria-label="Alternar tema">
       <i class="fas fa-moon" id="temaIcone"></i>
     </button>
   </div>
 </header>
 
-<!-- ============================================ -->
-<!-- HERO                                          -->
-<!-- ============================================ -->
+<!-- HERO -->
 <section class="hero">
   <div class="hero-content">
-    <h1 class="hero-titulo" id="heroTitulo">
-      Catálogo <b>Atacado</b>
-    </h1>
-    <p class="hero-sub" id="heroSub">
-      Calçados direto da fábrica. Consulta de preços e grades pelo WhatsApp.
+    <h1 class="hero-titulo">Catálogo <b>Atacado</b></h1>
+    <p class="hero-sub">
+      Calçados direto da fábrica. Monte seu pedido e envie pelo WhatsApp.
     </p>
     <a href="#produtos" class="hero-cta">
       <i class="fas fa-arrow-down"></i> Ver catálogo
@@ -64,37 +46,29 @@
   </div>
 </section>
 
-<!-- ============================================ -->
-<!-- CATÁLOGO                                      -->
-<!-- ============================================ -->
+<!-- CATÁLOGO -->
 <main class="catalogo" id="produtos">
   <div class="catalogo-header">
     <h2 class="catalogo-titulo">
       <i class="fas fa-shoe-prints"></i>
-      <span id="catalogoTitulo">Todos os Produtos</span>
+      <span>Todos os Produtos</span>
     </h2>
-    <div class="catalogo-contador" id="catalogoContador">
-      Carregando...
-    </div>
+    <div class="catalogo-contador" id="catalogoContador">Carregando...</div>
   </div>
 
-  <!-- GRID DE PRODUTOS -->
   <div class="grid-produtos" id="gridProdutos">
-    <!-- Loader inicial -->
     <div class="loader-wrap">
       <div class="loader"></div>
       <p class="loader-txt">Carregando produtos...</p>
     </div>
   </div>
 
-  <!-- ESTADO VAZIO -->
   <div class="vazio" id="vazioWrap" style="display:none">
     <i class="fas fa-box-open"></i>
     <h3>Nenhum produto disponível</h3>
     <p>Volte em breve — estamos repondo o estoque.</p>
   </div>
 
-  <!-- ERRO -->
   <div class="erro-box" id="erroWrap" style="display:none">
     <i class="fas fa-exclamation-triangle"></i>
     <h3>Não foi possível carregar</h3>
@@ -105,18 +79,14 @@
   </div>
 </main>
 
-<!-- ============================================ -->
-<!-- FOOTER / CONTATO                              -->
-<!-- ============================================ -->
+<!-- FOOTER -->
 <footer class="footer">
   <div class="footer-inner">
     <div class="footer-logo">
       <span class="logo-mark">M</span>
       <span class="logo-text">MAX <b>REPRESENTAÇÃO</b></span>
     </div>
-    <p class="footer-frase">
-      Atacado de calçados — peça pelo WhatsApp.
-    </p>
+    <p class="footer-frase">Atacado de calçados — peça pelo WhatsApp.</p>
     <a href="#" class="footer-whats" id="footerWhats">
       <i class="fab fa-whatsapp"></i> Falar com um vendedor
     </a>
@@ -126,23 +96,19 @@
   </div>
 </footer>
 
-<!-- ============================================ -->
-<!-- WHATSAPP FLUTUANTE                            -->
-<!-- ============================================ -->
+<!-- WHATSAPP FLUTUANTE -->
 <a href="#" class="whats-float" id="whatsFloat" title="Falar no WhatsApp" aria-label="WhatsApp">
   <i class="fab fa-whatsapp"></i>
   <span class="whats-float-pulse"></span>
 </a>
 
-<!-- ============================================ -->
-<!-- TOAST DE BOAS-VINDAS (tema — só 1ª visita)   -->
-<!-- ============================================ -->
+<!-- TOAST BOAS-VINDAS -->
 <div class="boas-vindas" id="boasVindas">
   <div class="boas-vindas-icon">
     <i class="fas fa-moon"></i>
   </div>
   <div class="boas-vindas-txt">
-    <strong>Modo escuro ativo 🌙</strong><br>
+    <strong>🌙 Modo escuro ativo</strong><br>
     Prefere claro? Clique no sol lá em cima.
   </div>
   <button class="boas-vindas-fechar" id="boasVindasFechar" aria-label="Fechar">
@@ -150,15 +116,53 @@
   </button>
 </div>
 
-<!-- ============================================ -->
-<!-- MODAL DE PRODUTO                              -->
-<!-- ============================================ -->
+<!-- MODAL PRODUTO -->
 <div class="modal" id="modalProduto">
   <div class="modal-box">
     <button class="modal-fechar" id="modalFechar" aria-label="Fechar">
       <i class="fas fa-times"></i>
     </button>
     <div class="modal-conteudo" id="modalConteudo"></div>
+  </div>
+</div>
+
+<!-- CARRINHO FLUTUANTE -->
+<button class="carrinho-float" id="carrinhoFloat" aria-label="Carrinho" style="display:none">
+  <i class="fas fa-shopping-bag"></i>
+  <span class="carrinho-badge" id="carrinhoBadge">0</span>
+</button>
+
+<!-- MODAL CARRINHO -->
+<div class="modal" id="modalCarrinho">
+  <div class="modal-box modal-carrinho">
+    <button class="modal-fechar" id="modalCarrinhoFechar" aria-label="Fechar">
+      <i class="fas fa-times"></i>
+    </button>
+    <div class="carrinho-conteudo">
+      <h2 class="carrinho-titulo">
+        <i class="fas fa-shopping-bag"></i> Seu Pedido
+      </h2>
+      <div id="carrinhoLista"></div>
+      <div class="carrinho-rodape" id="carrinhoRodape">
+        <div class="carrinho-totais">
+          <div class="carrinho-linha">
+            <span>Total de pares</span>
+            <strong id="carrinhoTotalPares">0</strong>
+          </div>
+          <div class="carrinho-linha">
+            <span>Valor estimado</span>
+            <strong id="carrinhoTotalValor" class="roxo">R$ 0,00</strong>
+          </div>
+        </div>
+        <div class="carrinho-aviso" id="carrinhoAviso"></div>
+        <button class="carrinho-btn-enviar" id="carrinhoEnviar" disabled>
+          <i class="fab fa-whatsapp"></i> Enviar Pedido pelo WhatsApp
+        </button>
+        <button class="carrinho-btn-limpar" id="carrinhoLimpar">
+          <i class="fas fa-trash"></i> Limpar
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 
