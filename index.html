@@ -3222,6 +3222,45 @@
   box-shadow: 0 0 24px rgba(245,158,11,0.2);
   animation: pulseAlerta 2s infinite;
 }
+/* Aba Pedidos piscando quando tem pedido do site pendente */
+.tab.tab-pedidos-pendente {
+  color: #f59e0b !important;
+  border-bottom-color: #f59e0b !important;
+  animation: piscarAbaPedidos 1.5s ease-in-out infinite;
+}
+.tab.tab-pedidos-pendente::after {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  margin-left: 6px;
+  box-shadow: 0 0 8px rgba(239,68,68,0.8);
+  animation: pulsarBolota 1.5s ease-in-out infinite;
+}
+@keyframes piscarAbaPedidos {
+  0%, 100% { 
+    color: #f59e0b;
+    text-shadow: 0 0 8px rgba(245,158,11,0.4);
+    transform: scale(1);
+  }
+  50% { 
+    color: #fbbf24;
+    text-shadow: 0 0 16px rgba(245,158,11,0.9);
+    transform: scale(1.05);
+  }
+}
+@keyframes pulsarBolota {
+  0%, 100% { 
+    transform: scale(1); 
+    opacity: 1;
+  }
+  50% { 
+    transform: scale(1.4); 
+    opacity: 0.7;
+  }
+}  
 @keyframes pulseAlerta {
   0%, 100% { box-shadow: 0 0 24px rgba(245,158,11,0.2); }
   50% { box-shadow: 0 0 36px rgba(245,158,11,0.4); }
