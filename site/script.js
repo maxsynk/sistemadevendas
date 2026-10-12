@@ -589,7 +589,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Carrinho
-  document.getElementById("carrinhoFloat").addEventListener("click", abrirModalCarrinho);
+  document.getElementById("headerCarrinho").addEventListener("click", abrirModalCarrinho);
   document.getElementById("modalCarrinhoFechar").addEventListener("click", fecharModalCarrinho);
   document.getElementById("modalCarrinho").addEventListener("click", (e) => {
     if (e.target.id === "modalCarrinho") fecharModalCarrinho();
