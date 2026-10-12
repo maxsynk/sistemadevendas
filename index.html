@@ -8727,6 +8727,401 @@ document.addEventListener("keydown", (e) => {
     fecharCameraBip();
   }
     });
+// ============================================
+// PEDIDOS DO SITE — Etapa 2
+// ============================================
+let pedidosSiteCache = [];
+let filtroStatusPedidosSite = "pendente";
+let filtroChavePedidosSite = "";
+let somPedidoSiteAtivo = true;
+let pedidoSiteDetalheAtual = null;
+
+function tocarSomPedidoSite() {
+  if (!somPedidoSiteAtivo) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc1.type = "sine";
+    osc1.frequency.setValueAtTime(880, ctx.currentTime);
+    osc2.type = "sine";
+    osc2.frequency.setValueAtTime(1320, ctx.currentTime + 0.08);
+
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+
+    osc1.connect(gain); osc2.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc1.start(); osc1.stop(ctx.currentTime + 0.15);
+    osc2.start(ctx.currentTime + 0.08); osc2.stop(ctx.currentTime + 0.4);
+
+    setTimeout(() => { try { ctx.close(); } catch (e) {} }, 600);
+  } catch (e) {
+    console.log("[som] Erro:", e.message);
+  }
+}
+
+async function verificarPedidosSite() {
+  if (!usuarioLogado || !tokenAtual) return;
+  try {
+    const res = await api("/pedidos-site/pendentes");
+    const data = await res.json();
+    if (!data.success) return;
+
+    const total = data.total || 0;
+    const alerta = document.getElementById("pedidosSiteAlerta");
+    const badge = document.getElementById("badgePedidosSite");
+    const titulo = document.getElementById("pedidosSiteAlertaTitulo");
+
+    if (!alerta) return;
+
+    if (total > 0) {
+      alerta.style.display = "flex";
+      badge.textContent = total;
+      titulo.textContent = total === 1
+        ? "Você tem 1 pedido recebido do site"
+        : `Você tem ${total} pedidos recebidos do site`;
+
+      const ultimoTotal = parseInt(sessionStorage.getItem("max_ultimo_total_site") || "0");
+      if (total > ultimoTotal) {
+        tocarSomPedidoSite();
+      }
+      sessionStorage.setItem("max_ultimo_total_site", String(total));
+    } else {
+      alerta.style.display = "none";
+      sessionStorage.setItem("max_ultimo_total_site", "0");
+    }
+
+    const modalAberto = document.getElementById("modalPedidosSite").classList.contains("active");
+    if (modalAberto) carregarListaPedidosSite();
+  } catch (e) {
+    console.log("[pedidos-site] Erro:", e.message);
+  }
+}
+
+// Loop de alerta sonoro a cada 30s
+setInterval(async () => {
+  if (!usuarioLogado || !tokenAtual) return;
+  try {
+    const res = await api("/pedidos-site/pendentes");
+    const data = await res.json();
+    if (data.success && data.total > 0) {
+      const modalAberto = document.getElementById("modalPedidosSite").classList.contains("active");
+      if (!modalAberto) tocarSomPedidoSite();
+    }
+  } catch (e) {}
+}, 30000);
+
+function abrirModalPedidosSite() {
+  somPedidoSiteAtivo = false;
+  document.getElementById("modalPedidosSite").classList.add("active");
+  carregarListaPedidosSite();
+}
+
+async function carregarListaPedidosSite() {
+  const wrap = document.getElementById("listaPedidosSite");
+  wrap.innerHTML = '<div class="loader"></div>';
+
+  try {
+    let url = "/pedidos-site";
+    if (filtroStatusPedidosSite) url += "?status=" + filtroStatusPedidosSite;
+    const res = await api(url);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+
+    pedidosSiteCache = data.pedidos || [];
+
+    let lista = pedidosSiteCache;
+    if (filtroChavePedidosSite) {
+      const f = filtroChavePedidosSite.toLowerCase();
+      lista = lista.filter(p =>
+        (p.chave || "").toLowerCase().includes(f) ||
+        (p.nome_cliente || "").toLowerCase().includes(f)
+      );
+    }
+
+    if (lista.length === 0) {
+      wrap.innerHTML = `<div class="empty" style="padding:40px 20px"><h2 style="font-size:14px">Nenhum pedido ${filtroStatusPedidosSite || ""}</h2></div>`;
+      return;
+    }
+
+    wrap.innerHTML = "";
+    for (const p of lista) {
+      const classeStatus = p.status === "aprovado" ? "aprovado"
+                         : p.status === "rejeitado" ? "rejeitado" : "";
+      const div = document.createElement("div");
+      div.className = "pre-pedido-item " + classeStatus;
+      div.innerHTML = `
+        <div class="chave">
+          <div class="lbl">Chave</div>
+          <div class="val">${p.chave}</div>
+        </div>
+        <div class="info">
+          <h4>${escapeHtml(p.nome_cliente)}</h4>
+          <div class="det"><i class="fas fa-phone"></i> ${escapeHtml(p.telefone_cliente)}</div>
+          ${p.cidade_estado ? `<div class="det"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(p.cidade_estado)}</div>` : ""}
+          <div class="det" style="margin-top:6px">
+            <strong>${p.total_pares}</strong> pares ·
+            <strong>${formatarMoeda(p.valor_estimado)}</strong>
+          </div>
+          <div class="det" style="font-size:11px;color:var(--text-dim);margin-top:4px">
+            ${tempoAtras(p.criado_em)}
+          </div>
+        </div>
+        <div class="acoes">
+          <button class="btn btn-primary btn-sm" data-ver="${p.id}">
+            <i class="fas fa-eye"></i> Abrir
+          </button>
+        </div>
+      `;
+      wrap.appendChild(div);
+    }
+
+    wrap.querySelectorAll("[data-ver]").forEach(btn => {
+      btn.onclick = () => abrirDetalhePedidoSite(parseInt(btn.dataset.ver));
+    });
+  } catch (e) {
+    wrap.innerHTML = `<div class="empty"><h2>Erro</h2><p>${e.message}</p></div>`;
+  }
+}
+
+async function abrirDetalhePedidoSite(id) {
+  const modal = document.getElementById("modalDetalhePedidoSite");
+  const conteudo = document.getElementById("modalDetalhePedidoSiteConteudo");
+  const acoes = document.getElementById("modalDetalhePedidoSiteAcoes");
+
+  conteudo.innerHTML = '<div class="loader"></div>';
+  acoes.innerHTML = "";
+  modal.classList.add("active");
+
+  try {
+    const res = await api("/pedidos-site/buscar?chave=" + encodeURIComponent(pedidosSiteCache.find(x => x.id === id)?.chave || ""));
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    pedidoSiteDetalheAtual = data.pedido;
+    renderizarDetalhePedidoSite(data.pedido);
+  } catch (e) {
+    conteudo.innerHTML = `<div class="empty"><h2>Erro</h2><p>${e.message}</p></div>`;
+  }
+}
+
+function renderizarDetalhePedidoSite(p) {
+  const conteudo = document.getElementById("modalDetalhePedidoSiteConteudo");
+  const acoes = document.getElementById("modalDetalhePedidoSiteAcoes");
+
+  let statusBadge = "";
+  if (p.status === "aprovado") {
+    statusBadge = `<span class="status-ped status-despachado"><i class="fas fa-check"></i> APROVADO${p.pedido_id ? ` · Pedido #${p.pedido_id}` : ""}</span>`;
+  } else if (p.status === "rejeitado") {
+    statusBadge = `<span class="status-ped status-cancelado"><i class="fas fa-times"></i> REJEITADO</span>`;
+  } else {
+    statusBadge = `<span class="status-ped status-separado"><i class="fas fa-hourglass-half"></i> AGUARDANDO APROVAÇÃO</span>`;
+  }
+
+  const itens = p.itens || [];
+  let itensHTML = "";
+  let temFalta = false;
+  let temAlgoOk = false;
+
+  for (const it of itens) {
+    const estoqueAgora = it.estoque_atual_agora !== undefined ? it.estoque_atual_agora : 0;
+    const temEstoque = estoqueAgora >= it.quantidade;
+    if (!temEstoque) temFalta = true;
+    if (estoqueAgora > 0) temAlgoOk = true;
+
+    itensHTML += `
+      <div class="detalhe-site-item" style="${temEstoque ? '' : 'border-left:4px solid var(--warning);'}">
+        ${it.foto_url ? `<img src="${it.foto_url}">` : `<div class="vazio"><i class="fas fa-image"></i></div>`}
+        <div class="info">
+          <div class="nome">${escapeHtml(it.modelo)} — ${escapeHtml(it.cor)}</div>
+          <div class="num">Nº <strong>${it.numeracao}</strong></div>
+          <div class="num" style="font-size:11px">
+            Pedido: <strong>${it.quantidade}</strong> pares ·
+            Estoque agora: <strong style="color:${temEstoque ? 'var(--success)' : 'var(--error)'}">${estoqueAgora}</strong>
+          </div>
+        </div>
+        <div class="qtd">${it.quantidade}x</div>
+      </div>
+    `;
+  }
+
+  let avisoFaltaHTML = "";
+  if (temFalta) {
+    avisoFaltaHTML = `<div class="detalhe-site-status falta"><i class="fas fa-exclamation-triangle"></i><span>Alguns itens não têm estoque suficiente. Você pode aprovar mesmo assim — os itens faltantes serão descontados.</span></div>`;
+  } else if (temAlgoOk) {
+    avisoFaltaHTML = `<div class="detalhe-site-status ok"><i class="fas fa-check-circle"></i><span>Todos os itens têm estoque disponível!</span></div>`;
+  } else {
+    avisoFaltaHTML = `<div class="detalhe-site-status sem"><i class="fas fa-times-circle"></i><span>Nenhum item tem estoque. Não é possível aprovar.</span></div>`;
+  }
+
+  conteudo.innerHTML = `
+    <div class="detalhe-site-header">
+      <div class="chave-titulo">Chave do Pedido</div>
+      <div class="chave-grande">${p.chave}</div>
+      <div class="chave-instrucao">Informe esta chave ao cliente se precisar confirmar</div>
+      <div style="margin-top:14px">${statusBadge}</div>
+    </div>
+
+    <div class="detalhe-site-cliente">
+      <h5><i class="fas fa-user"></i> Dados do Cliente</h5>
+      <div class="detalhe-row"><span class="label">Nome</span><span class="valor">${escapeHtml(p.nome_cliente)}</span></div>
+      <div class="detalhe-row"><span class="label">WhatsApp</span><span class="valor">${escapeHtml(p.telefone_cliente)}</span></div>
+      ${p.cidade_estado ? `<div class="detalhe-row"><span class="label">Cidade/UF</span><span class="valor">${escapeHtml(p.cidade_estado)}</span></div>` : ""}
+      <div class="detalhe-row"><span class="label">Recebido em</span><span class="valor">${formatarDataHora(p.criado_em)}</span></div>
+    </div>
+
+    <div class="detalhe-site-cliente">
+      <h5><i class="fas fa-shoe-prints"></i> Itens do Pedido (${itens.length})</h5>
+      ${itensHTML || '<p style="color:var(--text-dim)">Sem itens</p>'}
+    </div>
+
+    <div class="detalhe-site-cliente">
+      <h5><i class="fas fa-dollar-sign"></i> Resumo</h5>
+      <div class="detalhe-row"><span class="label">Total de pares</span><span class="valor">${p.total_pares}</span></div>
+      <div class="detalhe-row"><span class="label">Valor estimado</span><span class="valor" style="color:var(--neon);font-size:16px;font-weight:800">${formatarMoeda(p.valor_estimado)}</span></div>
+      ${avisoFaltaHTML}
+    </div>
+  `;
+
+  acoes.innerHTML = "";
+
+  if (p.status === "pendente") {
+    acoes.innerHTML += `<button class="btn btn-danger" id="btnRejeitarPedidoSite"><i class="fas fa-times"></i> Rejeitar</button>`;
+    if (temAlgoOk) {
+      acoes.innerHTML += `<button class="btn btn-success" id="btnAprovarPedidoSite"><i class="fas fa-check-double"></i> Aprovar e Reservar</button>`;
+    }
+  }
+
+  acoes.innerHTML += `<button class="btn btn-secondary" onclick="document.getElementById('modalDetalhePedidoSite').classList.remove('active')"><i class="fas fa-times"></i> Fechar</button>`;
+
+  const btnAprovar = document.getElementById("btnAprovarPedidoSite");
+  if (btnAprovar) btnAprovar.onclick = () => aprovarPedidoSite(p.id);
+  const btnRejeitar = document.getElementById("btnRejeitarPedidoSite");
+  if (btnRejeitar) btnRejeitar.onclick = () => rejeitarPedidoSite(p.id);
+}
+
+async function aprovarPedidoSite(id) {
+  const p = pedidoSiteDetalheAtual;
+  if (!p) return;
+
+  const confirmMsg = `Aprovar o pedido com chave ${p.chave}?\n\nCliente: ${p.nome_cliente}\nTotal: ${p.total_pares} pares\nValor: ${formatarMoeda(p.valor_estimado)}\n\nO estoque será reservado e um novo pedido será criado no sistema.`;
+  if (!confirm(confirmMsg)) return;
+
+  const btn = document.getElementById("btnAprovarPedidoSite");
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aprovando...';
+  }
+
+  try {
+    const res = await api(`/pedidos-site/${id}/aprovar`, { method: "POST" });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+
+    let msg = `✅ Pedido aprovado!\n\nPedido #${data.pedido_id} criado no sistema.\n${data.itens_aprovados} itens reservados.`;
+    if (data.itens_com_falta && data.itens_com_falta.length > 0) {
+      msg += `\n\n⚠️ ${data.itens_com_falta.length} itens com falta:\n`;
+      for (const f of data.itens_com_falta) {
+        msg += `• Nº ${f.numeracao} ${f.modelo}: ${f.motivo}\n`;
+      }
+    }
+    alert(msg);
+    toast("Pedido aprovado e reservado!");
+
+    document.getElementById("modalDetalhePedidoSite").classList.remove("active");
+    await carregarListaPedidosSite();
+    await verificarPedidosSite();
+    await carregarPedidos();
+    await carregarProdutos();
+    await carregarDashboard();
+  } catch (e) {
+    toast("Erro ao aprovar: " + e.message, "error");
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-check-double"></i> Aprovar e Reservar';
+    }
+  }
+}
+
+async function rejeitarPedidoSite(id) {
+  const motivo = prompt("Motivo da rejeição (opcional):");
+  if (motivo === null) return;
+
+  const btn = document.getElementById("btnRejeitarPedidoSite");
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Rejeitando...';
+  }
+
+  try {
+    const res = await api(`/pedidos-site/${id}/rejeitar`, {
+      method: "POST",
+      body: JSON.stringify({ motivo: motivo || "Rejeitado pelo operador" }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+
+    toast("Pedido rejeitado");
+    document.getElementById("modalDetalhePedidoSite").classList.remove("active");
+    await carregarListaPedidosSite();
+    await verificarPedidosSite();
+  } catch (e) {
+    toast("Erro ao rejeitar: " + e.message, "error");
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-times"></i> Rejeitar';
+    }
+  }
+}
+
+// ============================================
+// INICIALIZAÇÃO — precisa rodar 1 vez quando loga
+// ============================================
+// Aguarda o DOM carregar e o usuário logar
+setTimeout(() => {
+  const btnVer = document.getElementById("btnVerPedidosSite");
+  if (btnVer) {
+    btnVer.onclick = abrirModalPedidosSite;
+  }
+
+  const buscaChave = document.getElementById("buscaChavePedidoSite");
+  if (buscaChave) {
+    buscaChave.addEventListener("input", (e) => {
+      filtroChavePedidosSite = e.target.value.trim();
+      carregarListaPedidosSite();
+    });
+  }
+  const btnLimparBusca = document.getElementById("btnLimparBuscaChaveSite");
+  if (btnLimparBusca) {
+    btnLimparBusca.onclick = () => {
+      document.getElementById("buscaChavePedidoSite").value = "";
+      filtroChavePedidosSite = "";
+      carregarListaPedidosSite();
+    };
+  }
+
+  document.querySelectorAll("[data-filtro-site]").forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll("[data-filtro-site]").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      filtroStatusPedidosSite = btn.dataset.filtroSite;
+      carregarListaPedidosSite();
+    };
+  });
+
+  // Fecha modais ao clicar fora
+  document.getElementById("modalPedidosSite")?.addEventListener("click", (e) => {
+    if (e.target.id === "modalPedidosSite") {
+      document.getElementById("modalPedidosSite").classList.remove("active");
+      somPedidoSiteAtivo = true;
+    }
+  });
+  document.getElementById("modalDetalhePedidoSite")?.addEventListener("click", (e) => {
+    if (e.target.id === "modalDetalhePedidoSite") {
+      document.getElementById("modalDetalhePedidoSite").classList.remove("active");
   
 </script>
 </body>
