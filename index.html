@@ -3717,8 +3717,12 @@
         <div class="modal-actions" id="modalDetalhePedidoSiteAcoes"></div>
       </div>
     </div>
-    <div class="card">
-      <h3><i class="fas fa-plus"></i> Novo Pedido</h3>
+        <div class="card card-collapsible" data-collapse-id="novo_pedido">
+      <div class="card-header" onclick="toggleCardCollapsible(this)">
+        <h3 style="margin:0"><i class="fas fa-plus"></i> Novo Pedido (manual)</h3>
+        <div class="toggle-icon"><i class="fas fa-chevron-down"></i></div>
+      </div>
+      <div class="card-body">
       <div class="form-grid">
         <div class="form-row">
           <label>Cliente *</label>
@@ -3787,6 +3791,7 @@
         </div>
       </div>
     </div>
+    </div>      
 
     <div class="card">
       <h3><i class="fas fa-list"></i> Pedidos Cadastrados</h3>
