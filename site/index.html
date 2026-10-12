@@ -7,6 +7,13 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23a855f7'/><text x='50' y='68' font-size='60' font-weight='900' text-anchor='middle' fill='white' font-family='Arial'>M</text></svg>">
 <meta name="theme-color" content="#a855f7">
 <meta name="description" content="Catálogo de calçados atacado — MAX Representação">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MAX Representação">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="../icon-192.png">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -22,13 +29,25 @@
       <span class="logo-mark">M</span>
       <span class="logo-text">MAX <b>REPRESENTAÇÃO</b></span>
     </a>
-    <nav class="menu-topo">
-      <button class="menu-btn active" data-cat="todos">
-        <i class="fas fa-th-large"></i> Todos
-      </button>
-    </nav>
-    <button class="tema-toggle" id="temaToggle" title="Mudar tema" aria-label="Alternar tema">
+
+    <div class="header-spacer"></div>
+
+    <!-- Botão Instalar App (aparece só se suportar) -->
+    <button class="header-btn install-btn" id="btnInstalar" style="display:none" title="Instalar App">
+      <i class="fas fa-download"></i>
+      <span class="install-label">Instalar</span>
+    </button>
+
+    <!-- Botão Tema -->
+    <button class="header-btn tema-btn" id="temaToggle" title="Mudar tema" aria-label="Alternar tema">
       <i class="fas fa-moon" id="temaIcone"></i>
+    </button>
+
+    <!-- Carrinho no Topo -->
+    <button class="header-carrinho" id="headerCarrinho" aria-label="Abrir carrinho">
+      <i class="fas fa-shopping-bag"></i>
+      <span class="header-carrinho-texto">Seu Pedido</span>
+      <span class="header-carrinho-badge" id="headerCarrinhoBadge" style="display:none">0</span>
     </button>
   </div>
 </header>
@@ -125,12 +144,6 @@
     <div class="modal-conteudo" id="modalConteudo"></div>
   </div>
 </div>
-
-<!-- CARRINHO FLUTUANTE -->
-<button class="carrinho-float" id="carrinhoFloat" aria-label="Carrinho" style="display:none">
-  <i class="fas fa-shopping-bag"></i>
-  <span class="carrinho-badge" id="carrinhoBadge">0</span>
-</button>
 
 <!-- MODAL CARRINHO -->
 <div class="modal" id="modalCarrinho">
