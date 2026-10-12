@@ -3410,6 +3410,78 @@
   </div>
 
   <div class="aba" id="aba-pedidos">
+        <!-- ============================================ -->
+    <!-- PEDIDOS DO SITE — Faixa de alerta            -->
+    <!-- ============================================ -->
+    <div class="pedidos-site-alerta" id="pedidosSiteAlerta" style="display:none">
+      <div class="pedidos-site-alerta-icon">
+        <i class="fas fa-bell"></i>
+      </div>
+      <div class="pedidos-site-alerta-txt">
+        <strong id="pedidosSiteAlertaTitulo">Você tem 0 pedidos recebidos do site</strong>
+        <span id="pedidosSiteAlertaSub">Aguardando sua aprovação</span>
+      </div>
+      <button class="btn btn-warning btn-sm" id="btnVerPedidosSite">
+        <i class="fas fa-eye"></i> Ver Pedidos
+        <span class="badge-pedidos-site" id="badgePedidosSite">0</span>
+      </button>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MODAL: LISTA DE PEDIDOS RECEBIDOS DO SITE    -->
+    <!-- ============================================ -->
+    <div class="modal" id="modalPedidosSite">
+      <div class="modal-box modal-lg">
+        <h3 style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <span><i class="fas fa-shopping-bag"></i> Pedidos Recebidos do Site</span>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('modalPedidosSite').classList.remove('active')">
+            <i class="fas fa-times"></i>
+          </button>
+        </h3>
+
+        <div class="busca-pedidos" style="margin-bottom:16px">
+          <input type="text" id="buscaChavePedidoSite" placeholder="Buscar por chave (ex: XRKFQE) ou nome do cliente...">
+          <button class="btn btn-secondary btn-sm" id="btnLimparBuscaChaveSite">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div class="filtros-pedidos" style="margin-bottom:16px">
+          <button class="filtro-btn active" data-filtro-site="pendente">Pendentes</button>
+          <button class="filtro-btn" data-filtro-site="aprovado">Aprovados</button>
+          <button class="filtro-btn" data-filtro-site="rejeitado">Rejeitados</button>
+          <button class="filtro-btn" data-filtro-site="">Todos</button>
+        </div>
+
+        <div id="listaPedidosSite">
+          <div class="loader"></div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-secondary" onclick="document.getElementById('modalPedidosSite').classList.remove('active')">
+            <i class="fas fa-times"></i> Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MODAL: DETALHE DO PRÉ-PEDIDO DO SITE         -->
+    <!-- ============================================ -->
+    <div class="modal" id="modalDetalhePedidoSite">
+      <div class="modal-box modal-lg">
+        <h3 style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <span><i class="fas fa-file-invoice"></i> Detalhe do Pedido do Site</span>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('modalDetalhePedidoSite').classList.remove('active')">
+            <i class="fas fa-times"></i>
+          </button>
+        </h3>
+        <div id="modalDetalhePedidoSiteConteudo">
+          <div class="loader"></div>
+        </div>
+        <div class="modal-actions" id="modalDetalhePedidoSiteAcoes"></div>
+      </div>
+    </div>
     <div class="card">
       <h3><i class="fas fa-plus"></i> Novo Pedido</h3>
       <div class="form-grid">
