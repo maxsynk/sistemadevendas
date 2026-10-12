@@ -1,5 +1,5 @@
 // ============================================
-// MAX REPRESENTAÇÃO — MINI SITE v2.0
+// MAX REPRESENTAÇÃO — MINI SITE v3.0
 // script.js
 // ============================================
 
@@ -10,7 +10,7 @@ const MINIMO_PARES = 8;
 
 let produtosCache = [];
 let temaAtual = "escuro";
-let carrinho = []; // { produto_id, variacao_id, numeracao, modelo, cor, foto_url, preco, qtd, estoque_disp }
+let carrinho = [];
 
 // ============================================
 // TEMA
@@ -26,7 +26,7 @@ function aplicarTema() {
 function alternarTema() { setTema(temaAtual === "escuro" ? "claro" : "escuro"); }
 
 // ============================================
-// TOAST BOAS-VINDAS (sempre que entra)
+// TOAST BOAS-VINDAS
 // ============================================
 function mostrarBoasVindas() {
   setTimeout(() => {
@@ -37,6 +37,21 @@ function mostrarBoasVindas() {
 function fecharBoasVindas() {
   const el = document.getElementById("boasVindas");
   if (el) el.classList.remove("show");
+}
+
+// ============================================
+// TOAST "ADICIONADO"
+// ============================================
+function mostrarToastAdd(msg) {
+  const toast = document.getElementById("toastAdd");
+  const txt = document.getElementById("toastAddTexto");
+  if (!toast || !txt) return;
+  txt.textContent = msg || "Adicionado ao carrinho!";
+  toast.classList.add("show");
+  clearTimeout(window.__toastAddTimer);
+  window.__toastAddTimer = setTimeout(() => {
+    toast.classList.remove("show");
+  }, 1800);
 }
 
 // ============================================
@@ -152,7 +167,6 @@ function abrirModalProduto(id) {
     ? `<img src="${p.foto_url}" alt="${escapeHtml(p.modelo)}" onerror="this.parentNode.innerHTML='<div class=&quot;modal-foto-vazio&quot;><i class=&quot;fas fa-image&quot;></i></div>'">`
     : `<div class="modal-foto-vazio"><i class="fas fa-image"></i></div>`;
 
-  // Grade com input de quantidade (só numerações com estoque > 0)
   const disponiveis = (p.grade || []).filter(g => g.disponivel > 0);
   const gradeHTML = disponiveis.map(g => `
     <div class="grade-item">
@@ -194,7 +208,6 @@ function abrirModalProduto(id) {
   modal.classList.add("active");
   document.body.style.overflow = "hidden";
 
-  // Listeners dos inputs
   const inputs = conteudo.querySelectorAll(".qtd-input");
   const btnAdd = document.getElementById("modalAddBtn");
   const atualizarBtn = () => {
@@ -211,7 +224,6 @@ function abrirModalProduto(id) {
     });
   });
 
-  // Botão adicionar
   btnAdd.addEventListener("click", () => {
     let totalAdicionados = 0;
     inputs.forEach(inp => {
@@ -232,7 +244,7 @@ function abrirModalProduto(id) {
     if (totalAdicionados > 0) {
       atualizarCarrinho();
       fecharModalProduto();
-      abrirModalCarrinho();
+      mostrarToastAdd(`✅ ${totalAdicionados} ${totalAdicionados === 1 ? "par adicionado" : "pares adicionados"}!`);
     }
   });
 }
@@ -290,7 +302,6 @@ function abrirModalCarrinho() {
     </div>
   `).join("");
 
-  // Listeners remover
   lista.querySelectorAll(".carrinho-remover").forEach(btn => {
     btn.addEventListener("click", () => {
       carrinho.splice(parseInt(btn.dataset.idx), 1);
@@ -304,7 +315,6 @@ function abrirModalCarrinho() {
   document.getElementById("carrinhoTotalPares").textContent = totalPares;
   document.getElementById("carrinhoTotalValor").textContent = formatarMoeda(totalValor);
 
-  // Aviso de mínimo
   if (totalPares < MINIMO_PARES) {
     aviso.classList.add("show");
     aviso.innerHTML = `<i class="fas fa-info-circle"></i> Pedido mínimo: ${MINIMO_PARES} pares. Faltam ${MINIMO_PARES - totalPares}.`;
@@ -331,56 +341,203 @@ function limparCarrinho() {
 }
 
 // ============================================
-// ENVIAR PEDIDO VIA WHATSAPP
+// FECHAMENTO DE PEDIDO
 // ============================================
-function enviarPedidoWhatsApp() {
-  if (carrinho.length === 0) return;
+let chavePedidoGerada = null;
+let dadosUltimoPedido = null;
 
-  // Agrupa por produto
+function abrirFormFechamento() {
+  if (!carrinho || carrinho.length === 0) {
+    return alert("Seu carrinho está vazio.");
+  }
+
+  chavePedidoGerada = null;
+  dadosUltimoPedido = null;
+  document.getElementById("formFechamento").style.display = "flex";
+  document.getElementById("telaSucesso").style.display = "none";
+  document.getElementById("fpNome").value = "";
+  document.getElementById("fpTelefone").value = "";
+  document.getElementById("fpCidade").value = "";
+
+  const totalPares = carrinho.reduce((s, c) => s + c.qtd, 0);
+  const totalValor = carrinho.reduce((s, c) => s + (c.qtd * c.preco), 0);
+
+  let html = "";
   const porProduto = {};
   for (const it of carrinho) {
     const key = it.produto_id;
-    if (!porProduto[key]) {
-      porProduto[key] = { modelo: it.modelo, cor: it.cor, itens: [] };
-    }
+    if (!porProduto[key]) porProduto[key] = { modelo: it.modelo, cor: it.cor, itens: [] };
     porProduto[key].itens.push(it);
   }
-
-  let msg = `*NOVO PEDIDO — Site MAX Representação*\n\n`;
-
-  let totalPares = 0;
-  let totalValor = 0;
-
-  for (const key in porProduto) {
-    const p = porProduto[key];
-    msg += `*${p.modelo} — ${p.cor}*\n`;
+  for (const k in porProduto) {
+    const p = porProduto[k];
+    html += `<div style="margin-bottom:8px"><strong>${p.modelo} — ${p.cor}</strong><br>`;
     for (const it of p.itens) {
-      msg += `  • Nº ${it.numeracao}: ${it.qtd} ${it.qtd === 1 ? "par" : "pares"}\n`;
-      totalPares += it.qtd;
-      totalValor += it.qtd * it.preco;
+      html += `<span style="color:var(--text-dim)">  • Nº ${it.numeracao}: ${it.qtd} ${it.qtd === 1 ? "par" : "pares"}</span><br>`;
     }
-    msg += `\n`;
+    html += `</div>`;
+  }
+  html += `<div class="total">Total: ${totalPares} pares · R$ ${totalValor.toFixed(2).replace(".", ",")}</div>`;
+  document.getElementById("fpResumo").innerHTML = html;
+
+  document.getElementById("modalFecharPedido").classList.add("active");
+  document.body.style.overflow = "hidden";
+
+  setTimeout(() => document.getElementById("fpNome").focus(), 300);
+}
+
+function fecharFormFechamento() {
+  document.getElementById("modalFecharPedido").classList.remove("active");
+  document.body.style.overflow = "";
+}
+
+async function confirmarFechamento() {
+  const nome = document.getElementById("fpNome").value.trim();
+  const telefone = document.getElementById("fpTelefone").value.trim();
+  const cidade = document.getElementById("fpCidade").value.trim();
+
+  if (!nome) { alert("Preencha o nome"); document.getElementById("fpNome").focus(); return; }
+  if (!telefone || telefone.replace(/\D/g, "").length < 10) {
+    alert("Preencha um WhatsApp válido com DDD");
+    document.getElementById("fpTelefone").focus();
+    return;
   }
 
-  msg += `━━━━━━━━━━━━━━\n`;
-  msg += `*Total: ${totalPares} pares*\n`;
-  msg += `*Valor estimado: ${formatarMoeda(totalValor)}*\n\n`;
-  msg += `Aguardo instruções para fechamento do pedido.`;
+  const btn = document.getElementById("btnConfirmarFechamento");
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
 
-  abrirWhatsApp(msg);
-  fecharModalCarrinho();
+  try {
+    const itens = carrinho.map(it => ({
+      produto_id: it.produto_id,
+      numeracao: it.numeracao,
+      quantidade: it.qtd,
+    }));
+
+    const res = await fetch(API_BASE + "/publico/pedido-criar", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Site-Token": "max-site-2026",
+      },
+      body: JSON.stringify({
+        nome: nome,
+        telefone: telefone,
+        cidade_estado: cidade || null,
+        itens: itens,
+      }),
+    });
+
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "Erro ao enviar pedido");
+
+    chavePedidoGerada = data.chave;
+
+    // Monta mensagem do WhatsApp (pro VENDEDOR)
+    const WHATSAPP_VENDEDOR = "5537991021468";
+
+    let msg = `*NOVO PEDIDO — Site MAX Representação*\n\n`;
+    msg += `Chave: ${data.chave}\n`;
+    msg += `Nome: ${nome}\n`;
+    msg += `WhatsApp: ${telefone}\n`;
+    msg += `Cidade: ${cidade || "—"}\n\n`;
+    msg += `ITENS:\n`;
+
+    const porProduto = {};
+    for (const it of carrinho) {
+      const key = it.produto_id;
+      if (!porProduto[key]) porProduto[key] = { modelo: it.modelo, cor: it.cor, itens: [] };
+      porProduto[key].itens.push(it);
+    }
+    for (const k in porProduto) {
+      const p = porProduto[k];
+      msg += `• ${p.modelo} — ${p.cor}\n`;
+      for (const it of p.itens) {
+        msg += `  Nº ${it.numeracao}: ${it.qtd} ${it.qtd === 1 ? "par" : "pares"}\n`;
+      }
+    }
+
+    msg += `\nTotal: ${data.total_pares} pares\n`;
+    msg += `Valor estimado: R$ ${(data.valor_estimado || 0).toFixed(2).replace(".", ",")}\n\n`;
+    msg += `Informe esta chave para o vendedor confirmar.`;
+
+    dadosUltimoPedido = {
+      chave: data.chave,
+      nome: nome,
+      telefone: telefone,
+      cidade: cidade || "—",
+      totalPares: data.total_pares,
+      valorEstimado: data.valor_estimado,
+      msg: msg,
+      urlZap: `https://wa.me/${WHATSAPP_VENDEDOR}?text=${encodeURIComponent(msg)}`,
+    };
+
+    mostrarTelaSucesso();
+
+    carrinho = [];
+    atualizarCarrinho();
+    fecharModalCarrinho();
+
+  } catch (e) {
+    console.error("[fechar-pedido]", e);
+    alert("Erro ao enviar pedido: " + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-check"></i> Confirmar Pedido';
+  }
+}
+
+function mostrarTelaSucesso() {
+  const d = dadosUltimoPedido;
+  if (!d) return;
+
+  document.getElementById("formFechamento").style.display = "none";
+  const tela = document.getElementById("telaSucesso");
+  tela.style.display = "block";
+  tela.innerHTML = `
+    <div class="sucesso-chave">
+      <div class="icon-ok"><i class="fas fa-check"></i></div>
+      <h3>Pedido enviado!</h3>
+      <p class="sub">Agora envie o código para o vendedor confirmar seu pedido.</p>
+
+      <div class="caixa-chave">
+        <div class="lbl">Sua chave</div>
+        <div class="chave">${d.chave}</div>
+      </div>
+
+      <div class="instrucao">
+        <i class="fas fa-exclamation-triangle"></i>
+        Informe esta chave para o vendedor
+      </div>
+
+      <button class="btn-enviar-zap" id="btnEnviarZapSucesso">
+        <i class="fab fa-whatsapp"></i> Enviar para o vendedor
+      </button>
+
+      <button class="btn-fechar-sucesso" id="btnFecharSucesso">
+        Fechar
+      </button>
+    </div>
+  `;
+
+  const btnZap = document.getElementById("btnEnviarZapSucesso");
+  if (btnZap) {
+    btnZap.onclick = () => window.open(d.urlZap, "_blank");
+  }
+  const btnFechar = document.getElementById("btnFecharSucesso");
+  if (btnFechar) {
+    btnFechar.onclick = () => fecharFormFechamento();
+  }
 }
 
 // ============================================
-// WHATSAPP (Desktop first, fallback web)
+// WHATSAPP (Desktop first)
 // ============================================
 function abrirWhatsApp(mensagem) {
   const texto = encodeURIComponent(mensagem);
   const urlApp = `whatsapp://send?phone=${WHATSAPP_NUMERO}&text=${texto}`;
   const urlWeb = `https://wa.me/${WHATSAPP_NUMERO}?text=${texto}`;
 
-  // Tenta abrir o app (desktop/mobile)
-  // Se em 1.5s a página ainda estiver visível, cai pro web
   let foiParaApp = false;
   const t = setTimeout(() => {
     if (!foiParaApp && !document.hidden) {
@@ -420,7 +577,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("temaToggle").addEventListener("click", alternarTema);
 
-  // WhatsApp flutuante + footer
   const msgPadrao = WHATSAPP_MSG_PADRAO;
   document.getElementById("whatsFloat").href = `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(msgPadrao)}`;
   document.getElementById("footerWhats").href = `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(msgPadrao)}`;
@@ -441,13 +597,23 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.target.id === "modalCarrinho") fecharModalCarrinho();
   });
   document.getElementById("carrinhoLimpar").addEventListener("click", limparCarrinho);
-  document.getElementById("carrinhoEnviar").addEventListener("click", enviarPedidoWhatsApp);
+
+  // Finalizar pedido
+  document.getElementById("carrinhoEnviar").addEventListener("click", abrirFormFechamento);
+
+  // Modal de formulário
+  document.getElementById("btnFecharModalForm").addEventListener("click", fecharFormFechamento);
+  document.getElementById("btnConfirmarFechamento").addEventListener("click", confirmarFechamento);
+  document.getElementById("modalFecharPedido").addEventListener("click", (e) => {
+    if (e.target.id === "modalFecharPedido") fecharFormFechamento();
+  });
 
   // ESC fecha modais
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       fecharModalProduto();
       fecharModalCarrinho();
+      fecharFormFechamento();
     }
   });
 
