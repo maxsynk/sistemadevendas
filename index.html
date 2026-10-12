@@ -9354,10 +9354,37 @@ setTimeout(() => {
       somPedidoSiteAtivo = true;
     }
   });
-  document.getElementById("modalDetalhePedidoSite")?.addEventListener("click", (e) => {
-    if (e.target.id === "modalDetalhePedidoSite") {
-      document.getElementById("modalDetalhePedidoSite").classList.remove("active");
-  
-</script>
-</body>
-</html>
+  9357: document.getElementById("modalDetalhePedidoSite")?.addEventListener("click", (e) => {
+9358:   if (e.target.id === "modalDetalhePedidoSite") {
+9359:     document.getElementById("modalDetalhePedidoSite").classList.remove("active");
+9360:   }
+  });
+});
+
+// ============================================
+// INICIAR CHECAGEM QUANDO O USUÁRIO LOGAR
+// ============================================
+let _intervaloVerificacaoSite = null;
+setInterval(() => {
+  if (usuarioLogado && tokenAtual && !_intervaloVerificacaoSite) {
+    verificarPedidosSite();
+    _intervaloVerificacaoSite = setInterval(verificarPedidosSite, 30000);
+  }
+}, 2000);    
+9361: });                              ← fecha addEventListener
+9362: });                              ← fecha document.addEventListener("DOMContentLoaded",...)
+9363:
+9364: // ============================================
+9365: // INICIAR CHECAGEM QUANDO O USUÁRIO LOGAR
+9366: // ============================================
+9367: let _intervaloVerificacaoSite = null;
+9368: setInterval(() => {
+9369:   if (usuarioLogado && tokenAtual && !_intervaloVerificacaoSite) {
+9370:     verificarPedidosSite();
+9371:     _intervaloVerificacaoSite = setInterval(verificarPedidosSite, 30000);
+9372:   }
+9373: }, 2000);
+9374:
+9375: </script>
+9376: </body>
+9377: </html>
