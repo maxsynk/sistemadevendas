@@ -259,10 +259,11 @@ function fecharModalProduto() {
 // ============================================
 function atualizarCarrinho() {
   const totalItens = carrinho.reduce((s, c) => s + c.qtd, 0);
-  const badge = document.getElementById("carrinhoBadge");
-  const floatBtn = document.getElementById("carrinhoFloat");
-  badge.textContent = totalItens;
-  floatBtn.style.display = totalItens > 0 ? "flex" : "none";
+  const badge = document.getElementById("headerCarrinhoBadge");
+  if (badge) {
+    badge.textContent = totalItens;
+    badge.style.display = totalItens > 0 ? "flex" : "none";
+  }
 }
 
 function abrirModalCarrinho() {
