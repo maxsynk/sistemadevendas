@@ -572,4 +572,144 @@ body.tema-claro .hero {
 .carrinho-conteudo { padding: 32px 28px 28px; }
 .carrinho-titulo {
   font-size: 20px; font-weight: 900;
-  letter-spacing: 1px; text-transform:
+  letter-spacing: 1px; text-transform: uppercase;
+  color: var(--text);
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 24px;
+}
+.carrinho-titulo i { color: var(--roxo); }
+.carrinho-item {
+  display: grid; grid-template-columns: 60px 1fr auto;
+  gap: 14px; align-items: center;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+.carrinho-foto {
+  width: 60px; height: 60px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; color: var(--text-dim);
+}
+.carrinho-foto img { width: 100%; height: 100%; object-fit: cover; }
+.carrinho-info .nome {
+  font-size: 14px; font-weight: 800;
+  color: var(--text); margin-bottom: 3px;
+}
+.carrinho-info .det {
+  font-size: 11px; color: var(--text-2);
+  margin-bottom: 2px;
+}
+.carrinho-info .det b { color: var(--roxo); }
+.carrinho-remover {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+.carrinho-remover:hover { background: #ef4444; color: #fff; }
+.carrinho-vazio {
+  text-align: center; padding: 40px 20px;
+  color: var(--text-dim);
+}
+.carrinho-vazio i { font-size: 48px; margin-bottom: 16px; opacity: 0.4; }
+.carrinho-rodape {
+  margin-top: 20px; padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.carrinho-totais {
+  display: flex; flex-direction: column; gap: 8px;
+  margin-bottom: 16px;
+}
+.carrinho-linha {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 13px; color: var(--text-2);
+}
+.carrinho-linha strong {
+  font-size: 18px; font-weight: 900; color: var(--text);
+}
+.carrinho-linha strong.roxo {
+  color: var(--roxo); text-shadow: 0 0 12px var(--roxo-glow);
+}
+.carrinho-aviso {
+  padding: 10px 14px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: 10px;
+  color: var(--amarelo);
+  font-size: 11px; font-weight: 700;
+  text-align: center;
+  margin-bottom: 12px;
+  display: none;
+}
+.carrinho-aviso.show { display: block; }
+.carrinho-btn-enviar {
+  width: 100%; padding: 16px;
+  background: linear-gradient(135deg, var(--verde-whats), #128C7E);
+  color: #fff; border-radius: 12px;
+  font-weight: 900; font-size: 13px;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(37, 211, 102, 0.4);
+  transition: all 0.2s;
+}
+.carrinho-btn-enviar:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(37, 211, 102, 0.6);
+}
+.carrinho-btn-enviar:disabled {
+  opacity: 0.4; cursor: not-allowed; box-shadow: none;
+}
+.carrinho-btn-enviar i { font-size: 20px; }
+.carrinho-btn-limpar {
+  width: 100%; padding: 12px;
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 10px;
+  font-weight: 700; font-size: 11px;
+  letter-spacing: 1px; text-transform: uppercase;
+  display: flex; align-items: center; justify-content: center;
+  gap: 6px; margin-top: 10px;
+  transition: all 0.2s;
+}
+.carrinho-btn-limpar:hover { background: rgba(239, 68, 68, 0.15); }
+
+/* RESPONSIVO */
+@media (max-width: 900px) {
+  .modal-conteudo { grid-template-columns: 1fr; }
+  .modal-foto { aspect-ratio: 4 / 3; }
+  .modal-info { padding: 28px 22px; }
+  .modal-modelo { font-size: 22px; }
+}
+@media (max-width: 700px) {
+  .header-inner { padding: 12px 16px; gap: 10px; }
+  .logo-text { display: none; }
+  .logo-mark { width: 36px; height: 36px; font-size: 20px; }
+  .tema-toggle { width: 40px; height: 40px; font-size: 16px; }
+  .menu-btn { padding: 9px 14px; font-size: 11px; }
+  .hero { padding: 110px 16px 60px; }
+  .hero-titulo { font-size: 40px; }
+  .hero-sub { font-size: 14px; }
+  .catalogo { padding: 24px 16px 60px; }
+  .catalogo-titulo { font-size: 16px; }
+  .catalogo-contador { font-size: 11px; padding: 6px 12px; }
+  .grid-produtos { grid-template-columns: 1fr; gap: 14px; }
+  .card-modelo { font-size: 15px; }
+  .card-preco .val { font-size: 20px; }
+  .whats-float { width: 54px; height: 54px; font-size: 26px; bottom: 18px; right: 18px; }
+  .carrinho-float { width: 54px; height: 54px; font-size: 22px; bottom: 18px; right: 82px; }
+  .carrinho-badge { min-width: 22px; height: 22px; font-size: 11px; }
+  .boas-vindas { bottom: 90px; right: 16px; left: 16px; max-width: none; }
+  .footer { padding: 40px 16px 24px; }
+  .modal-info { padding: 22px 18px; }
+  .carrinho-conteudo { padding: 24px 18px 20px; }
+  .carrinho-item { grid-template-columns: 50px 1fr auto; gap: 10px; padding: 10px; }
+  .carrinho-foto { width: 50px; height: 50px; }
+}
