@@ -1,5 +1,5 @@
 // ============================================
-// MAX REPRESENTAÇÃO — MINI SITE v3.1
+// MAX REPRESENTAÇÃO — MINI SITE v3.3
 // script.js
 // ============================================
 
@@ -11,6 +11,36 @@ const MINIMO_PARES = 8;
 let produtosCache = [];
 let temaAtual = "escuro";
 let carrinho = [];
+let deferredInstallPrompt = null;
+
+// ============================================
+// PWA — INSTALAÇÃO
+// ============================================
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const btn = document.getElementById("btnInstalar");
+  if (btn) btn.style.display = "inline-flex";
+});
+
+window.addEventListener("appinstalled", () => {
+  deferredInstallPrompt = null;
+  const btn = document.getElementById("btnInstalar");
+  if (btn) btn.style.display = "none";
+});
+
+async function instalarPWA() {
+  if (!deferredInstallPrompt) {
+    alert("Pra instalar: use o menu do navegador → 'Instalar app' ou 'Adicionar à tela inicial'");
+    return;
+  }
+  deferredInstallPrompt.prompt();
+  const { outcome } = await deferredInstallPrompt.userChoice;
+  console.log("[PWA] Escolha do usuário:", outcome);
+  deferredInstallPrompt = null;
+  const btn = document.getElementById("btnInstalar");
+  if (btn) btn.style.display = "none";
+}
 
 // ============================================
 // TEMA
@@ -99,7 +129,7 @@ async function carregarProdutos() {
 }
 
 // ============================================
-// RENDERIZAR CARDS
+// RENDERIZAR CARDS (SEM COR E SEM CÓDIGO)
 // ============================================
 function renderizarProdutos() {
   const grid = document.getElementById("gridProdutos");
@@ -150,6 +180,7 @@ function renderizarProdutos() {
     grid.appendChild(card);
   }
 }
+
 // ============================================
 // MODAL PRODUTO
 // ============================================
@@ -516,7 +547,6 @@ function mostrarTelaSucesso() {
 
   const btnZap = document.getElementById("btnEnviarZapSucesso");
   if (btnZap) {
-    // Usa a função abrirWhatsApp que tenta WhatsApp Desktop primeiro
     btnZap.onclick = () => abrirWhatsApp(d.msg);
   }
   const btnFechar = document.getElementById("btnFecharSucesso");
@@ -526,7 +556,7 @@ function mostrarTelaSucesso() {
 }
 
 // ============================================
-// WHATSAPP — Tenta Desktop primeiro, cai pra Web se falhar
+// WHATSAPP — Desktop first
 // ============================================
 function abrirWhatsApp(mensagem) {
   const texto = encodeURIComponent(mensagem);
@@ -570,12 +600,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const anoEl = document.getElementById("anoAtual");
   if (anoEl) anoEl.textContent = new Date().getFullYear();
 
+  // Tema
   document.getElementById("temaToggle").addEventListener("click", alternarTema);
 
+  // Instalar PWA
+  const btnInstalar = document.getElementById("btnInstalar");
+  if (btnInstalar) btnInstalar.addEventListener("click", instalarPWA);
+
+  // WhatsApp flutuante + footer
   const msgPadrao = WHATSAPP_MSG_PADRAO;
   document.getElementById("whatsFloat").href = `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(msgPadrao)}`;
   document.getElementById("footerWhats").href = `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(msgPadrao)}`;
 
+  // Recarregar + boas-vindas
   document.getElementById("btnRecarregar").addEventListener("click", carregarProdutos);
   document.getElementById("boasVindasFechar").addEventListener("click", fecharBoasVindas);
 
@@ -585,7 +622,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.target.id === "modalProduto") fecharModalProduto();
   });
 
-  // Carrinho
+  // Carrinho — agora usa o botão do TOPO
   document.getElementById("headerCarrinho").addEventListener("click", abrirModalCarrinho);
   document.getElementById("modalCarrinhoFechar").addEventListener("click", fecharModalCarrinho);
   document.getElementById("modalCarrinho").addEventListener("click", (e) => {
