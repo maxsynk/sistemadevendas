@@ -38,7 +38,7 @@
   <div class="hero-content">
     <h1 class="hero-titulo">Catálogo <b>Atacado</b></h1>
     <p class="hero-sub">
-      Calçados direto da fábrica. Monte seu pedido e envie pelo WhatsApp.
+      Calçados direto da fábrica. Monte seu pedido e finalize pelo site.
     </p>
     <a href="#produtos" class="hero-cta">
       <i class="fas fa-arrow-down"></i> Ver catálogo
@@ -156,13 +156,59 @@
         </div>
         <div class="carrinho-aviso" id="carrinhoAviso"></div>
         <button class="carrinho-btn-enviar" id="carrinhoEnviar" disabled>
-          <i class="fab fa-whatsapp"></i> Enviar Pedido pelo WhatsApp
+          <i class="fas fa-check-circle"></i> Finalizar Pedido
         </button>
         <button class="carrinho-btn-limpar" id="carrinhoLimpar">
           <i class="fas fa-trash"></i> Limpar
         </button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- TOAST DE "ADICIONADO AO CARRINHO" -->
+<div class="toast-add" id="toastAdd">
+  <i class="fas fa-check-circle"></i>
+  <span id="toastAddTexto">Adicionado ao carrinho!</span>
+</div>
+
+<!-- MODAL FINALIZAR PEDIDO -->
+<div class="modal" id="modalFecharPedido">
+  <div class="modal-box" style="max-width:520px">
+    <button class="modal-fechar" id="btnFecharModalForm" aria-label="Fechar">
+      <i class="fas fa-times"></i>
+    </button>
+    <div class="form-fechamento" id="formFechamento">
+      <div class="form-titulo">
+        <i class="fas fa-clipboard-check"></i> Finalizar Pedido
+      </div>
+      <div class="form-aviso">
+        <strong><i class="fas fa-info-circle"></i> Preencha seus dados</strong><br>
+        Vamos gerar um <strong>código único</strong> pro seu pedido. Ele será enviado pro seu WhatsApp pra você confirmar com o vendedor.
+      </div>
+
+      <div class="campo">
+        <label>Nome completo *</label>
+        <input type="text" id="fpNome" placeholder="Ex: João da Silva" autocomplete="name">
+      </div>
+      <div class="campo">
+        <label>WhatsApp *</label>
+        <input type="tel" id="fpTelefone" placeholder="(00) 00000-0000" autocomplete="tel">
+      </div>
+      <div class="campo">
+        <label>Cidade / Estado (opcional)</label>
+        <input type="text" id="fpCidade" placeholder="Ex: Formiga/MG">
+      </div>
+
+      <div class="resumo-itens" id="fpResumo"></div>
+
+      <button class="btn-fechar-sucesso" id="btnConfirmarFechamento" style="background:linear-gradient(135deg,var(--roxo),var(--roxo-alt));color:#fff;border-color:var(--roxo);padding:16px;font-size:13px;">
+        <i class="fas fa-check"></i> Confirmar Pedido
+      </button>
+    </div>
+
+    <!-- Tela de sucesso (escondida inicialmente) -->
+    <div id="telaSucesso" style="display:none"></div>
   </div>
 </div>
 
