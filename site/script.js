@@ -123,8 +123,6 @@ function renderizarProdutos() {
       <div class="card-foto">${fotoHTML}</div>
       <div class="card-info">
         <h3 class="card-modelo">${escapeHtml(p.modelo)}</h3>
-        <p class="card-cor">${escapeHtml(p.cor)}</p>
-        <p class="card-codigo">${escapeHtml(p.codigo_barras || "")}</p>
         <p class="card-grade-label">Numeração disponível</p>
         <div class="card-grade">${gradeHTML}</div>
         <div class="card-rodape">
@@ -152,7 +150,6 @@ function renderizarProdutos() {
     grid.appendChild(card);
   }
 }
-
 // ============================================
 // MODAL PRODUTO
 // ============================================
