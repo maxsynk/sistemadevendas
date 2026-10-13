@@ -199,6 +199,21 @@
   }
   .btn-text.install.show { display: inline-flex; }
   .btn-text.install:hover { box-shadow: 0 0 28px var(--neon-glow-strong); color: #fff; }
+  /* Botões do header com texto sempre visível (desktop) */
+@media (min-width: 701px) {
+  .topbar .btn-text {
+    font-size: 12px !important;
+    padding: 10px 18px !important;
+    min-width: 0 !important;
+    gap: 8px !important;
+  }
+  .topbar .btn-text i {
+    font-size: 14px !important;
+  }
+  .topbar .btn-text span {
+    display: inline !important;
+  }
+}
 
   .hamburger {
     width: 42px; height: 42px; background: rgba(255,255,255,0.03);
