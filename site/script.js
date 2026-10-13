@@ -619,7 +619,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // WhatsApp flutuante + footer
   const msgPadrao = WHATSAPP_MSG_PADRAO;
   document.getElementById("whatsFloat").href = `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(msgPadrao)}`;
-  document.getElementById("footerWhats").href = `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(msgPadrao)}`;
 
   // Recarregar + boas-vindas
   document.getElementById("btnRecarregar").addEventListener("click", carregarProdutos);
