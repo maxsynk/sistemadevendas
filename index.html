@@ -3656,6 +3656,16 @@
         <div class="form-row"><label>Preço Atacado (R$)</label><input type="number" step="0.01" id="prodAtacado" placeholder="0.00"></div>
         <div class="form-row"><label>Preço Unitário (R$)</label><input type="number" step="0.01" id="prodUnitario" placeholder="0.00"></div>
       </div>
+       <div class="form-row" style="margin-top:8px">
+  <label>Categoria</label>
+  <select id="prodCategoria">
+    <option value="">— Sem categoria —</option>
+  </select>
+  <small style="font-size:11px;color:var(--text-dim);margin-top:6px;display:block">
+    <i class="fas fa-info-circle"></i> Para cadastrar nova categoria, acesse
+    <a href="#" onclick="event.preventDefault(); irParaAba('config'); setTimeout(() => { const c = document.querySelector('[data-collapse-id=categorias]'); if(c && !c.classList.contains('open')) c.querySelector('.card-header').click(); c && c.scrollIntoView({behavior:'smooth'}); }, 300)" style="color:var(--neon);text-decoration:underline">Configurações</a>.
+  </small>
+</div> 
       <div class="form-row" style="margin-top:8px">
         <label>Foto do Produto</label>
         <div class="foto-upload-area" id="fotoUploadArea">
