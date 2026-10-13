@@ -9329,8 +9329,9 @@ document.getElementById("btnRefresh").onclick = async () => {
     await carregarClientesPedido();
     await carregarProdutosPedido();
   }
-  if (document.getElementById("aba-config").classList.contains("active")) {
+    if (document.getElementById("aba-config").classList.contains("active")) {
     await carregarTransportadorasConfig();
+    await carregarCategorias();
     renderizarListaMsgModelos();
     if (usuarioLogado.perfil === "admin") {
       await carregarUsuarios();
@@ -9347,8 +9348,11 @@ async function iniciarApp() {
   aplicarConfig();
   aplicarIdentidade();
   renderizarGrade();
-  restaurarColapsaveis();
+    restaurarColapsaveis();
   renderizarListaMsgModelos();
+  await carregarCategorias();
+  carregarCategoriasSelect("prodCategoria");
+  carregarCategoriasSelect("editCategoria");
   await verificarStatus();
   await carregarDashboard();
   await carregarProdutos();
