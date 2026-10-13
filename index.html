@@ -6663,6 +6663,7 @@ document.getElementById("btnSalvarProduto").onclick = async () => {
 };
 function limparForm() {
   ["prodModelo","prodCor","prodCusto","prodAtacado","prodUnitario","prodCodigo"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("prodCategoria").value = "";
   document.getElementById("previewCadastro").classList.add("vazio");
   fotoCadastroFile = null;
   document.getElementById("prodFoto").value = "";
