@@ -52,6 +52,15 @@
   </div>
 </header>
 
+<!-- BARRA DE CATEGORIAS (sticky, abaixo do header) -->
+<nav class="cat-bar" id="catBar">
+  <div class="cat-bar-inner" id="catBarInner">
+    <!-- Botão "Todos" fixo -->
+    <button class="cat-chip active" data-cat-slug="">Todos</button>
+    <!-- Demais categorias são inseridas aqui pelo JS -->
+  </div>
+</nav>
+
 <!-- HERO -->
 <section class="hero">
   <div class="hero-content">
@@ -70,7 +79,7 @@
   <div class="catalogo-header">
     <h2 class="catalogo-titulo">
       <i class="fas fa-shoe-prints"></i>
-      <span>Todos os Produtos</span>
+      <span id="catalogoTituloFiltro">Todos os Produtos</span>
     </h2>
     <div class="catalogo-contador" id="catalogoContador">Carregando...</div>
   </div>
@@ -86,6 +95,12 @@
     <i class="fas fa-box-open"></i>
     <h3>Nenhum produto disponível</h3>
     <p>Volte em breve — estamos repondo o estoque.</p>
+  </div>
+
+  <div class="vazio" id="vazioCategoriaWrap" style="display:none">
+    <i class="fas fa-tag"></i>
+    <h3>Nenhum produto nesta categoria</h3>
+    <p>Tente escolher outra categoria ou ver todos os produtos.</p>
   </div>
 
   <div class="erro-box" id="erroWrap" style="display:none">
