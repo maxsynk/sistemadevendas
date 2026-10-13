@@ -5536,9 +5536,10 @@ function irParaAba(nomeAba) {
   if (nomeAba === "clientes") carregarClientes();
   if (nomeAba === "pedidos") { carregarPedidos(); carregarClientesPedido(); carregarProdutosPedido(); }
   if (nomeAba === "produtos") carregarProximoCodigo();
-  if (nomeAba === "config") {
+    if (nomeAba === "config") {
     restaurarColapsaveis();
     carregarTransportadorasConfig();
+    carregarCategorias();
     renderizarListaMsgModelos();
     if (usuarioLogado && usuarioLogado.perfil === "admin") {
       carregarUsuarios();
