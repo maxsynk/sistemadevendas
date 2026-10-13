@@ -6627,7 +6627,7 @@ document.getElementById("btnSalvarProduto").onclick = async () => {
   try {
     const res = await api("/produtos", {
       method: "POST",
-      body: JSON.stringify({ modelo, cor, preco_custo: custo, preco_venda_atacado: atacado, preco_venda_unitario: unitario, codigo_barras: codigo }),
+      body: JSON.stringify({ modelo, cor, preco_custo: custo, preco_venda_atacado: atacado, preco_venda_unitario: unitario, codigo_barras: codigo, categoria_id: categoriaId }),
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.error);
