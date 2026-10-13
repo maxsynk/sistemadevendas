@@ -6858,6 +6858,7 @@ function abrirEdicao(id) {
   document.getElementById("editAtacado").value = p.preco_venda_atacado || 0;
   document.getElementById("editUnitario").value = p.preco_venda_unitario || 0;
   document.getElementById("editCodigo").value = p.codigo_barras || "";
+  carregarCategoriasSelect("editCategoria", p.categoria_id || null);
   fotoEditFile = null; fotoEditRemover = false;
   if (p.foto_url) {
     document.getElementById("fotoPreviewEdit").src = p.foto_url;
