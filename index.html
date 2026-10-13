@@ -7001,6 +7001,7 @@ document.getElementById("btnSalvarEdit").onclick = async () => {
   const unitario = parseFloat(document.getElementById("editUnitario").value) || 0;
   const codigo = document.getElementById("editCodigo").value.trim().toUpperCase();
   if (!modelo || !cor) return toast("Modelo e cor obrigatórios", "error");
+    const categoriaId = document.getElementById("editCategoria").value ? parseInt(document.getElementById("editCategoria").value) : null;
 
   const adicionar = [], remover = [];
   document.querySelectorAll("#gradeEditWrap .grade-item").forEach(item => {
