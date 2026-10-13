@@ -4404,6 +4404,49 @@
   </div>
 </div>
 
+<!-- MODAL NOVA/EDITAR CATEGORIA -->
+<div class="modal" id="modalCategoria">
+  <div class="modal-box" style="max-width:520px">
+    <h3><i class="fas fa-sitemap"></i> <span id="modalCategoriaTitulo">Nova Categoria</span></h3>
+
+    <div class="form-row">
+      <label>Nome da Categoria *</label>
+      <input type="text" id="catNome" placeholder="Ex: Tênis, Masculino, Sandálias...">
+      <small style="font-size:11px;color:var(--text-dim);margin-top:6px;display:block">
+        <i class="fas fa-info-circle"></i> O nome fica salvo como você digita. O sistema cria um "slug" automático (ex: <code>tenis-masculino</code>) pra usar nas URLs.
+      </small>
+    </div>
+
+    <div class="form-row">
+      <label>Categoria Pai (opcional)</label>
+      <select id="catParent">
+        <option value="">— Nenhuma (categoria raiz) —</option>
+      </select>
+      <small style="font-size:11px;color:var(--text-dim);margin-top:6px;display:block">
+        <i class="fas fa-info-circle"></i> Se escolher uma pai, essa categoria será "filha" e aparecerá dentro dela no menu do site.
+      </small>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-row">
+        <label>Ordem</label>
+        <input type="number" id="catOrdem" value="0" min="0">
+      </div>
+      <div class="form-row">
+        <label>Status</label>
+        <select id="catAtivo">
+          <option value="1">Ativa</option>
+          <option value="0">Inativa</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="btnCancelarCategoria"><i class="fas fa-times"></i> Cancelar</button>
+      <button class="btn btn-primary" id="btnSalvarCategoria"><i class="fas fa-save"></i> Salvar</button>
+    </div>
+  </div>
+</div>  
 <!-- MODAL NOVO USUÁRIO -->
 <div class="modal" id="modalUsuario">
   <div class="modal-box" style="max-width:640px">
