@@ -495,6 +495,7 @@ async function confirmarFechamento() {
     msg += `\nTotal: ${data.total_pares} pares\n`;
     msg += `Valor estimado: R$ ${(data.valor_estimado || 0).toFixed(2).replace(".", ",")}\n\n`;
     msg += `Informe esta chave para o vendedor confirmar.`;
+    msg += `Qualquer dúvida, estamos à disposição para atendê-lo(a)! 😊`;
 
     dadosUltimoPedido = {
       chave: data.chave,
