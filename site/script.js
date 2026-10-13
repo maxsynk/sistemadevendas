@@ -143,10 +143,10 @@ function renderizarProdutos() {
       ? `<img src="${p.foto_url}" alt="${escapeHtml(p.modelo)}" loading="lazy" onerror="this.parentNode.innerHTML='<div class=&quot;card-foto-vazio&quot;><i class=&quot;fas fa-image&quot;></i></div>'">`
       : `<div class="card-foto-vazio"><i class="fas fa-image"></i></div>`;
 
-    const gradeHTML = (p.grade || []).map(g => {
+        const gradeHTML = (p.grade || []).map(g => {
       const disp = g.disponivel || 0;
       const cls = disp > 0 ? "" : "zero";
-      return `<span class="grade-num ${cls}">${g.numeracao}${disp > 0 ? `·${disp}` : ""}</span>`;
+      return `<span class="grade-num ${cls}">${g.numeracao}</span>`;
     }).join("");
 
     card.innerHTML = `
