@@ -3261,6 +3261,50 @@
     opacity: 0.7;
   }
 }  
+@keyframes pulsarBolota {
+  0%, 100% { 
+    transform: scale(1); 
+    opacity: 1;
+  }
+  50% { 
+    transform: scale(1.4); 
+    opacity: 0.7;
+  }
+}
+
+/* ↓↓ COLA ISSO AQUI ↓↓ */
+/* Drawer (mobile) — item Pedidos piscando quando tiver pedido do site */
+.drawer-item.drawer-pedidos-pendente {
+  color: #f59e0b !important;
+  border-color: #f59e0b !important;
+  background: rgba(245, 158, 11, 0.1) !important;
+  animation: piscarDrawerPedidos 1.5s ease-in-out infinite;
+}
+.drawer-item.drawer-pedidos-pendente .icon {
+  color: #f59e0b !important;
+}
+.drawer-item.drawer-pedidos-pendente::after {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+  margin-left: auto;
+  box-shadow: 0 0 10px rgba(239,68,68,0.9);
+  animation: pulsarBolota 1.5s ease-in-out infinite;
+}
+@keyframes piscarDrawerPedidos {
+  0%, 100% { 
+    background: rgba(245, 158, 11, 0.08);
+    box-shadow: 0 0 0 rgba(245,158,11,0);
+  }
+  50% { 
+    background: rgba(245, 158, 11, 0.2);
+    box-shadow: 0 0 16px rgba(245,158,11,0.5);
+  }
+}
+/* ↑↑ FIM DO QUE COLAR ↑↑ */  
 @keyframes pulseAlerta {
   0%, 100% { box-shadow: 0 0 24px rgba(245,158,11,0.2); }
   50% { box-shadow: 0 0 36px rgba(245,158,11,0.4); }
