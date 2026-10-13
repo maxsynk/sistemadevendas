@@ -7,7 +7,16 @@ const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const WHATSAPP_NUMERO = "5537991021468";
 const WHATSAPP_MSG_PADRAO = "Olá! Vi o catálogo no site e gostaria de mais informações.";
 const MINIMO_PARES = 8;
-
+// ============================================
+// PWA — Registra o service worker
+// ============================================
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js")
+      .then((reg) => console.log("[PWA Site] Service Worker registrado:", reg.scope))
+      .catch((err) => console.error("[PWA Site] Erro ao registrar SW:", err));
+  });
+}
 let produtosCache = [];
 let temaAtual = "escuro";
 let carrinho = [];
