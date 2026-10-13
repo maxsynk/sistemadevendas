@@ -9005,6 +9005,301 @@ function imprimirRelClientes() {
   printHTML("Relatório de Clientes", html);
 }
 
+// ============================================
+// FASE A — CATEGORIAS DINÂMICAS
+// ============================================
+
+// Carrega categorias da API e guarda no cache
+async function carregarCategorias() {
+  try {
+    const res = await api("/categorias");
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    categoriasCache = data.categorias || [];
+    renderizarArvoreCategorias();
+    return categoriasCache;
+  } catch (e) {
+    console.error("[categorias]", e);
+    const wrap = document.getElementById("listaCategoriasConfig");
+    if (wrap) {
+      wrap.innerHTML = `<div class="cat-vazio" style="color:var(--error)"><i class="fas fa-exclamation-triangle"></i>Erro ao carregar: ${escapeHtml(e.message)}</div>`;
+    }
+    return [];
+  }
+}
+
+// Renderiza a árvore de categorias em Configurações
+function renderizarArvoreCategorias() {
+  const wrap = document.getElementById("listaCategoriasConfig");
+  if (!wrap) return;
+
+  if (categoriasCache.length === 0) {
+    wrap.innerHTML = `<div class="cat-vazio"><i class="fas fa-sitemap"></i>Nenhuma categoria cadastrada ainda.<br>Clique em <strong>+ Nova Categoria</strong> pra começar.</div>`;
+    return;
+  }
+
+  const pais = categoriasCache.filter(c => !c.parent_id);
+  const filhasPorPai = {};
+  for (const c of categoriasCache) {
+    if (c.parent_id) {
+      if (!filhasPorPai[c.parent_id]) filhasPorPai[c.parent_id] = [];
+      filhasPorPai[c.parent_id].push(c);
+    }
+  }
+
+  let html = '<div class="cat-arvore">';
+
+  for (const pai of pais) {
+    html += renderizarNodeCategoria(pai, false);
+    const filhas = (filhasPorPai[pai.id] || []).sort((a,b) => (a.ordem || 0) - (b.ordem || 0));
+    for (const filha of filhas) {
+      html += renderizarNodeCategoria(filha, true);
+    }
+  }
+
+  html += '</div>';
+  wrap.innerHTML = html;
+
+  wrap.querySelectorAll("[data-cat-editar]").forEach(btn => {
+    btn.onclick = () => abrirModalCategoria(parseInt(btn.dataset.catEditar));
+  });
+  wrap.querySelectorAll("[data-cat-excluir]").forEach(btn => {
+    btn.onclick = () => abrirModalExcluirCategoria(parseInt(btn.dataset.catExcluir));
+  });
+}
+
+function renderizarNodeCategoria(cat, ehFilha) {
+  const qtdProdutos = cat.total_produtos || 0;
+  const inativa = cat.ativo === 0;
+  const icone = ehFilha ? "fa-folder-open" : "fa-folder";
+  const badgeProd = qtdProdutos > 0
+    ? `<span class="badge-prod"><i class="fas fa-box"></i> ${qtdProdutos} produto${qtdProdutos === 1 ? "" : "s"}</span>`
+    : `<span class="badge-vazio"><i class="fas fa-box-open"></i> sem produtos</span>`;
+  const badgeStatus = inativa ? `<span class="badge-status-inativo"><i class="fas fa-eye-slash"></i> INATIVA</span>` : "";
+
+  return `
+    <div class="cat-node ${ehFilha ? "filha" : ""} ${inativa ? "inativa" : ""}">
+      <div class="cat-icon"><i class="fas ${icone}"></i></div>
+      <div class="cat-info">
+        <div class="cat-nome">
+          ${escapeHtml(cat.nome)}
+          <span class="cat-slug">${escapeHtml(cat.slug)}</span>
+        </div>
+        <div class="cat-meta">
+          ${badgeProd}
+          ${badgeStatus}
+        </div>
+      </div>
+      <div class="cat-acoes">
+        <button class="btn-cat-acao" data-cat-editar="${cat.id}" title="Editar"><i class="fas fa-edit"></i></button>
+        <button class="btn-cat-acao danger" data-cat-excluir="${cat.id}" title="Excluir"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>
+  `;
+}
+
+// Preenche um <select> com as categorias (agrupadas por pai)
+function carregarCategoriasSelect(selectId, selecionadaId = null) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+
+  const pais = categoriasCache.filter(c => !c.parent_id && c.ativo === 1);
+  const filhasPorPai = {};
+  for (const c of categoriasCache) {
+    if (c.parent_id && c.ativo === 1) {
+      if (!filhasPorPai[c.parent_id]) filhasPorPai[c.parent_id] = [];
+      filhasPorPai[c.parent_id].push(c);
+    }
+  }
+
+  let html = '<option value="">— Sem categoria —</option>';
+
+  for (const pai of pais) {
+    const filhas = (filhasPorPai[pai.id] || []).sort((a,b) => (a.ordem || 0) - (b.ordem || 0));
+    if (filhas.length > 0) {
+      // Pai tem filhas → aparece como optgroup, e as filhas como opções
+      html += `<optgroup label="${escapeHtml(pai.nome)}">`;
+      for (const f of filhas) {
+        const selStr = (selecionadaId && parseInt(selecionadaId) === f.id) ? " selected" : "";
+        html += `<option value="${f.id}"${selStr}>${escapeHtml(f.nome)}</option>`;
+      }
+      html += `</optgroup>`;
+    } else {
+      // Pai sem filhas → é uma folha direta
+      const selStr = (selecionadaId && parseInt(selecionadaId) === pai.id) ? " selected" : "";
+      html += `<option value="${pai.id}"${selStr}>${escapeHtml(pai.nome)}</option>`;
+    }
+  }
+
+  sel.innerHTML = html;
+}
+
+// Preenche o <select> de "Categoria Pai" no modal (não permite escolher a si mesmo nem filhos)
+function carregarSelectParentCategoria(editandoId = null) {
+  const sel = document.getElementById("catParent");
+  if (!sel) return;
+
+  const pais = categoriasCache.filter(c => !c.parent_id);
+  // Descobre os filhos diretos da categoria sendo editada (pra não permitir virar filho de si mesmo)
+  const proibidos = new Set();
+  if (editandoId) {
+    proibidos.add(editandoId);
+    // E também os filhos (pra não criar ciclo)
+    for (const c of categoriasCache) {
+      if (c.parent_id === editandoId) proibidos.add(c.id);
+    }
+  }
+
+  let html = '<option value="">— Nenhuma (categoria raiz) —</option>';
+  for (const p of pais) {
+    if (proibidos.has(p.id)) continue;
+    const selStr = (editandoId && editandoId === p.id) ? "" : "";
+    html += `<option value="${p.id}">${escapeHtml(p.nome)}</option>`;
+  }
+
+  sel.innerHTML = html;
+}
+
+// Abre o modal de Nova / Editar categoria
+function abrirModalCategoria(id = null) {
+  categoriaEditando = id ? { id } : null;
+  document.getElementById("modalCategoriaTitulo").textContent = id ? "Editar Categoria" : "Nova Categoria";
+  document.getElementById("catNome").value = "";
+  document.getElementById("catOrdem").value = "0";
+  document.getElementById("catAtivo").value = "1";
+
+  carregarSelectParentCategoria(id);
+
+  if (id) {
+    const cat = categoriasCache.find(c => c.id === id);
+    if (cat) {
+      document.getElementById("catNome").value = cat.nome || "";
+      document.getElementById("catOrdem").value = cat.ordem || 0;
+      document.getElementById("catAtivo").value = cat.ativo ? "1" : "0";
+      if (cat.parent_id) {
+        document.getElementById("catParent").value = String(cat.parent_id);
+      }
+    }
+  }
+
+  document.getElementById("modalCategoria").classList.add("active");
+  setTimeout(() => document.getElementById("catNome").focus(), 200);
+}
+
+// Salva categoria (nova ou edição)
+async function salvarCategoria() {
+  const nome = document.getElementById("catNome").value.trim();
+  const parentId = document.getElementById("catParent").value || null;
+  const ordem = parseInt(document.getElementById("catOrdem").value) || 0;
+  const ativo = document.getElementById("catAtivo").value === "1";
+
+  if (!nome) {
+    toast("Nome obrigatório", "error");
+    document.getElementById("catNome").focus();
+    return;
+  }
+
+  const btn = document.getElementById("btnSalvarCategoria");
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+
+  try {
+    let res;
+    if (categoriaEditando) {
+      res = await api(`/categorias/${categoriaEditando.id}`, {
+        method: "PUT",
+        body: JSON.stringify({ nome, ordem, ativo }),
+      });
+    } else {
+      res = await api("/categorias", {
+        method: "POST",
+        body: JSON.stringify({ nome, parent_id: parentId ? parseInt(parentId) : null, ordem, ativo }),
+      });
+    }
+    const d = await res.json();
+    if (!d.success) throw new Error(d.error);
+
+    toast(categoriaEditando ? "Categoria atualizada!" : "Categoria criada!");
+    document.getElementById("modalCategoria").classList.remove("active");
+    categoriaEditando = null;
+
+    await carregarCategorias();
+    // Atualiza os selects de produto também
+    carregarCategoriasSelect("prodCategoria", document.getElementById("prodCategoria")?.value || null);
+    carregarCategoriasSelect("editCategoria", document.getElementById("editCategoria")?.value || null);
+  } catch (e) {
+    toast("Erro: " + e.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-save"></i> Salvar';
+  }
+}
+
+// Abre modal de exclusão
+function abrirModalExcluirCategoria(id) {
+  const cat = categoriasCache.find(c => c.id === id);
+  if (!cat) return;
+  categoriaExcluindo = cat;
+
+  document.getElementById("excCatNome").textContent = cat.nome;
+  const qtdProd = cat.total_produtos || 0;
+  const temFilhas = categoriasCache.some(c => c.parent_id === id);
+  document.getElementById("excCatDetalhes").innerHTML =
+    `Slug: <code>${escapeHtml(cat.slug)}</code><br>` +
+    `Produtos vinculados: <strong>${qtdProd}</strong><br>` +
+    `Subcategorias: <strong>${temFilhas ? "sim" : "não"}</strong>`;
+
+  const btn = document.getElementById("btnConfirmarExcluirCategoria");
+  const bloqueado = qtdProd > 0 || temFilhas;
+  btn.disabled = bloqueado;
+  if (bloqueado) {
+    btn.innerHTML = '<i class="fas fa-ban"></i> Bloqueado';
+  } else {
+    btn.innerHTML = '<i class="fas fa-trash"></i> Excluir';
+  }
+
+  document.getElementById("modalExcluirCategoria").classList.add("active");
+}
+
+// Confirma exclusão
+async function confirmarExcluirCategoria() {
+  if (!categoriaExcluindo) return;
+
+  const btn = document.getElementById("btnConfirmarExcluirCategoria");
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Excluindo...';
+
+  try {
+    const res = await api(`/categorias/${categoriaExcluindo.id}`, { method: "DELETE" });
+    const d = await res.json();
+    if (!d.success) throw new Error(d.error);
+
+    toast("Categoria excluída!");
+    document.getElementById("modalExcluirCategoria").classList.remove("active");
+    categoriaExcluindo = null;
+
+    await carregarCategorias();
+    carregarCategoriasSelect("prodCategoria", document.getElementById("prodCategoria")?.value || null);
+    carregarCategoriasSelect("editCategoria", document.getElementById("editCategoria")?.value || null);
+  } catch (e) {
+    toast("Erro: " + e.message, "error");
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-trash"></i> Excluir';
+  }
+}
+
+// Listeners dos botões do modal de categoria
+document.getElementById("btnNovaCategoria").onclick = () => abrirModalCategoria(null);
+document.getElementById("btnCancelarCategoria").onclick = () => {
+  document.getElementById("modalCategoria").classList.remove("active");
+  categoriaEditando = null;
+};
+document.getElementById("btnSalvarCategoria").onclick = salvarCategoria;
+document.getElementById("btnCancelarExcluirCategoria").onclick = () => {
+  document.getElementById("modalExcluirCategoria").classList.remove("active");
+  categoriaExcluindo = null;
+};
+document.getElementById("btnConfirmarExcluirCategoria").onclick = confirmarExcluirCategoria;  
 // REFRESH
 // Botão "Catálogo" no header
 document.getElementById("btnAbrirCatalogo").onclick = () => {
