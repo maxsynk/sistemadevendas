@@ -3,7 +3,7 @@
 // Permite o mini site ser instalável como app
 // ============================================
 
-const CACHE_NOME = "max-site-v1";
+const CACHE_NOME = "max-catalogo-v1";
 const ARQUIVOS_CACHE = [
   "./",
   "./index.html",
@@ -14,23 +14,23 @@ const ARQUIVOS_CACHE = [
 
 // INSTALL
 self.addEventListener("install", (event) => {
-  console.log("[SW Site] Instalando...");
+  console.log("[SW Catálogo] Instalando...");
   event.waitUntil(
     caches.open(CACHE_NOME)
       .then((cache) => cache.addAll(ARQUIVOS_CACHE))
       .then(() => self.skipWaiting())
-      .catch((err) => console.error("[SW Site] Erro no cache:", err))
+      .catch((err) => console.error("[SW Catálogo] Erro no cache:", err))
   );
 });
 
 // ACTIVATE
 self.addEventListener("activate", (event) => {
-  console.log("[SW Site] Ativando...");
+  console.log("[SW Catálogo] Ativando...");
   event.waitUntil(
     caches.keys().then((nomes) => {
       return Promise.all(
         nomes.map((nome) => {
-          if (nome !== CACHE_NOME) {
+          if (nome !== CACHE_NOME && nome.startsWith("max-catalogo")) {
             return caches.delete(nome);
           }
         })
@@ -39,7 +39,7 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-// FETCH — passa direto pra rede (não trava nada)
+// FETCH — cache-first
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
@@ -48,7 +48,6 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Estratégia cache-first
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
