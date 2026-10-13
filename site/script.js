@@ -1,5 +1,5 @@
 // ============================================
-// MAX REPRESENTAÇÃO — MINI SITE v3.3
+// MAX REPRESENTAÇÃO — MINI SITE v3.4
 // script.js
 // ============================================
 
@@ -7,6 +7,7 @@ const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const WHATSAPP_NUMERO = "5537991021468";
 const WHATSAPP_MSG_PADRAO = "Olá! Vi o catálogo no site e gostaria de mais informações.";
 const MINIMO_PARES = 8;
+
 // ============================================
 // PWA — Registra o service worker
 // ============================================
@@ -17,6 +18,7 @@ if ("serviceWorker" in navigator) {
       .catch((err) => console.error("[PWA Site] Erro ao registrar SW:", err));
   });
 }
+
 let produtosCache = [];
 let temaAtual = "escuro";
 let carrinho = [];
@@ -138,7 +140,7 @@ async function carregarProdutos() {
 }
 
 // ============================================
-// RENDERIZAR CARDS (SEM COR E SEM CÓDIGO)
+// RENDERIZAR CARDS
 // ============================================
 function renderizarProdutos() {
   const grid = document.getElementById("gridProdutos");
@@ -152,7 +154,7 @@ function renderizarProdutos() {
       ? `<img src="${p.foto_url}" alt="${escapeHtml(p.modelo)}" loading="lazy" onerror="this.parentNode.innerHTML='<div class=&quot;card-foto-vazio&quot;><i class=&quot;fas fa-image&quot;></i></div>'">`
       : `<div class="card-foto-vazio"><i class="fas fa-image"></i></div>`;
 
-        const gradeHTML = (p.grade || []).map(g => {
+    const gradeHTML = (p.grade || []).map(g => {
       const disp = g.disponivel || 0;
       const cls = disp > 0 ? "" : "zero";
       return `<span class="grade-num ${cls}">${g.numeracao}</span>`;
@@ -494,7 +496,7 @@ async function confirmarFechamento() {
 
     msg += `\nTotal: ${data.total_pares} pares\n`;
     msg += `Valor estimado: R$ ${(data.valor_estimado || 0).toFixed(2).replace(".", ",")}\n\n`;
-    msg += `Informe esta chave para o vendedor confirmar.`;
+    msg += `Informe esta chave para o vendedor confirmar.\n\n`;
     msg += `Qualquer dúvida, estamos à disposição para atendê-lo(a)! 😊`;
 
     dadosUltimoPedido = {
@@ -611,41 +613,50 @@ document.addEventListener("DOMContentLoaded", () => {
   if (anoEl) anoEl.textContent = new Date().getFullYear();
 
   // Tema
-  document.getElementById("temaToggle").addEventListener("click", alternarTema);
+  const temaToggle = document.getElementById("temaToggle");
+  if (temaToggle) temaToggle.addEventListener("click", alternarTema);
 
   // Instalar PWA
   const btnInstalar = document.getElementById("btnInstalar");
   if (btnInstalar) btnInstalar.addEventListener("click", instalarPWA);
 
-  // WhatsApp flutuante + footer
-  const msgPadrao = WHATSAPP_MSG_PADRAO;
-  document.getElementById("whatsFloat").href = `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(msgPadrao)}`;
-
   // Recarregar + boas-vindas
-  document.getElementById("btnRecarregar").addEventListener("click", carregarProdutos);
-  document.getElementById("boasVindasFechar").addEventListener("click", fecharBoasVindas);
+  const btnRec = document.getElementById("btnRecarregar");
+  if (btnRec) btnRec.addEventListener("click", carregarProdutos);
+  const btnBv = document.getElementById("boasVindasFechar");
+  if (btnBv) btnBv.addEventListener("click", fecharBoasVindas);
 
   // Modal produto
-  document.getElementById("modalFechar").addEventListener("click", fecharModalProduto);
-  document.getElementById("modalProduto").addEventListener("click", (e) => {
+  const mf = document.getElementById("modalFechar");
+  if (mf) mf.addEventListener("click", fecharModalProduto);
+  const mp = document.getElementById("modalProduto");
+  if (mp) mp.addEventListener("click", (e) => {
     if (e.target.id === "modalProduto") fecharModalProduto();
   });
 
-  // Carrinho — agora usa o botão do TOPO
-  document.getElementById("headerCarrinho").addEventListener("click", abrirModalCarrinho);
-  document.getElementById("modalCarrinhoFechar").addEventListener("click", fecharModalCarrinho);
-  document.getElementById("modalCarrinho").addEventListener("click", (e) => {
+  // Carrinho
+  const hc = document.getElementById("headerCarrinho");
+  if (hc) hc.addEventListener("click", abrirModalCarrinho);
+  const mcf = document.getElementById("modalCarrinhoFechar");
+  if (mcf) mcf.addEventListener("click", fecharModalCarrinho);
+  const mc = document.getElementById("modalCarrinho");
+  if (mc) mc.addEventListener("click", (e) => {
     if (e.target.id === "modalCarrinho") fecharModalCarrinho();
   });
-  document.getElementById("carrinhoLimpar").addEventListener("click", limparCarrinho);
+  const cl = document.getElementById("carrinhoLimpar");
+  if (cl) cl.addEventListener("click", limparCarrinho);
 
   // Finalizar pedido
-  document.getElementById("carrinhoEnviar").addEventListener("click", abrirFormFechamento);
+  const ce = document.getElementById("carrinhoEnviar");
+  if (ce) ce.addEventListener("click", abrirFormFechamento);
 
   // Modal de formulário
-  document.getElementById("btnFecharModalForm").addEventListener("click", fecharFormFechamento);
-  document.getElementById("btnConfirmarFechamento").addEventListener("click", confirmarFechamento);
-  document.getElementById("modalFecharPedido").addEventListener("click", (e) => {
+  const bf = document.getElementById("btnFecharModalForm");
+  if (bf) bf.addEventListener("click", fecharFormFechamento);
+  const bc = document.getElementById("btnConfirmarFechamento");
+  if (bc) bc.addEventListener("click", confirmarFechamento);
+  const mfp = document.getElementById("modalFecharPedido");
+  if (mfp) mfp.addEventListener("click", (e) => {
     if (e.target.id === "modalFecharPedido") fecharFormFechamento();
   });
 
