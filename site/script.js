@@ -1,6 +1,7 @@
 // ============================================
-// MAX REPRESENTAÇÃO — MINI SITE v3.4
+// MAX REPRESENTAÇÃO — MINI SITE v3.5
 // script.js
+// Adicionado menu de categorias dinâmicas
 // ============================================
 
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
@@ -20,6 +21,8 @@ if ("serviceWorker" in navigator) {
 }
 
 let produtosCache = [];
+let categoriasMenu = [];
+let categoriaAtualSlug = ""; // slug da categoria selecionada (vazio = Todos)
 let temaAtual = "escuro";
 let carrinho = [];
 let deferredInstallPrompt = null;
@@ -96,11 +99,83 @@ function mostrarToastAdd(msg) {
 }
 
 // ============================================
+// CARREGAR CATEGORIAS
+// ============================================
+async function carregarCategorias() {
+  const barra = document.getElementById("catBar");
+  const inner = document.getElementById("catBarInner");
+  if (!barra || !inner) return;
+
+  try {
+    const res = await fetch(API_BASE + "/publico/categorias");
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "Erro ao buscar categorias");
+
+    categoriasMenu = data.menu || [];
+
+    if (categoriasMenu.length === 0) {
+      barra.classList.add("vazia");
+      return;
+    }
+
+    barra.classList.remove("vazia");
+
+    // Limpa e recria os chips (mantém "Todos" sempre primeiro)
+    inner.innerHTML = `<button class="cat-chip active" data-cat-slug=""><i class="fas fa-th"></i> Todos</button>`;
+
+    for (const c of categoriasMenu) {
+      const btn = document.createElement("button");
+      btn.className = "cat-chip";
+      btn.dataset.catSlug = c.slug;
+      btn.textContent = c.nome;
+      btn.addEventListener("click", () => selecionarCategoria(c.slug, c.nome));
+      inner.appendChild(btn);
+    }
+
+    // Re-bind do "Todos"
+    const btnTodos = inner.querySelector('[data-cat-slug=""]');
+    btnTodos.addEventListener("click", () => selecionarCategoria("", "Todos os Produtos"));
+  } catch (e) {
+    console.error("[carregarCategorias]", e);
+    // Se falhar, esconde a barra
+    barra.classList.add("vazia");
+  }
+}
+
+// ============================================
+// SELECIONAR CATEGORIA
+// ============================================
+function selecionarCategoria(slug, nome) {
+  categoriaAtualSlug = slug;
+
+  // Atualiza chip ativo
+  document.querySelectorAll(".cat-chip").forEach(chip => {
+    chip.classList.toggle("active", chip.dataset.catSlug === slug);
+  });
+
+  // Atualiza o título do catálogo
+  const titulo = document.getElementById("catalogoTituloFiltro");
+  if (titulo) titulo.textContent = nome || "Todos os Produtos";
+
+  // Rola até o catálogo
+  const catalogo = document.getElementById("produtos");
+  if (catalogo) {
+    const yOffset = -140; // compensa header + cat-bar
+    const y = catalogo.getBoundingClientRect().top + window.pageYOffset + yOffset;
+    window.scrollTo({ top: y, behavior: "smooth" });
+  }
+
+  // Recarrega produtos filtrados
+  carregarProdutos();
+}
+
+// ============================================
 // CARREGAR PRODUTOS
 // ============================================
 async function carregarProdutos() {
   const grid = document.getElementById("gridProdutos");
   const vazioWrap = document.getElementById("vazioWrap");
+  const vazioCategoriaWrap = document.getElementById("vazioCategoriaWrap");
   const erroWrap = document.getElementById("erroWrap");
   const contador = document.getElementById("catalogoContador");
 
@@ -111,11 +186,15 @@ async function carregarProdutos() {
     </div>
   `;
   vazioWrap.style.display = "none";
+  vazioCategoriaWrap.style.display = "none";
   erroWrap.style.display = "none";
   contador.textContent = "Carregando...";
 
   try {
-    const res = await fetch(API_BASE + "/publico/produtos");
+    let url = API_BASE + "/publico/produtos";
+    if (categoriaAtualSlug) url += "?categoria=" + encodeURIComponent(categoriaAtualSlug);
+
+    const res = await fetch(url);
     const data = await res.json();
     if (!data.success) throw new Error(data.error || "Erro ao buscar produtos");
 
@@ -123,7 +202,12 @@ async function carregarProdutos() {
 
     if (produtosCache.length === 0) {
       grid.innerHTML = "";
-      vazioWrap.style.display = "block";
+      // Se tem categoria selecionada, mostra o vazio da categoria
+      if (categoriaAtualSlug) {
+        vazioCategoriaWrap.style.display = "block";
+      } else {
+        vazioWrap.style.display = "block";
+      }
       contador.textContent = "0 produtos";
       return;
     }
@@ -622,7 +706,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Recarregar + boas-vindas
   const btnRec = document.getElementById("btnRecarregar");
-  if (btnRec) btnRec.addEventListener("click", carregarProdutos);
+  if (btnRec) btnRec.addEventListener("click", () => { carregarCategorias(); carregarProdutos(); });
   const btnBv = document.getElementById("boasVindasFechar");
   if (btnBv) btnBv.addEventListener("click", fecharBoasVindas);
 
@@ -669,6 +753,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // Carrega categorias primeiro, depois produtos
+  carregarCategorias();
   carregarProdutos();
   mostrarBoasVindas();
 });
