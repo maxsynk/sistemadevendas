@@ -3,7 +3,7 @@
 // PWA: cache da interface pra funcionar offline
 // ============================================
 
-const CACHE_NOME = "max-representacao-v1.3";
+const CACHE_NOME = "max-representacao-v1.5";
 const ARQUIVOS_CACHE = [
   "./",
   "./index.html",
