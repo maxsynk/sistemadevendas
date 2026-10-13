@@ -6615,6 +6615,7 @@ document.getElementById("btnSalvarProduto").onclick = async () => {
   const unitario = parseFloat(document.getElementById("prodUnitario").value) || 0;
   let codigo = document.getElementById("prodCodigo").value.trim().toUpperCase();
   if (!modelo || !cor) return toast("Modelo e cor obrigatórios", "error");
+    const categoriaId = document.getElementById("prodCategoria").value ? parseInt(document.getElementById("prodCategoria").value) : null;
   if (!codigo) codigo = await pegarProximoCodigo();
   const nums = [];
   document.querySelectorAll("#gradeWrap .chk-num:checked").forEach(chk => nums.push(parseInt(chk.dataset.num)));
