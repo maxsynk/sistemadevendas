@@ -4079,6 +4079,26 @@
       </div>
     </div>
 
+    <div class="card card-collapsible" data-permissao="config_categorias" data-collapse-id="categorias">
+  <div class="card-header" onclick="toggleCardCollapsible(this)">
+    <h3 style="margin:0"><i class="fas fa-sitemap"></i> Categorias</h3>
+    <div class="toggle-icon"><i class="fas fa-chevron-down"></i></div>
+  </div>
+  <div class="card-body">
+    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;line-height:1.6">
+      Gerencie as categorias que aparecem no menu do mini site.<br>
+      <strong style="color:var(--neon-alt)">Estrutura:</strong> você pode criar categorias "pai" (ex: Tênis) com "filhas" dentro (ex: Masculino, Feminino). Categorias sem filhas aparecem direto no menu do site.
+    </p>
+
+    <button class="btn btn-primary" id="btnNovaCategoria" style="margin-bottom:16px">
+      <i class="fas fa-plus"></i> Nova Categoria
+    </button>
+
+    <div id="listaCategoriasConfig">
+      <div class="loader"></div>
+    </div>
+  </div>
+</div>
     <div class="card card-collapsible" data-permissao="config_transportadoras" data-collapse-id="transportadoras">
       <div class="card-header" onclick="toggleCardCollapsible(this)">
         <h3 style="margin:0"><i class="fas fa-truck"></i> Transportadoras</h3>
