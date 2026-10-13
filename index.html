@@ -9070,6 +9070,7 @@ async function verificarPedidosSite() {
 
     // Achar a aba Pedidos pra piscar
     const abaPedidos = document.querySelector('.tab[data-aba="pedidos"]');
+    const drawerPedidos = document.querySelector('.drawer-item[data-aba="pedidos"]');
 
     if (!alerta) return;
 
@@ -9081,7 +9082,10 @@ async function verificarPedidosSite() {
         : `Você tem ${total} pedidos recebidos do site`;
 
       // Faz a aba Pedidos piscar
+            // Faz a aba Pedidos piscar (desktop)
       if (abaPedidos) abaPedidos.classList.add("tab-pedidos-pendente");
+      // Faz o item do menu hamburger piscar (mobile)
+      if (drawerPedidos) drawerPedidos.classList.add("drawer-pedidos-pendente");
 
       const ultimoTotal = parseInt(sessionStorage.getItem("max_ultimo_total_site") || "0");
       if (total > ultimoTotal) {
@@ -9090,8 +9094,10 @@ async function verificarPedidosSite() {
       sessionStorage.setItem("max_ultimo_total_site", String(total));
     } else {
       alerta.style.display = "none";
-      // Para de piscar
+            // Para de piscar (desktop)
       if (abaPedidos) abaPedidos.classList.remove("tab-pedidos-pendente");
+      // Para de piscar (mobile)
+      if (drawerPedidos) drawerPedidos.classList.remove("drawer-pedidos-pendente");
 
       sessionStorage.setItem("max_ultimo_total_site", "0");
     }
