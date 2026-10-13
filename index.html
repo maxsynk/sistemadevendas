@@ -4491,6 +4491,30 @@
   </div>
 </div>
 
+<!-- MODAL CONFIRMAR EXCLUSÃO CATEGORIA -->
+<div class="modal" id="modalExcluirCategoria">
+  <div class="modal-box" style="max-width:480px">
+    <h3 style="color:var(--error)"><i class="fas fa-exclamation-triangle"></i> Excluir Categoria</h3>
+
+    <p style="font-size:13px;color:var(--text-secondary);line-height:1.7;margin-bottom:14px">
+      Você está prestes a excluir a categoria:
+    </p>
+
+    <div style="padding:14px;background:rgba(239,68,68,0.08);border:1px solid var(--error);border-radius:10px;margin-bottom:14px">
+      <div style="font-size:16px;font-weight:700;color:var(--text-primary)" id="excCatNome"></div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:4px" id="excCatDetalhes"></div>
+    </div>
+
+    <p style="font-size:12px;color:var(--warning);line-height:1.6;margin-bottom:16px">
+      <i class="fas fa-info-circle"></i> Só é possível excluir categorias que <strong>não têm produtos vinculados</strong> e <strong>não têm subcategorias</strong>.
+    </p>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="btnCancelarExcluirCategoria"><i class="fas fa-times"></i> Cancelar</button>
+      <button class="btn btn-danger" id="btnConfirmarExcluirCategoria"><i class="fas fa-trash"></i> Excluir</button>
+    </div>
+  </div>
+</div>  
 <!-- MODAL RESTAURAR BACKUP -->
 <div class="modal" id="modalRestaurar">
   <div class="modal-box" style="max-width:640px">
