@@ -7034,7 +7034,7 @@ document.getElementById("btnSalvarEdit").onclick = async () => {
   try {
     const res = await api(`/produtos/${p.id}`, {
       method: "PUT",
-      body: JSON.stringify({ modelo, cor, preco_custo: custo, preco_venda_atacado: atacado, preco_venda_unitario: unitario, codigo_barras: codigo }),
+           body: JSON.stringify({ modelo, cor, preco_custo: custo, preco_venda_atacado: atacado, preco_venda_unitario: unitario, codigo_barras: codigo, categoria_id: categoriaId }), 
     });
     const d = await res.json();
     if (!d.success) throw new Error(d.error);
