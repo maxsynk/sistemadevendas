@@ -1,5 +1,6 @@
 /* ============================================ */
-/* MAX REPRESENTAÇÃO — MINI SITE v3.2           */
+/* MAX REPRESENTAÇÃO — MINI SITE v3.5           */
+/* Adicionado menu de categorias dinâmicas      */
 /* ============================================ */
 
 :root {
@@ -173,10 +174,70 @@ body.tema-claro .header { background: rgba(255, 255, 255, 0.9); }
 }
 
 /* ============================================ */
+/* BARRA DE CATEGORIAS                           */
+/* ============================================ */
+.cat-bar {
+  position: fixed;
+  top: 70px; /* altura do header */
+  left: 0; right: 0;
+  z-index: 90;
+  background: rgba(10, 6, 18, 0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  transition: background 0.3s;
+}
+body.tema-claro .cat-bar { background: rgba(255, 255, 255, 0.9); }
+
+.cat-bar-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 10px 20px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.cat-bar-inner::-webkit-scrollbar { display: none; }
+
+.cat-chip {
+  padding: 8px 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.cat-chip:hover {
+  border-color: var(--roxo);
+  color: var(--roxo);
+  background: rgba(168, 85, 247, 0.08);
+}
+.cat-chip.active {
+  background: linear-gradient(135deg, var(--roxo), var(--roxo-alt));
+  border-color: var(--roxo);
+  color: #fff;
+  box-shadow: 0 0 16px var(--roxo-glow);
+}
+.cat-chip i { font-size: 12px; }
+
+/* Quando não há categorias, esconde a barra */
+.cat-bar.vazia {
+  display: none;
+}
+
+/* ============================================ */
 /* HERO                                          */
 /* ============================================ */
 .hero {
-  padding: 130px 24px 70px; text-align: center;
+  padding: 190px 24px 70px; /* aumentado por causa da cat-bar */
+  text-align: center;
   background:
     radial-gradient(circle at 50% 20%, rgba(168, 85, 247, 0.15) 0%, transparent 50%),
     radial-gradient(circle at 50% 100%, rgba(217, 70, 239, 0.08) 0%, transparent 60%);
@@ -235,7 +296,7 @@ body.tema-claro .hero {
   padding: 8px 16px; border-radius: 20px;
 }
 
-/* GRID — agora 4-6 por linha em desktop */
+/* GRID — 4-6 por linha em desktop */
 .grid-produtos {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -971,7 +1032,12 @@ body.tema-claro .hero {
     right: -4px;
   }
 
-  .hero { padding: 100px 16px 50px; }
+  /* Ajusta barra de categorias no mobile */
+  .cat-bar { top: 62px; }
+  .cat-bar-inner { padding: 8px 14px; gap: 6px; }
+  .cat-chip { padding: 7px 14px; font-size: 12px; }
+
+  .hero { padding: 160px 16px 50px; }
   .hero-titulo { font-size: 34px; }
   .hero-sub { font-size: 14px; }
 
