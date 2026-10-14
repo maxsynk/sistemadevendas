@@ -9852,9 +9852,10 @@ async function iniciarApp() {
   renderizarGrade();
     restaurarColapsaveis();
   renderizarListaMsgModelos();
-  await carregarCategorias();
+    await carregarCategorias();
   carregarCategoriasSelect("prodCategoria");
   carregarCategoriasSelect("editCategoria");
+  await carregarTabelasPreco();
   await verificarStatus();
   await carregarDashboard();
   await carregarProdutos();
