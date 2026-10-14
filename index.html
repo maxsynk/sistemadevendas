@@ -9553,7 +9553,255 @@ document.getElementById("btnCancelarExcluirCategoria").onclick = () => {
   document.getElementById("modalExcluirCategoria").classList.remove("active");
   categoriaExcluindo = null;
 };
-document.getElementById("btnConfirmarExcluirCategoria").onclick = confirmarExcluirCategoria;  
+document.getElementById("btnConfirmarExcluirCategoria").onclick = confirmarExcluirCategoria;
+ // ============================================
+// FASE C — TABELAS DE PREÇO (REAJUSTE EM LOTE)
+// ============================================
+
+// Carrega produtos e agrupa por preço atacado
+async function carregarTabelasPreco() {
+  const wrap = document.getElementById("listaTabelasPreco");
+  if (!wrap) return;
+
+  wrap.innerHTML = '<div class="loader"></div>';
+
+  try {
+    const res = await api("/produtos");
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+
+    const produtos = data.produtos || [];
+
+    if (produtos.length === 0) {
+      wrap.innerHTML = `<div class="tabela-preco-vazio"><i class="fas fa-tags"></i>Nenhum produto cadastrado ainda.</div>`;
+      tabelasPrecoCache = [];
+      return;
+    }
+
+    // Agrupa por preço atacado
+    const grupos = {};
+    for (const p of produtos) {
+      const preco = parseFloat(p.preco_venda_atacado) || 0;
+      const chave = preco.toFixed(2);
+      if (!grupos[chave]) {
+        grupos[chave] = {
+          preco: preco,
+          preco_str: chave,
+          produtos: [],
+        };
+      }
+      grupos[chave].produtos.push({
+        id: p.id,
+        modelo: p.modelo,
+        cor: p.cor,
+        preco_atacado: preco,
+        preco_unitario: parseFloat(p.preco_venda_unitario) || 0,
+      });
+    }
+
+    // Ordena por preço crescente
+    tabelasPrecoCache = Object.values(grupos).sort((a, b) => a.preco - b.preco);
+
+    // Renderiza
+    let html = "";
+    for (const g of tabelasPrecoCache) {
+      const qtd = g.produtos.length;
+      html += `
+        <div class="tabela-preco-item">
+          <div class="preco-grupo">R$ ${formatarMoeda(g.preco).replace("R$ ", "")}</div>
+          <div class="preco-qtd">
+            <strong>${qtd}</strong>
+            ${qtd === 1 ? "produto" : "produtos"}
+          </div>
+          <button class="preco-btn" data-reajustar="${g.preco_str}">
+            <i class="fas fa-edit"></i> Reajustar
+          </button>
+        </div>
+      `;
+    }
+    wrap.innerHTML = html;
+
+    // Bind dos botões
+    wrap.querySelectorAll("[data-reajustar]").forEach(btn => {
+      btn.onclick = () => abrirModalReajuste(btn.dataset.reajustar);
+    });
+
+  } catch (e) {
+    console.error("[carregarTabelasPreco]", e);
+    wrap.innerHTML = `<div class="tabela-preco-vazio" style="color:var(--error)"><i class="fas fa-exclamation-triangle"></i>Erro ao carregar: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+// Abre o modal de reajuste para um grupo específico
+function abrirModalReajuste(precoStr) {
+  const grupo = tabelasPrecoCache.find(g => g.preco_str === precoStr);
+  if (!grupo) return;
+
+  grupoReajusteAtual = grupo;
+
+  // Atualiza info do modal
+  document.getElementById("reajusteGrupoAtual").textContent = `R$ ${formatarMoeda(grupo.preco).replace("R$ ", "")}`;
+  document.getElementById("reajusteQtdProdutos").textContent = grupo.produtos.length;
+
+  // Limpa campos
+  document.getElementById("reajusteNovoAtacado").value = "";
+  document.getElementById("reajusteNovoUnitario").value = "";
+
+  // Esconde exemplo
+  const exemploEl = document.getElementById("reajusteExemplo");
+  exemploEl.classList.remove("show");
+  exemploEl.innerHTML = "";
+
+  // Listeners pra atualizar o exemplo ao digitar
+  const inputAtacado = document.getElementById("reajusteNovoAtacado");
+  const inputUnitario = document.getElementById("reajusteNovoUnitario");
+  inputAtacado.oninput = atualizarExemploReajuste;
+  inputUnitario.oninput = atualizarExemploReajuste;
+
+  document.getElementById("modalReajustePreco").classList.add("active");
+  setTimeout(() => inputAtacado.focus(), 200);
+}
+
+// Atualiza o preview do que vai acontecer
+function atualizarExemploReajuste() {
+  if (!grupoReajusteAtual) return;
+
+  const exemploEl = document.getElementById("reajusteExemplo");
+  const atacadoStr = document.getElementById("reajusteNovoAtacado").value;
+  const unitarioStr = document.getElementById("reajusteNovoUnitario").value;
+
+  const novoAtacado = parseFloat(atacadoStr);
+  if (isNaN(novoAtacado)) {
+    exemploEl.classList.remove("show");
+    return;
+  }
+
+  const novoUnitarioFixo = unitarioStr.trim() !== "" ? parseFloat(unitarioStr) : null;
+  if (novoUnitarioFixo !== null && isNaN(novoUnitarioFixo)) {
+    exemploEl.classList.remove("show");
+    return;
+  }
+
+  // Pega os primeiros 3 produtos pra exemplo
+  const exemplos = grupoReajusteAtual.produtos.slice(0, 3);
+
+  let html = `<div class="titulo"><i class="fas fa-eye"></i> Pré-visualização</div>`;
+
+  for (const p of exemplos) {
+    let novoUnit;
+    if (novoUnitarioFixo !== null) {
+      novoUnit = novoUnitarioFixo;
+    } else {
+      // Proporcional: mantém a diferença
+      const dif = p.preco_unitario - p.preco_atacado;
+      novoUnit = novoAtacado + dif;
+      if (novoUnit < 0) novoUnit = 0;
+    }
+
+    html += `
+      <div class="linha">
+        <div class="produto">${escapeHtml(p.modelo)} — ${escapeHtml(p.cor)}</div>
+        <div class="precos">
+          R$ ${p.preco_atacado.toFixed(2).replace(".", ",")}
+          <span class="seta">→</span>
+          <span class="novo">R$ ${novoAtacado.toFixed(2).replace(".", ",")}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  const total = grupoReajusteAtual.produtos.length;
+  if (total > 3) {
+    html += `<div class="mais">+ ${total - 3} outros produtos</div>`;
+  }
+
+  exemploEl.innerHTML = html;
+  exemploEl.classList.add("show");
+}
+
+// Aplica o reajuste no servidor
+async function aplicarReajuste() {
+  if (!grupoReajusteAtual) return;
+
+  const atacadoStr = document.getElementById("reajusteNovoAtacado").value;
+  const unitarioStr = document.getElementById("reajusteNovoUnitario").value;
+
+  const novoAtacado = parseFloat(atacadoStr);
+  if (isNaN(novoAtacado) || novoAtacado < 0) {
+    toast("Preencha um preço atacado válido", "error");
+    document.getElementById("reajusteNovoAtacado").focus();
+    return;
+  }
+
+  let novoUnitario = null;
+  if (unitarioStr.trim() !== "") {
+    novoUnitario = parseFloat(unitarioStr);
+    if (isNaN(novoUnitario) || novoUnitario < 0) {
+      toast("Preço unitário inválido", "error");
+      document.getElementById("reajusteNovoUnitario").focus();
+      return;
+    }
+  }
+
+  const qtd = grupoReajusteAtual.produtos.length;
+  const msgConfirma = `Vai reajustar ${qtd} ${qtd === 1 ? "produto" : "produtos"}:\n\n` +
+    `Preço atacado: R$ ${grupoReajusteAtual.preco.toFixed(2).replace(".", ",")} → R$ ${novoAtacado.toFixed(2).replace(".", ",")}\n` +
+    (novoUnitario !== null
+      ? `Preço unitário: TODOS vão virar R$ ${novoUnitario.toFixed(2).replace(".", ",")}\n`
+      : `Preço unitário: PROPORCIONAL (mantém diferença)\n`) +
+    `\nConfirmar?`;
+
+  if (!confirm(msgConfirma)) return;
+
+  const btn = document.getElementById("btnConfirmarReajuste");
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aplicando...';
+
+  try {
+    const ids = grupoReajusteAtual.produtos.map(p => p.id);
+
+    const res = await api("/produtos/reajustar-preco", {
+      method: "POST",
+      body: JSON.stringify({
+        produto_ids: ids,
+        novo_atacado: novoAtacado,
+        novo_unitario: novoUnitario,
+      }),
+    });
+
+    const d = await res.json();
+    if (!d.success) throw new Error(d.error);
+
+    toast(`✅ ${d.atualizados} ${d.atualizados === 1 ? "produto reajustado" : "produtos reajustados"}!`);
+    document.getElementById("modalReajustePreco").classList.remove("active");
+    grupoReajusteAtual = null;
+
+    // Recarrega a lista
+    await carregarTabelasPreco();
+
+    // Recarrega produtos (pra refletir em outras telas)
+    await carregarProdutos();
+    await carregarDashboard();
+  } catch (e) {
+    toast("Erro: " + e.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-check"></i> Aplicar Reajuste';
+  }
+}
+
+// Listeners dos botões do modal
+document.getElementById("btnAtualizarTabelasPreco").onclick = () => {
+  carregarTabelasPreco();
+  toast("Atualizando lista...", "info");
+};
+
+document.getElementById("btnCancelarReajuste").onclick = () => {
+  document.getElementById("modalReajustePreco").classList.remove("active");
+  grupoReajusteAtual = null;
+};
+
+document.getElementById("btnConfirmarReajuste").onclick = aplicarReajuste; 
 // REFRESH
 // Botão "Catálogo" no header
 document.getElementById("btnAbrirCatalogo").onclick = () => {
