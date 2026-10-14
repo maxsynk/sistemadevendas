@@ -4600,6 +4600,46 @@
     </div>
   </div>
 </div>  
+ <!-- MODAL REAJUSTAR PREÇO -->
+<div class="modal" id="modalReajustePreco">
+  <div class="modal-box" style="max-width:600px">
+    <h3><i class="fas fa-tags"></i> Reajustar Preço em Lote</h3>
+
+    <div class="reajuste-info">
+      <div class="reajuste-info-item">
+        <div class="lbl">Grupo atual</div>
+        <div class="val" id="reajusteGrupoAtual">R$ 0,00</div>
+      </div>
+      <div class="reajuste-info-item">
+        <div class="lbl">Produtos afetados</div>
+        <div class="val" id="reajusteQtdProdutos">0</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label>Novo Preço Atacado *</label>
+      <input type="number" step="0.01" id="reajusteNovoAtacado" placeholder="0.00" min="0">
+      <small style="font-size:11px;color:var(--text-dim);margin-top:6px;display:block">
+        <i class="fas fa-info-circle"></i> Todos os produtos deste grupo vão receber este preço.
+      </small>
+    </div>
+
+    <div class="form-row">
+      <label>Novo Preço Unitário (opcional)</label>
+      <input type="number" step="0.01" id="reajusteNovoUnitario" placeholder="Deixe vazio pra manter proporcional" min="0">
+      <small style="font-size:11px;color:var(--text-dim);margin-top:6px;display:block">
+        <i class="fas fa-info-circle"></i> Vazio = mantém a <strong>diferença</strong> entre atacado e unitário de cada produto. Preenchido = todos os unitários viram esse valor.
+      </small>
+    </div>
+
+    <div class="reajuste-exemplo" id="reajusteExemplo"></div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="btnCancelarReajuste"><i class="fas fa-times"></i> Cancelar</button>
+      <button class="btn btn-primary" id="btnConfirmarReajuste"><i class="fas fa-check"></i> Aplicar Reajuste</button>
+    </div>
+  </div>
+</div> 
 <!-- MODAL NOVO USUÁRIO -->
 <div class="modal" id="modalUsuario">
   <div class="modal-box" style="max-width:640px">
