@@ -9831,10 +9831,11 @@ document.getElementById("btnRefresh").onclick = async () => {
     await carregarClientesPedido();
     await carregarProdutosPedido();
   }
-    if (document.getElementById("aba-config").classList.contains("active")) {
+       if (document.getElementById("aba-config").classList.contains("active")) {
     await carregarTransportadorasConfig();
     await carregarCategorias();
-    renderizarListaMsgModelos();
+    await carregarTabelasPreco();
+    renderizarListaMsgModelos(); 
     if (usuarioLogado.perfil === "admin") {
       await carregarUsuarios();
       await carregarAuditoria();
