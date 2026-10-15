@@ -4296,6 +4296,49 @@
     </div>
     </div>
     </div>
+    <div class="aba" id="aba-catalogo-dia">
+    <div class="card">
+      <h3><i class="fas fa-camera"></i> Catálogo do Dia</h3>
+
+      <div class="catalogo-dia-intro">
+        <p>
+          Gera <strong>1 imagem por produto</strong> com a foto, referência e numerações disponíveis.
+          Depois baixa tudo em ZIP pra você enviar no grupo de WhatsApp dos seus clientes.
+        </p>
+      </div>
+
+      <div class="catalogo-dia-filtros">
+        <div class="form-row">
+          <label>Filtrar por Categoria (opcional)</label>
+          <select id="catDiaCategoria">
+            <option value="">— Todas as categorias —</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label>Filtrar por Faixa de Preço (opcional)</label>
+          <select id="catDiaPreco">
+            <option value="">— Todos os preços —</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="catalogo-dia-acoes">
+        <button class="btn btn-primary btn-lg" id="btnGerarCatalogoDia">
+          <i class="fas fa-download"></i> Gerar e Baixar ZIP
+        </button>
+        <div class="catalogo-dia-info" id="catDiaPreviewInfo"></div>
+      </div>
+
+      <div class="catalogo-dia-progresso" id="catDiaProgresso" style="display:none">
+        <div class="cat-dia-barra-wrap">
+          <div class="cat-dia-barra" id="catDiaBarra"></div>
+        </div>
+        <div class="cat-dia-status" id="catDiaStatus">Preparando...</div>
+      </div>
+
+    </div>
+  </div>
   <div class="aba" id="aba-relatorios">
     <div class="card">
       <h3><i class="fas fa-file-alt"></i> Relatórios</h3>
