@@ -5937,7 +5937,8 @@ function irParaAba(nomeAba) {
       carregarBackups();
     }
   }
-  if (nomeAba === "relatorios") carregarRelatorio(relatorioAtual);
+    if (nomeAba === "relatorios") carregarRelatorio(relatorioAtual);
+  if (nomeAba === "catalogo-dia") carregarFiltrosCatalogoDia();
 }
 document.querySelectorAll(".tab").forEach(btn => { btn.onclick = () => irParaAba(btn.dataset.aba); });
 
