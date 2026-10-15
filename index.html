@@ -9694,7 +9694,289 @@ document.getElementById("btnCancelarExcluirCategoria").onclick = () => {
   categoriaExcluindo = null;
 };
 document.getElementById("btnConfirmarExcluirCategoria").onclick = confirmarExcluirCategoria;
- // ============================================
+// ============================================
+// CATÁLOGO DO DIA — Geração das imagens (Canvas + ZIP)
+// ============================================
+
+// Atualiza a barra de progresso
+function atualizarProgressoCatalogoDia(gerados, total, mensagem) {
+  const wrap = document.getElementById("catDiaProgresso");
+  const barra = document.getElementById("catDiaBarra");
+  const status = document.getElementById("catDiaStatus");
+
+  if (wrap) wrap.style.display = "block";
+  if (barra && total > 0) {
+    const pct = Math.round((gerados / total) * 100);
+    barra.style.width = pct + "%";
+  }
+  if (status && mensagem) status.textContent = mensagem;
+}
+
+// Esconde a barra de progresso
+function esconderProgressoCatalogoDia() {
+  const wrap = document.getElementById("catDiaProgresso");
+  if (wrap) wrap.style.display = "none";
+  const barra = document.getElementById("catDiaBarra");
+  if (barra) barra.style.width = "0%";
+}
+
+// Carrega uma imagem via fetch (pra evitar problema de CORS no canvas)
+async function carregarImagemComoDataURL(url) {
+  const res = await fetch(url, { mode: "cors" });
+  if (!res.ok) throw new Error(`HTTP ${res.status} ao baixar foto`);
+  const blob = await res.blob();
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Erro ao ler blob da foto"));
+    reader.readAsDataURL(blob);
+  });
+}
+
+// Carrega imagem a partir de um dataURL (HTMLImageElement)
+function imagemDeDataURL(dataURL) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("Erro ao carregar imagem no elemento"));
+    img.src = dataURL;
+  });
+}
+
+// Desenha a imagem final no canvas (1080x1080)
+function desenharImagemProduto(imgFoto, produto, variacoesDisponiveis) {
+  const SIZE = 1080;
+  const FOOTER_H = 200;
+  const FOTO_H = SIZE - FOOTER_H;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = SIZE;
+  canvas.height = SIZE;
+  const ctx = canvas.getContext("2d");
+
+  // Fundo branco
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Foto do produto (recortada pra caber em 1080x880 mantendo proporção)
+  if (imgFoto) {
+    const escala = Math.min(SIZE / imgFoto.width, FOTO_H / imgFoto.height);
+    const w = imgFoto.width * escala;
+    const h = imgFoto.height * escala;
+    const x = (SIZE - w) / 2;
+    const y = (FOTO_H - h) / 2;
+    ctx.drawImage(imgFoto, x, y, w, h);
+  } else {
+    // Sem foto: desenha um placeholder cinza
+    ctx.fillStyle = "#e5e7eb";
+    ctx.fillRect(0, 0, SIZE, FOTO_H);
+    ctx.fillStyle = "#9ca3af";
+    ctx.font = "bold 42px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Sem foto", SIZE / 2, FOTO_H / 2);
+  }
+
+  // Faixa inferior (fundo escuro)
+  ctx.fillStyle = "#0a0612";
+  ctx.fillRect(0, FOTO_H, SIZE, FOOTER_H);
+
+  // Borda fina roxa entre a foto e a faixa
+  ctx.fillStyle = "#a855f7";
+  ctx.fillRect(0, FOTO_H, SIZE, 6);
+
+  // REF (código de barras)
+  const ref = (produto.codigo_barras || "").toUpperCase();
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 34px Arial";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  const refTexto = ref ? `REF: ${ref}` : "REF: —";
+  ctx.fillText(refTexto, 40, FOTO_H + 48);
+
+  // Linha separadora
+  ctx.fillStyle = "rgba(168,85,247,0.3)";
+  ctx.fillRect(40, FOTO_H + 82, SIZE - 80, 2);
+
+  // Numerações disponíveis
+  if (variacoesDisponiveis.length === 0) {
+    ctx.fillStyle = "#9a94a8";
+    ctx.font = "24px Arial";
+    ctx.fillText("Sem numeração disponível", 40, FOTO_H + 120);
+  } else {
+    // Numeros em "chips" centralizados
+    const nums = variacoesDisponiveis.map(v => String(v.numeracao));
+    const chipW = 92;
+    const chipH = 68;
+    const gap = 12;
+    const totalW = nums.length * chipW + (nums.length - 1) * gap;
+    let x = (SIZE - totalW) / 2;
+    const y = FOTO_H + 108;
+
+    for (const n of nums) {
+      // Fundo do chip
+      ctx.fillStyle = "#22c55e";
+      roundRect(ctx, x, y, chipW, chipH, 12);
+      ctx.fill();
+
+      // Texto da numeração
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 40px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(n, x + chipW / 2, y + chipH / 2 + 2);
+
+      x += chipW + gap;
+    }
+  }
+
+  return canvas;
+}
+
+// Helper pra desenhar retângulo arredondado
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// Função principal — gera o catálogo
+async function gerarCatalogoDia() {
+  const btn = document.getElementById("btnGerarCatalogoDia");
+  const filtroCategoria = document.getElementById("catDiaCategoria").value;
+  const filtroPreco = document.getElementById("catDiaPreco").value;
+
+  // Valida JSZip
+  if (typeof JSZip === "undefined") {
+    toast("Erro: biblioteca ZIP não carregou. Recarregue a página.", "error");
+    return;
+  }
+
+  // Filtra os produtos
+  let lista = produtosCache.slice();
+
+  if (filtroCategoria) {
+    lista = lista.filter(p => String(p.categoria_id) === String(filtroCategoria));
+  }
+  if (filtroPreco) {
+    lista = lista.filter(p => {
+      const preco = parseFloat(p.preco_venda_atacado) || 0;
+      return preco.toFixed(2) === filtroPreco;
+    });
+  }
+
+  // Remove produtos sem foto
+  const comFoto = lista.filter(p => p.foto_url);
+
+  if (comFoto.length === 0) {
+    toast("Nenhum produto neste filtro tem foto cadastrada", "error");
+    return;
+  }
+
+  // Desabilita botão durante geração
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando...';
+
+  // Mostra barra de progresso
+  atualizarProgressoCatalogoDia(0, comFoto.length, `Preparando... 0/${comFoto.length}`);
+
+  try {
+    // 1) Busca as variações de todos os produtos (com estoque > 0)
+    const variacoesPorProduto = {};
+    for (const p of comFoto) {
+      const res = await api(`/variacoes?produto_id=${p.id}`);
+      const data = await res.json();
+      if (data.success) {
+        variacoesPorProduto[p.id] = data.variacoes
+          .filter(v => (v.estoque_atual || 0) > 0)
+          .sort((a, b) => a.numeracao - b.numeracao);
+      }
+    }
+
+    // 2) Cria o ZIP
+    const zip = new JSZip();
+    const pasta = zip.folder("catalogo");
+
+    let gerados = 0;
+    let erros = 0;
+
+    // 3) Loop nos produtos
+    for (const p of comFoto) {
+      try {
+        // Baixa a foto
+        const dataURL = await carregarImagemComoDataURL(p.foto_url);
+        const img = await imagemDeDataURL(dataURL);
+
+        // Pega as numerações disponíveis
+        const varsDisp = variacoesPorProduto[p.id] || [];
+
+        // Desenha no canvas
+        const canvas = desenharImagemProduto(img, p, varsDisp);
+
+        // Exporta como JPG
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.75));
+
+        // Nome do arquivo
+        const ref = (p.codigo_barras || `produto-${p.id}`).toLowerCase().replace(/[^a-z0-9-]/g, "-");
+        pasta.file(`${ref}.jpg`, blob);
+
+        gerados++;
+
+        // Atualiza progresso a cada 3 produtos (evita sobrecarga de render)
+        if (gerados % 3 === 0 || gerados === comFoto.length) {
+          atualizarProgressoCatalogoDia(gerados, comFoto.length, `Gerando imagens... ${gerados}/${comFoto.length}`);
+          // Deixa o navegador respirar
+          await new Promise(r => setTimeout(r, 0));
+        }
+      } catch (err) {
+        console.warn(`Erro no produto ${p.id} (${p.modelo}):`, err.message);
+        erros++;
+        gerados++;
+        atualizarProgressoCatalogoDia(gerados, comFoto.length, `Gerando imagens... ${gerados}/${comFoto.length} (${erros} erros)`);
+      }
+    }
+
+    // 4) Gera o ZIP
+    atualizarProgressoCatalogoDia(comFoto.length, comFoto.length, "Compactando ZIP...");
+
+    const zipBlob = await zip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });
+
+    // 5) Nome do arquivo
+    const hoje = new Date();
+    const dataStr = hoje.toISOString().split("T")[0];
+    const nomeZip = `catalogo-do-dia-${dataStr}.zip`;
+
+    // 6) Baixa
+    saveAs(zipBlob, nomeZip);
+
+    // 7) Feedback final
+    let msgFinal = `✅ ${gerados - erros} imagens geradas!`;
+    if (erros > 0) msgFinal += ` (${erros} com erro)`;
+
+    atualizarProgressoCatalogoDia(comFoto.length, comFoto.length, msgFinal);
+    toast(msgFinal);
+
+    // Esconde a barra depois de 5s
+    setTimeout(() => esconderProgressoCatalogoDia(), 5000);
+
+  } catch (e) {
+    console.error("[gerarCatalogoDia]", e);
+    atualizarProgressoCatalogoDia(0, 0, "❌ Erro: " + e.message);
+    toast("Erro ao gerar catálogo: " + e.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-download"></i> Gerar e Baixar ZIP';
+  }
+} 
+  // ============================================
 // CATÁLOGO DO DIA — Filtros e Preview
 // ============================================
 
