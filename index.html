@@ -9695,6 +9695,131 @@ document.getElementById("btnCancelarExcluirCategoria").onclick = () => {
 };
 document.getElementById("btnConfirmarExcluirCategoria").onclick = confirmarExcluirCategoria;
  // ============================================
+// CATÁLOGO DO DIA — Filtros e Preview
+// ============================================
+
+// Popula os dropdowns de categoria e preço
+async function carregarFiltrosCatalogoDia() {
+  const selCategoria = document.getElementById("catDiaCategoria");
+  const selPreco = document.getElementById("catDiaPreco");
+  const infoEl = document.getElementById("catDiaPreviewInfo");
+
+  if (!selCategoria || !selPreco) return;
+
+  try {
+    // Busca produtos (se ainda não tem no cache)
+    if (produtosCache.length === 0) {
+      const res = await api("/produtos");
+      const data = await res.json();
+      if (data.success) produtosCache = data.produtos || [];
+    }
+
+    // 1) Preenche categorias (se ainda não tiver)
+    if (selCategoria.options.length <= 1) {
+      // Busca categorias ativas (já tem em categoriasCache, mas garante)
+      if (categoriasCache.length === 0) {
+        await carregarCategorias();
+      }
+
+      const pais = categoriasCache.filter(c => !c.parent_id && c.ativo === 1);
+      const filhasPorPai = {};
+      for (const c of categoriasCache) {
+        if (c.parent_id && c.ativo === 1) {
+          if (!filhasPorPai[c.parent_id]) filhasPorPai[c.parent_id] = [];
+          filhasPorPai[c.parent_id].push(c);
+        }
+      }
+
+      let html = '<option value="">— Todas as categorias —</option>';
+
+      for (const pai of pais) {
+        const filhas = (filhasPorPai[pai.id] || []).sort((a,b) => (a.ordem || 0) - (b.ordem || 0));
+        if (filhas.length > 0) {
+          html += `<optgroup label="${escapeHtml(pai.nome)}">`;
+          for (const f of filhas) {
+            html += `<option value="${f.id}">${escapeHtml(f.nome)}</option>`;
+          }
+          html += `</optgroup>`;
+        } else {
+          html += `<option value="${pai.id}">${escapeHtml(pai.nome)}</option>`;
+        }
+      }
+      selCategoria.innerHTML = html;
+    }
+
+    // 2) Preenche faixas de preço únicas
+    if (selPreco.options.length <= 1) {
+      const precos = {};
+      for (const p of produtosCache) {
+        const preco = parseFloat(p.preco_venda_atacado) || 0;
+        const chave = preco.toFixed(2);
+        precos[chave] = preco;
+      }
+      const listaPrecos = Object.values(precos).sort((a,b) => a - b);
+
+      let html = '<option value="">— Todos os preços —</option>';
+      for (const preco of listaPrecos) {
+        const precoStr = "R$ " + preco.toFixed(2).replace(".", ",");
+        html += `<option value="${preco.toFixed(2)}">${precoStr}</option>`;
+      }
+      selPreco.innerHTML = html;
+    }
+
+    // 3) Atualiza contagem de produtos na preview
+    atualizarPreviewCatalogoDia();
+
+    // 4) Listeners dos filtros (adiciona só 1 vez)
+    if (!selCategoria.dataset.listenerAdded) {
+      selCategoria.addEventListener("change", atualizarPreviewCatalogoDia);
+      selCategoria.dataset.listenerAdded = "1";
+    }
+    if (!selPreco.dataset.listenerAdded) {
+      selPreco.addEventListener("change", atualizarPreviewCatalogoDia);
+      selPreco.dataset.listenerAdded = "1";
+    }
+
+  } catch (e) {
+    console.error("[carregarFiltrosCatalogoDia]", e);
+    if (infoEl) infoEl.textContent = "Erro ao carregar filtros: " + e.message;
+  }
+}
+
+// Atualiza a contagem "X produtos serão gerados"
+function atualizarPreviewCatalogoDia() {
+  const infoEl = document.getElementById("catDiaPreviewInfo");
+  if (!infoEl) return;
+
+  const filtroCategoria = document.getElementById("catDiaCategoria").value;
+  const filtroPreco = document.getElementById("catDiaPreco").value;
+
+  let lista = produtosCache.slice();
+
+  if (filtroCategoria) {
+    lista = lista.filter(p => String(p.categoria_id) === String(filtroCategoria));
+  }
+  if (filtroPreco) {
+    lista = lista.filter(p => {
+      const preco = parseFloat(p.preco_venda_atacado) || 0;
+      return preco.toFixed(2) === filtroPreco;
+    });
+  }
+
+  // Remove produtos sem foto
+  const comFoto = lista.filter(p => p.foto_url);
+  const semFoto = lista.length - comFoto.length;
+
+  if (comFoto.length === 0) {
+    infoEl.innerHTML = `<span style="color:var(--warning)"><i class="fas fa-exclamation-triangle"></i> Nenhum produto neste filtro</span>`;
+    return;
+  }
+
+  let html = `<strong>${comFoto.length}</strong> ${comFoto.length === 1 ? "produto será gerado" : "produtos serão gerados"}`;
+  if (semFoto > 0) {
+    html += ` <span style="color:var(--warning)">(${semFoto} sem foto — pulados)</span>`;
+  }
+  infoEl.innerHTML = html;
+} 
+ // ============================================
 // FASE C — TABELAS DE PREÇO (REAJUSTE EM LOTE)
 // ============================================
 
