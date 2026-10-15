@@ -3365,6 +3365,98 @@
     margin: 30px auto;
   }
   /* ============================================ */
+/* CATÁLOGO DO DIA                              */
+/* ============================================ */
+
+.catalogo-dia-intro {
+  padding: 14px 18px;
+  background: rgba(56,189,248,0.06);
+  border-left: 4px solid var(--info);
+  border-radius: 10px;
+  margin-bottom: 24px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+.catalogo-dia-intro strong { color: var(--text-primary); }
+
+.catalogo-dia-filtros {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.catalogo-dia-acoes {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.btn-lg {
+  padding: 16px 32px;
+  font-size: 14px;
+}
+
+.catalogo-dia-info {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.catalogo-dia-info strong {
+  color: var(--neon);
+  font-weight: 800;
+  font-size: 15px;
+}
+
+.catalogo-dia-progresso {
+  padding: 20px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-top: 16px;
+}
+
+.cat-dia-barra-wrap {
+  height: 24px;
+  background: rgba(0,0,0,0.5);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  position: relative;
+}
+
+.cat-dia-barra {
+  height: 100%;
+  background: linear-gradient(90deg, var(--neon), var(--neon-alt));
+  width: 0%;
+  transition: width 0.3s ease-out;
+  box-shadow: 0 0 20px var(--neon-glow);
+}
+
+.cat-dia-status {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+@media (max-width: 700px) {
+  .catalogo-dia-filtros {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .catalogo-dia-acoes {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .catalogo-dia-acoes .btn-lg {
+    width: 100%;
+    justify-content: center;
+  }
+}
+  /* ============================================ */
 /* FASE C — TABELAS DE PREÇO                    */
 /* ============================================ */
 
@@ -3915,7 +4007,7 @@
   </div>
   <div class="spacer"></div>
   <button class="btn-text install" id="btnInstalar"><i class="fas fa-download"></i> Instalar App</button>
-  <button class="btn-text" id="btnAbrirCatalogo"><i class="fas fa-shopping-bag"></i> Catálogo</button>
+  <button class="btn-text" id="btnAbrirCatalogo"><i class="fas fa-shopping-bag"></i> Site</button>
   <button class="btn-text" id="btnRefresh"><i class="fas fa-sync-alt"></i> Atualizar</button>
   <button class="btn-text danger" id="btnSair"><i class="fas fa-sign-out-alt"></i> Sair</button>
   <button class="hamburger" id="btnMenu" aria-label="Menu">
