@@ -5242,7 +5242,7 @@
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "4.0";
+const APP_VERSION = "4.1";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -10336,7 +10336,9 @@ async function aplicarReajuste() {
     btn.innerHTML = '<i class="fas fa-check"></i> Aplicar Reajuste';
   }
 }
-
+// Listener do botão "Gerar e Baixar ZIP" (Catálogo do Dia)
+document.getElementById("btnGerarCatalogoDia").onclick = gerarCatalogoDia;
+  
 // Listeners dos botões do modal
 document.getElementById("btnAtualizarTabelasPreco").onclick = () => {
   carregarTabelasPreco();
