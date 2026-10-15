@@ -9952,6 +9952,11 @@ document.getElementById("drawerCatalogo").onclick = () => {
   fecharSidebar();
   window.open("https://maxsynk.github.io/sistemadevendas/site/", "_blank");
 };
+// Botão "Catálogo do Dia" no menu lateral
+document.getElementById("drawerCatalogoDia").onclick = () => {
+  fecharSidebar();
+  irParaAba("catalogo-dia");
+};  
 
 document.getElementById("btnRefresh").onclick = async () => {  
   toast("Atualizando...", "info");
