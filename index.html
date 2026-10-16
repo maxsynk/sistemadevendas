@@ -8234,8 +8234,33 @@ function abrirEdicaoCliente(id) {
   document.getElementById("ecBairro").value = c.bairro || "";
   document.getElementById("ecCidade").value = c.cidade || "";
   document.getElementById("ecUf").value = c.uf || "";
-  document.getElementById("ecPontoReferencia").value = c.ponto_referencia || "";
+    document.getElementById("ecPontoReferencia").value = c.ponto_referencia || "";
   document.getElementById("ecObs").value = c.observacoes || "";
+
+  // Preenche revendedor
+  clienteEditandoEhRevendedorAtual = c.is_revendedor === 1;
+  const radioTipo = c.is_revendedor ? "revendedor" : "comum";
+  const radio = document.querySelector(`input[name="ecTipoCliente"][value="${radioTipo}"]`);
+  if (radio) radio.checked = true;
+
+  const wrapRev = document.getElementById("ecRevendedorWrap");
+  const wrapSenha = document.getElementById("ecSenhaAdminWrap");
+
+  if (c.is_revendedor) {
+    wrapRev.style.display = "block";
+    wrapSenha.style.display = "block";
+    document.getElementById("ecDescontoTipo").value = c.desconto_tipo || "fixo";
+    document.getElementById("ecDescontoValor").value = c.desconto_valor || 0;
+    document.getElementById("ecChaveRevendedor").value = c.chave_revendedor || "";
+    document.getElementById("ecSenhaAdmin").value = "";
+  } else {
+    wrapRev.style.display = "none";
+    document.getElementById("ecDescontoTipo").value = "fixo";
+    document.getElementById("ecDescontoValor").value = "";
+    document.getElementById("ecChaveRevendedor").value = "";
+    document.getElementById("ecSenhaAdmin").value = "";
+  }
+
   document.getElementById("modalEditarCliente").classList.add("active");
 }
 document.getElementById("btnCancelarCliente").onclick = () => {
