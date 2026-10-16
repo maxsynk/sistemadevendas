@@ -1,7 +1,7 @@
 // ============================================
-// MAX REPRESENTAÇÃO — MINI SITE v3.5
+// MAX REPRESENTAÇÃO — SITE v3.6
 // script.js
-// Adicionado menu de categorias dinâmicas
+// Adicionado sistema de revendedores + descontos
 // ============================================
 
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
@@ -469,6 +469,8 @@ function limparCarrinho() {
 // ============================================
 let chavePedidoGerada = null;
 let dadosUltimoPedido = null;
+let descontoRevendedor = null; // { valido, desconto_tipo, desconto_valor, nome }
+let validandoChaveTimer = null;
 
 function abrirFormFechamento() {
   if (!carrinho || carrinho.length === 0) {
@@ -477,11 +479,14 @@ function abrirFormFechamento() {
 
   chavePedidoGerada = null;
   dadosUltimoPedido = null;
+  descontoRevendedor = null;
   document.getElementById("formFechamento").style.display = "flex";
   document.getElementById("telaSucesso").style.display = "none";
   document.getElementById("fpNome").value = "";
   document.getElementById("fpTelefone").value = "";
   document.getElementById("fpCidade").value = "";
+  document.getElementById("fpChaveRevendedor").value = "";
+  document.getElementById("descontoAviso").style.display = "none";
 
   const totalPares = carrinho.reduce((s, c) => s + c.qtd, 0);
   const totalValor = carrinho.reduce((s, c) => s + (c.qtd * c.preco), 0);
