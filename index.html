@@ -11513,6 +11513,17 @@ function renderizarDetalhePedidoSite(p) {
     avisoFaltaHTML = `<div class="detalhe-site-status sem"><i class="fas fa-times-circle"></i><span>Nenhum item tem estoque. Não é possível aprovar.</span></div>`;
   }
 
+    // Verifica se tem desconto de revendedor
+  const temDesconto = p.desconto_aplicado && parseFloat(p.desconto_aplicado) > 0;
+  const valorOriginal = parseFloat(p.valor_original) || parseFloat(p.valor_estimado) || 0;
+  const valorFinal = parseFloat(p.valor_estimado) || 0;
+  const descontoVal = parseFloat(p.desconto_aplicado) || 0;
+  const revendedor = p.revendedor || null;
+
+  const badgeRevendedor = revendedor
+    ? `<span class="badge-revendedor"><i class="fas fa-user-tie"></i> REVENDEDOR</span>`
+    : "";
+
   conteudo.innerHTML = `
     <div class="detalhe-site-header">
       <div class="chave-titulo">Chave do Pedido</div>
@@ -11523,7 +11534,7 @@ function renderizarDetalhePedidoSite(p) {
 
     <div class="detalhe-site-cliente">
       <h5><i class="fas fa-user"></i> Dados do Cliente</h5>
-      <div class="detalhe-row"><span class="label">Nome</span><span class="valor">${escapeHtml(p.nome_cliente)}</span></div>
+      <div class="detalhe-row"><span class="label">Nome</span><span class="valor">${escapeHtml(p.nome_cliente)} ${badgeRevendedor}</span></div>
       <div class="detalhe-row"><span class="label">WhatsApp</span><span class="valor">${escapeHtml(p.telefone_cliente)}</span></div>
       ${p.cidade_estado ? `<div class="detalhe-row"><span class="label">Cidade/UF</span><span class="valor">${escapeHtml(p.cidade_estado)}</span></div>` : ""}
       <div class="detalhe-row"><span class="label">Recebido em</span><span class="valor">${formatarDataHora(p.criado_em)}</span></div>
@@ -11534,13 +11545,19 @@ function renderizarDetalhePedidoSite(p) {
       ${itensHTML || '<p style="color:var(--text-dim)">Sem itens</p>'}
     </div>
 
-    <div class="detalhe-site-cliente">
+      <div class="detalhe-site-cliente">
       <h5><i class="fas fa-dollar-sign"></i> Resumo</h5>
       <div class="detalhe-row"><span class="label">Total de pares</span><span class="valor">${p.total_pares}</span></div>
-      <div class="detalhe-row"><span class="label">Valor estimado</span><span class="valor" style="color:var(--neon);font-size:16px;font-weight:800">${formatarMoeda(p.valor_estimado)}</span></div>
+      ${temDesconto ? `
+        <div class="detalhe-row"><span class="label">Valor original</span><span class="valor" style="text-decoration:line-through;color:var(--text-dim)">${formatarMoeda(valorOriginal)}</span></div>
+        <div class="detalhe-row"><span class="label" style="color:var(--success)">💼 Desconto revendedor</span><span class="valor" style="color:var(--success)">- ${formatarMoeda(descontoVal)}</span></div>
+        <div class="detalhe-row" style="border-top:2px solid var(--neon);padding-top:12px"><span class="label" style="color:var(--neon);font-weight:800;font-size:14px">VALOR FINAL</span><span class="valor" style="color:var(--neon);font-size:20px;font-weight:900">${formatarMoeda(valorFinal)}</span></div>
+      ` : `
+        <div class="detalhe-row"><span class="label">Valor estimado</span><span class="valor" style="color:var(--neon);font-size:16px;font-weight:800">${formatarMoeda(valorFinal)}</span></div>
+      `}
       ${avisoFaltaHTML}
     </div>
-  `;
+  `;  
 
   acoes.innerHTML = "";
 
