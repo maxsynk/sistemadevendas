@@ -8180,12 +8180,19 @@ async function carregarClientes() {
       const enderecoCompleto = [c.endereco, c.numero].filter(Boolean).join(", ");
       const cidadeUf = [c.cidade, c.uf].filter(Boolean).join("/");
       const tel = telLimpo(c.telefone);
+            const badgeRev = c.is_revendedor
+        ? `<span class="badge-revendedor"><i class="fas fa-user-tie"></i> REVENDEDOR</span>`
+        : "";
+      const infoDesconto = c.is_revendedor
+        ? `<div class="cliente-desconto-info"><i class="fas fa-percent"></i> ${c.desconto_tipo === "percentual" ? `${c.desconto_valor}%` : `R$ ${parseFloat(c.desconto_valor).toFixed(2).replace(".", ",")}/par`} de desconto</div>`
+        : "";
       const div = document.createElement("div");
       div.className = "pedido-item";
       div.innerHTML = `
         <div style="width:20px"></div>
         <div class="info">
-          <h4>${c.nome}</h4>
+          <h4>${c.nome}${badgeRev}</h4>
+          ${infoDesconto}
           <div class="meta">
             ${c.cpf ? `<span><i class="fas fa-id-card"></i> ${c.cpf}</span>` : ''}
             ${c.telefone ? `<span><i class="fas fa-phone"></i> ${c.telefone}</span>` : ''}
