@@ -8128,9 +8128,16 @@ document.getElementById("btnSalvarCliente").onclick = async () => {
     });
     const d = await res.json();
     if (!d.success) throw new Error(d.error);
-    toast("Cliente cadastrado!");
+       toast(isRevendedor ? "💼 Revendedor cadastrado!" : "Cliente cadastrado!");
     ["cliNome","cliCpf","cliTelefone","cliCep","cliEndereco","cliNumero","cliBairro","cliCidade","cliUf","cliPontoReferencia","cliObs"].forEach(id => document.getElementById(id).value = "");
-    await carregarClientes();
+    // Limpa os campos de revendedor
+    document.querySelector('input[name="cliTipoCliente"][value="comum"]').checked = true;
+    document.getElementById("cliRevendedorWrap").style.display = "none";
+    document.getElementById("cliDescontoTipo").value = "fixo";
+    document.getElementById("cliDescontoValor").value = "";
+    document.getElementById("cliChaveRevendedor").value = "";
+    document.getElementById("cliSenhaAdmin").value = "";
+    await carregarClientes(); 
   } catch (e) { toast("Erro: " + e.message, "error"); }
 };
   // ============================================
