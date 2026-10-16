@@ -8263,6 +8263,42 @@ function abrirEdicaoCliente(id) {
 
   document.getElementById("modalEditarCliente").classList.add("active");
 }
+// ============================================
+// Listeners dos radios (Edição)
+// ============================================
+document.querySelectorAll('input[name="ecTipoCliente"]').forEach(radio => {
+  radio.addEventListener("change", () => {
+    const wrap = document.getElementById("ecRevendedorWrap");
+    const wrapSenha = document.getElementById("ecSenhaAdminWrap");
+    if (!wrap) return;
+    if (radio.value === "revendedor" && radio.checked) {
+      wrap.style.display = "block";
+      wrapSenha.style.display = "block";
+    } else if (radio.value === "comum" && radio.checked) {
+      wrap.style.display = "none";
+    }
+  });
+});
+
+// Gerar nova chave no modal de edição
+document.getElementById("btnGerarChaveRevendedorEdit").addEventListener("click", async () => {
+  if (!confirm("⚠️ Gerar nova chave vai INVALIDAR a chave atual.\n\nO revendedor vai precisar da nova chave pra usar no site.\n\nContinuar?")) return;
+  const btn = document.getElementById("btnGerarChaveRevendedorEdit");
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+  try {
+    const res = await api("/clientes/gerar-chave-revendedor", { method: "POST" });
+    const d = await res.json();
+    if (!d.success) throw new Error(d.error);
+    document.getElementById("ecChaveRevendedor").value = d.chave;
+    toast("Nova chave gerada: " + d.chave);
+  } catch (e) {
+    toast("Erro: " + e.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-key"></i> Gerar nova';
+  }
+});  
 document.getElementById("btnCancelarCliente").onclick = () => {
   document.getElementById("modalEditarCliente").classList.remove("active");
   clienteEditando = null;
