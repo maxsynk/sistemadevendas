@@ -5543,7 +5543,7 @@
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "4.1";
+const APP_VERSION = "4.2";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -10968,7 +10968,8 @@ document.getElementById("btnRefresh").onclick = async () => {
     await carregarTransportadorasConfig();
     await carregarCategorias();
     await carregarTabelasPreco();
-    renderizarListaMsgModelos(); 
+    await carregarVendedores();
+    renderizarListaMsgModelos();
     if (usuarioLogado.perfil === "admin") {
       await carregarUsuarios();
       await carregarAuditoria();
