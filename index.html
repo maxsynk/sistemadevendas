@@ -10990,6 +10990,7 @@ async function iniciarApp() {
   carregarCategoriasSelect("prodCategoria");
   carregarCategoriasSelect("editCategoria");
   await carregarTabelasPreco();
+  await carregarVendedores();
   await verificarStatus();
   await carregarDashboard();
   await carregarProdutos();
