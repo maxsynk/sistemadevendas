@@ -52,12 +52,10 @@
   </div>
 </header>
 
-<!-- BARRA DE CATEGORIAS (sticky, abaixo do header) -->
+<!-- BARRA DE CATEGORIAS -->
 <nav class="cat-bar" id="catBar">
   <div class="cat-bar-inner" id="catBarInner">
-    <!-- Botão "Todos" fixo -->
     <button class="cat-chip active" data-cat-slug="">Todos</button>
-    <!-- Demais categorias são inseridas aqui pelo JS -->
   </div>
 </nav>
 
@@ -224,6 +222,16 @@
         <label>Cidade / Estado (opcional)</label>
         <input type="text" id="fpCidade" placeholder="Ex: Formiga/MG">
       </div>
+
+      <div class="campo">
+        <label>Chave de Revendedor (opcional)</label>
+        <input type="text" id="fpChaveRevendedor" placeholder="Ex: REV-ABC123" autocomplete="off" style="text-transform:uppercase">
+        <small style="font-size:11px;color:var(--text-dim);margin-top:6px;display:block">
+          <i class="fas fa-info-circle"></i> Se você é revendedor registrado, digite sua chave pra ganhar desconto.
+        </small>
+      </div>
+
+      <div class="desconto-aviso" id="descontoAviso" style="display:none"></div>
 
       <div class="resumo-itens" id="fpResumo"></div>
 
