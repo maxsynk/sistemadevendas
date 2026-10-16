@@ -8081,6 +8081,28 @@ document.getElementById("btnGerarChaveRevendedor").addEventListener("click", asy
 document.getElementById("btnSalvarCliente").onclick = async () => {
   const nome = document.getElementById("cliNome").value.trim();
   if (!nome) return toast("Nome obrigatório", "error");
+
+  // Verifica se é revendedor
+  const tipoRadio = document.querySelector('input[name="cliTipoCliente"]:checked');
+  const isRevendedor = tipoRadio && tipoRadio.value === "revendedor";
+
+  let descontoTipo = null;
+  let descontoValor = 0;
+  let chaveRevendedor = null;
+  let senhaAdmin = null;
+
+  if (isRevendedor) {
+    descontoTipo = document.getElementById("cliDescontoTipo").value;
+    descontoValor = parseFloat(document.getElementById("cliDescontoValor").value);
+    chaveRevendedor = document.getElementById("cliChaveRevendedor").value.trim().toUpperCase();
+    senhaAdmin = document.getElementById("cliSenhaAdmin").value;
+
+    if (!descontoTipo) return toast("Selecione o tipo de desconto", "error");
+    if (!descontoValor || descontoValor <= 0) return toast("Preencha um valor de desconto válido", "error");
+    if (!chaveRevendedor) return toast("Clique em Gerar pra criar a chave do revendedor", "error");
+    if (!senhaAdmin) return toast("Digite a senha do admin pra confirmar", "error");
+  }
+
   const dados = {
     nome,
     cpf: document.getElementById("cliCpf").value.trim(),
@@ -8093,6 +8115,11 @@ document.getElementById("btnSalvarCliente").onclick = async () => {
     uf: document.getElementById("cliUf").value.trim().toUpperCase(),
     ponto_referencia: document.getElementById("cliPontoReferencia").value.trim(),
     observacoes: document.getElementById("cliObs").value.trim(),
+    is_revendedor: isRevendedor,
+    desconto_tipo: descontoTipo,
+    desconto_valor: descontoValor,
+    chave_revendedor: chaveRevendedor,
+    senha_admin: senhaAdmin,
   };
   try {
     const res = await api("/clientes", {
