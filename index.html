@@ -3365,6 +3365,185 @@
     margin: 30px auto;
   }
   /* ============================================ */
+/* REVENDEDORES E DESCONTOS                     */
+/* ============================================ */
+
+/* Badge REVENDEDOR ao lado do nome do cliente */
+.badge-revendedor {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  background: linear-gradient(135deg, var(--neon), var(--neon-alt));
+  color: #fff;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  box-shadow: 0 0 10px var(--neon-glow);
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.badge-revendedor i {
+  font-size: 10px;
+}
+
+/* Info de desconto abaixo do cliente */
+.cliente-desconto-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--neon);
+  font-weight: 700;
+  background: rgba(168,85,247,0.08);
+  border: 1px solid rgba(168,85,247,0.3);
+  border-radius: 8px;
+  padding: 4px 10px;
+  margin-top: 4px;
+}
+.cliente-desconto-info i {
+  font-size: 11px;
+}
+
+/* Item da lista de vendedores */
+.vendedor-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 18px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--neon);
+  border-radius: 12px;
+  margin-bottom: 10px;
+  transition: all 0.15s;
+}
+.vendedor-item:hover {
+  border-color: var(--neon);
+  background: rgba(168,85,247,0.05);
+}
+.vendedor-item .avatar-rev {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--neon), var(--neon-alt));
+  color: #fff;
+  font-weight: 900;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 12px var(--neon-glow);
+  flex-shrink: 0;
+}
+.vendedor-item .vendedor-info .nome {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 3px;
+}
+.vendedor-item .vendedor-info .det {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+.vendedor-item .vendedor-info .det i {
+  width: 14px;
+  color: var(--neon);
+}
+.vendedor-item .vendedor-desconto {
+  text-align: right;
+  padding: 8px 12px;
+  background: rgba(34,197,94,0.1);
+  border: 1px solid rgba(34,197,94,0.4);
+  border-radius: 10px;
+  white-space: nowrap;
+}
+.vendedor-item .vendedor-desconto .lbl {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 3px;
+}
+.vendedor-item .vendedor-desconto .val {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--success);
+}
+.vendedor-item .vendedor-chave {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+}
+.vendedor-item .vendedor-chave .chave-box {
+  font-family: 'Consolas', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--neon);
+  background: rgba(168,85,247,0.1);
+  border: 1px solid rgba(168,85,247,0.4);
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 1px;
+}
+.vendedor-item .vendedor-chave .chave-box:hover {
+  background: rgba(168,85,247,0.2);
+  box-shadow: 0 0 12px var(--neon-glow);
+}
+.vendedor-item .vendedor-chave .btn-copiar-chave {
+  font-size: 10px;
+  color: var(--text-dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+  text-decoration: underline;
+}
+.vendedor-item .vendedor-chave .btn-copiar-chave:hover {
+  color: var(--neon);
+}
+
+/* Vazio */
+.vendedor-vazio {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+.vendedor-vazio i {
+  font-size: 40px;
+  margin-bottom: 12px;
+  display: block;
+  opacity: 0.4;
+}
+
+@media (max-width: 700px) {
+  .vendedor-item {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    text-align: center;
+  }
+  .vendedor-item .avatar-rev {
+    margin: 0 auto;
+  }
+  .vendedor-item .vendedor-desconto,
+  .vendedor-item .vendedor-chave {
+    align-items: center;
+    text-align: center;
+  }
+  .vendedor-item .vendedor-chave {
+    align-items: center;
+  }
+}
+  /* ============================================ */
 /* CATÁLOGO DO DIA                              */
 /* ============================================ */
 
