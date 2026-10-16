@@ -4366,6 +4366,59 @@
         <div class="form-row"><label>Cidade</label><input type="text" id="cliCidade" placeholder="Cidade"></div>
         <div class="form-row"><label>UF</label><input type="text" id="cliUf" placeholder="SP" maxlength="2"></div>
       </div>
+             <div class="form-row" style="margin-top:8px">
+        <label>💼 Tipo de Cliente</label>
+        <div style="display:flex;gap:20px;flex-wrap:wrap;padding:12px;background:rgba(0,0,0,0.2);border-radius:10px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text-primary)">
+            <input type="radio" name="cliTipoCliente" value="comum" checked>
+            Cliente comum
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text-primary)">
+            <input type="radio" name="cliTipoCliente" value="revendedor">
+            💼 Revendedor registrado
+          </label>
+        </div>
+      </div>
+
+      <div id="cliRevendedorWrap" style="display:none;padding:16px;background:rgba(168,85,247,0.06);border:1px solid rgba(168,85,247,0.3);border-radius:12px;margin-bottom:16px">
+        <h4 style="font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--neon);margin:0 0 14px">
+          <i class="fas fa-percent"></i> Configuração de Desconto
+        </h4>
+
+        <div class="form-row">
+          <label>Tipo de Desconto *</label>
+          <select id="cliDescontoTipo">
+            <option value="fixo">R$ fixo por par</option>
+            <option value="percentual">Percentual (%)</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label>Valor do Desconto *</label>
+          <input type="number" step="0.01" id="cliDescontoValor" placeholder="Ex: 5.00 ou 10">
+        </div>
+
+        <div class="form-row">
+          <label>Chave do Revendedor</label>
+          <div class="form-grid-codigo">
+            <input type="text" id="cliChaveRevendedor" placeholder="Clique em Gerar" readonly>
+            <button class="btn-gerar" id="btnGerarChaveRevendedor" type="button">
+              <i class="fas fa-key"></i> Gerar
+            </button>
+          </div>
+          <small style="font-size:11px;color:var(--text-dim);margin-top:6px;display:block">
+            <i class="fas fa-info-circle"></i> Manda essa chave pro revendedor. Ele vai usar no site na hora de finalizar pedido pra ganhar o desconto.
+          </small>
+        </div>
+
+        <div class="form-row">
+          <label>🔒 Senha do Admin (obrigatório) *</label>
+          <input type="password" id="cliSenhaAdmin" placeholder="Confirme sua senha pra autorizar">
+          <small style="font-size:11px;color:var(--warning);margin-top:6px;display:block">
+            <i class="fas fa-lock"></i> Só o admin pode criar revendedor.
+          </small>
+        </div>
+      </div> 
       <div class="form-row">
         <label>⭐ Ponto de Referência (apelido, bar do Seu Zé, referência...)</label>
         <input type="text" id="cliPontoReferencia" placeholder="Ex: Deixar no Bar do Seu Zé / Apelido: João do Mercado">
