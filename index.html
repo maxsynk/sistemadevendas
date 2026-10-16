@@ -6234,6 +6234,7 @@ function irParaAba(nomeAba) {
     carregarTransportadorasConfig();
     carregarCategorias();
     carregarTabelasPreco();
+    carregarVendedores();
     renderizarListaMsgModelos();
     if (usuarioLogado && usuarioLogado.perfil === "admin") {
       carregarUsuarios();
