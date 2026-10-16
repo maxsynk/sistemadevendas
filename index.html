@@ -8044,6 +8044,39 @@ async function carregarUltimasEntradas() {
   } catch (e) { wrap.innerHTML = `<div class="empty"><h2>Erro</h2></div>`; }
 }
 
+// ============================================
+// REVENDEDORES — Listeners dos radios (Cadastro)
+// ============================================
+document.querySelectorAll('input[name="cliTipoCliente"]').forEach(radio => {
+  radio.addEventListener("change", () => {
+    const wrap = document.getElementById("cliRevendedorWrap");
+    if (!wrap) return;
+    if (radio.value === "revendedor" && radio.checked) {
+      wrap.style.display = "block";
+    } else if (radio.value === "comum" && radio.checked) {
+      wrap.style.display = "none";
+    }
+  });
+});
+
+// Gerar chave no cadastro
+document.getElementById("btnGerarChaveRevendedor").addEventListener("click", async () => {
+  const btn = document.getElementById("btnGerarChaveRevendedor");
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando...';
+  try {
+    const res = await api("/clientes/gerar-chave-revendedor", { method: "POST" });
+    const d = await res.json();
+    if (!d.success) throw new Error(d.error);
+    document.getElementById("cliChaveRevendedor").value = d.chave;
+    toast("Chave gerada: " + d.chave);
+  } catch (e) {
+    toast("Erro: " + e.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-key"></i> Gerar';
+  }
+});  
 // CLIENTES
 document.getElementById("btnSalvarCliente").onclick = async () => {
   const nome = document.getElementById("cliNome").value.trim();
