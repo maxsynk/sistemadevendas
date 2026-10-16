@@ -8307,6 +8307,36 @@ document.getElementById("btnSalvarClienteEdit").onclick = async () => {
   if (!clienteEditando) return;
   const nome = document.getElementById("ecNome").value.trim();
   if (!nome) return toast("Nome obrigatório", "error");
+
+  // Verifica tipo de cliente
+  const tipoRadio = document.querySelector('input[name="ecTipoCliente"]:checked');
+  const isRevendedor = tipoRadio && tipoRadio.value === "revendedor";
+
+  let descontoTipo = null;
+  let descontoValor = 0;
+  let chaveRevendedor = null;
+  let senhaAdmin = null;
+
+  if (isRevendedor) {
+    descontoTipo = document.getElementById("ecDescontoTipo").value;
+    descontoValor = parseFloat(document.getElementById("ecDescontoValor").value);
+    chaveRevendedor = document.getElementById("ecChaveRevendedor").value.trim().toUpperCase();
+    senhaAdmin = document.getElementById("ecSenhaAdmin").value;
+
+    if (!descontoTipo) return toast("Selecione o tipo de desconto", "error");
+    if (!descontoValor || descontoValor <= 0) return toast("Preencha um valor de desconto válido", "error");
+    if (!chaveRevendedor) return toast("Chave do revendedor não pode ficar vazia", "error");
+
+    // Se tá virando revendedor agora OU mudou desconto, exige senha
+    const descontoMudou = (descontoTipo !== clienteEditando.desconto_tipo) ||
+                          (descontoValor !== parseFloat(clienteEditando.desconto_valor));
+    const virandoRevendedor = !clienteEditandoEhRevendedorAtual;
+
+    if ((virandoRevendedor || descontoMudou) && !senhaAdmin) {
+      return toast("Digite a senha do admin pra confirmar", "error");
+    }
+  }
+
   try {
     const res = await api(`/clientes/${clienteEditando.id}`, {
       method: "PUT",
@@ -8322,6 +8352,11 @@ document.getElementById("btnSalvarClienteEdit").onclick = async () => {
         uf: document.getElementById("ecUf").value.trim().toUpperCase(),
         ponto_referencia: document.getElementById("ecPontoReferencia").value.trim(),
         observacoes: document.getElementById("ecObs").value.trim(),
+        is_revendedor: isRevendedor,
+        desconto_tipo: descontoTipo,
+        desconto_valor: descontoValor,
+        chave_revendedor: chaveRevendedor,
+        senha_admin: senhaAdmin,
       }),
     });
     const d = await res.json();
