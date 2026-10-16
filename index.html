@@ -10576,6 +10576,111 @@ function atualizarPreviewCatalogoDia() {
   infoEl.innerHTML = html;
 } 
  // ============================================
+// VENDEDORES (REVENDEDORES) — Configurações
+// ============================================
+
+async function carregarVendedores() {
+  const wrap = document.getElementById("listaVendedores");
+  if (!wrap) return;
+  wrap.innerHTML = '<div class="loader"></div>';
+
+  try {
+    const res = await api("/clientes");
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+
+    const revendedores = (data.clientes || []).filter(c => c.is_revendedor === 1);
+    vendedoresCache = revendedores;
+
+    if (revendedores.length === 0) {
+      wrap.innerHTML = `<div class="vendedor-vazio"><i class="fas fa-user-tie"></i>Nenhum revendedor cadastrado ainda.<br>Vá em <strong>Clientes</strong> e marque um cliente como revendedor.</div>`;
+      return;
+    }
+
+    let html = "";
+    for (const v of revendedores) {
+      const iniciais = (v.nome || "?").split(" ").map(p => p[0]).slice(0, 2).join("").toUpperCase();
+      const descStr = v.desconto_tipo === "percentual"
+        ? `${v.desconto_valor}%`
+        : `R$ ${parseFloat(v.desconto_valor).toFixed(2).replace(".", ",")}/par`;
+
+      html += `
+        <div class="vendedor-item">
+          <div class="avatar-rev">${iniciais}</div>
+          <div class="vendedor-info">
+            <div class="nome">${escapeHtml(v.nome)}</div>
+            ${v.telefone ? `<div class="det"><i class="fas fa-phone"></i> ${escapeHtml(v.telefone)}</div>` : ""}
+            ${v.cidade ? `<div class="det"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(v.cidade)}${v.uf ? "/" + v.uf : ""}</div>` : ""}
+          </div>
+          <div class="vendedor-desconto">
+            <div class="lbl">Desconto</div>
+            <div class="val">${descStr}</div>
+          </div>
+          <div class="vendedor-chave">
+            <div class="chave-box" data-copiar="${v.chave_revendedor || ""}" title="Clique pra copiar">
+              ${v.chave_revendedor || "—"}
+            </div>
+            <button class="btn-copiar-chave" data-copiar-btn="${v.chave_revendedor || ""}">
+              <i class="fas fa-copy"></i> Copiar
+            </button>
+          </div>
+        </div>
+      `;
+    }
+    wrap.innerHTML = html;
+
+    // Listener pra copiar chave
+    wrap.querySelectorAll("[data-copiar-btn]").forEach(btn => {
+      btn.onclick = async () => {
+        const chave = btn.dataset.copiarBtn;
+        if (!chave) return;
+        try {
+          await navigator.clipboard.writeText(chave);
+          toast("Chave copiada: " + chave);
+        } catch (e) {
+          // Fallback
+          const ta = document.createElement("textarea");
+          ta.value = chave;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+          toast("Chave copiada: " + chave);
+        }
+      };
+    });
+    wrap.querySelectorAll(".chave-box[data-copiar]").forEach(box => {
+      box.onclick = async () => {
+        const chave = box.dataset.copiar;
+        if (!chave) return;
+        try {
+          await navigator.clipboard.writeText(chave);
+          toast("Chave copiada: " + chave);
+        } catch (e) {
+          const ta = document.createElement("textarea");
+          ta.value = chave;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+          toast("Chave copiada: " + chave);
+        }
+      };
+    });
+
+  } catch (e) {
+    wrap.innerHTML = `<div class="vendedor-vazio" style="color:var(--error)"><i class="fas fa-exclamation-triangle"></i>Erro: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+// Listener do botão Atualizar
+document.getElementById("btnAtualizarVendedores").onclick = () => {
+  carregarVendedores();
+  toast("Atualizando...", "info");
+};
+
+// Hook no irParaAba pra carregar vendedores 
+ // ============================================
 // FASE C — TABELAS DE PREÇO (REAJUSTE EM LOTE)
 // ============================================
 
