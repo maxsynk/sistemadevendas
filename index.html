@@ -4639,6 +4639,25 @@
     </div>
   </div>
 </div>
+    <div class="card card-collapsible" data-permissao="config_vendedores" data-collapse-id="vendedores">
+  <div class="card-header" onclick="toggleCardCollapsible(this)">
+    <h3 style="margin:0"><i class="fas fa-user-tie"></i> Vendedores (Revendedores)</h3>
+    <div class="toggle-icon"><i class="fas fa-chevron-down"></i></div>
+  </div>
+  <div class="card-body">
+    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;line-height:1.6">
+      Lista dos revendedores cadastrados com seus descontos e chaves de acesso ao site.
+    </p>
+
+    <button class="btn btn-secondary" id="btnAtualizarVendedores" style="margin-bottom:16px">
+      <i class="fas fa-sync-alt"></i> Atualizar lista
+    </button>
+
+    <div id="listaVendedores">
+      <div class="loader"></div>
+    </div>
+  </div>
+</div>
     <div class="card card-collapsible" data-permissao="config_transportadoras" data-collapse-id="transportadoras">
       <div class="card-header" onclick="toggleCardCollapsible(this)">
         <h3 style="margin:0"><i class="fas fa-truck"></i> Transportadoras</h3>
