@@ -507,12 +507,105 @@ function abrirFormFechamento() {
     html += `</div>`;
   }
   html += `<div class="total">Total: ${totalPares} pares · R$ ${totalValor.toFixed(2).replace(".", ",")}</div>`;
-  document.getElementById("fpResumo").innerHTML = html;
+    document.getElementById("fpResumo").innerHTML = html;
 
   document.getElementById("modalFecharPedido").classList.add("active");
   document.body.style.overflow = "hidden";
 
   setTimeout(() => document.getElementById("fpNome").focus(), 300);
+
+  // Listeners pra validação da chave de revendedor
+  const inputChave = document.getElementById("fpChaveRevendedor");
+  const inputTel = document.getElementById("fpTelefone");
+
+  if (inputChave && !inputChave.dataset.listenerAdded) {
+    inputChave.addEventListener("input", (e) => {
+      e.target.value = e.target.value.toUpperCase();
+      agendarValidacaoChave();
+    });
+    inputChave.dataset.listenerAdded = "1";
+  }
+
+  if (inputTel && !inputTel.dataset.listenerAdded) {
+    inputTel.addEventListener("input", () => {
+      agendarValidacaoChave();
+    });
+    inputTel.dataset.listenerAdded = "1";
+  }
+}
+
+// Agenda validação da chave (debounce de 800ms)
+function agendarValidacaoChave() {
+  clearTimeout(validandoChaveTimer);
+  validandoChaveTimer = setTimeout(() => validarChaveRevendedor(), 800);
+}
+
+// Valida a chave do revendedor via API
+async function validarChaveRevendedor() {
+  const chave = (document.getElementById("fpChaveRevendedor").value || "").trim().toUpperCase();
+  const whatsapp = (document.getElementById("fpTelefone").value || "").trim();
+  const aviso = document.getElementById("descontoAviso");
+
+  if (!chave) {
+    descontoRevendedor = null;
+    aviso.style.display = "none";
+    return;
+  }
+
+  if (!whatsapp || whatsapp.replace(/\D/g, "").length < 10) {
+    descontoRevendedor = null;
+    aviso.style.display = "block";
+    aviso.style.background = "rgba(245,158,11,0.1)";
+    aviso.style.borderColor = "var(--amarelo)";
+    aviso.style.color = "var(--amarelo)";
+    aviso.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Preencha o WhatsApp antes de validar a chave.`;
+    return;
+  }
+
+  try {
+    const res = await fetch(API_BASE + "/publico/validar-chave", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Site-Token": "max-site-2026",
+      },
+      body: JSON.stringify({ chave, whatsapp }),
+    });
+    const data = await res.json();
+
+    if (!data.success) {
+      descontoRevendedor = null;
+      aviso.style.display = "block";
+      aviso.style.background = "rgba(239,68,68,0.1)";
+      aviso.style.borderColor = "var(--error)";
+      aviso.style.color = "var(--error)";
+      aviso.innerHTML = `<i class="fas fa-times-circle"></i> ${escapeHtml(data.error || "Chave inválida")}`;
+      return;
+    }
+
+    // Sucesso
+    descontoRevendedor = {
+      valido: true,
+      desconto_tipo: data.desconto_tipo,
+      desconto_valor: parseFloat(data.desconto_valor) || 0,
+      nome: data.nome,
+    };
+
+    const descStr = data.desconto_tipo === "percentual"
+      ? `${data.desconto_valor}% de desconto`
+      : `R$ ${parseFloat(data.desconto_valor).toFixed(2).replace(".", ",")} por par`;
+
+    aviso.style.display = "block";
+    aviso.style.background = "linear-gradient(135deg, rgba(34,197,94,0.12), rgba(34,197,94,0.05))";
+    aviso.style.borderColor = "var(--verde)";
+    aviso.style.color = "var(--verde)";
+    aviso.innerHTML = `<i class="fas fa-check-circle"></i> <div><strong>${escapeHtml(data.nome)}</strong> — Revendedor registrado<br>${descStr}</div>`;
+
+  } catch (e) {
+    console.error("[validarChaveRevendedor]", e);
+    descontoRevendedor = null;
+    aviso.style.display = "none";
+  }
 }
 
 function fecharFormFechamento() {
@@ -524,7 +617,7 @@ async function confirmarFechamento() {
   const nome = document.getElementById("fpNome").value.trim();
   const telefone = document.getElementById("fpTelefone").value.trim();
   const cidade = document.getElementById("fpCidade").value.trim();
-
+  const chaveRevendedor = (document.getElementById("fpChaveRevendedor").value || "").trim().toUpperCase();
   if (!nome) { alert("Preencha o nome"); document.getElementById("fpNome").focus(); return; }
   if (!telefone || telefone.replace(/\D/g, "").length < 10) {
     alert("Preencha um WhatsApp válido com DDD");
@@ -543,7 +636,7 @@ async function confirmarFechamento() {
       quantidade: it.qtd,
     }));
 
-    const res = await fetch(API_BASE + "/publico/pedido-criar", {
+        const res = await fetch(API_BASE + "/publico/pedido-criar", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -554,6 +647,7 @@ async function confirmarFechamento() {
         telefone: telefone,
         cidade_estado: cidade || null,
         itens: itens,
+        chave_revendedor: chaveRevendedor || null,
       }),
     });
 
@@ -583,18 +677,30 @@ async function confirmarFechamento() {
       }
     }
 
-    msg += `\nTotal: ${data.total_pares} pares\n`;
-    msg += `Valor estimado: R$ ${(data.valor_estimado || 0).toFixed(2).replace(".", ",")}\n\n`;
-    msg += `Informe esta chave para o vendedor confirmar.\n\n`;
-    msg += `Qualquer dúvida, estamos à disposição para atendê-lo(a)! 😊`;
+      msg += `\nTotal: ${data.total_pares} pares\n`;
 
-    dadosUltimoPedido = {
+    if (data.desconto_aplicado && data.desconto_aplicado > 0) {
+      msg += `\n💰 *REVENDEDOR APLICADO*\n`;
+      msg += `Valor original: R$ ${(data.valor_original || 0).toFixed(2).replace(".", ",")}\n`;
+      msg += `Desconto: -R$ ${data.desconto_aplicado.toFixed(2).replace(".", ",")}\n`;
+      msg += `*Valor com desconto: R$ ${(data.valor_estimado || 0).toFixed(2).replace(".", ",")}*\n\n`;
+    } else {
+      msg += `Valor estimado: R$ ${(data.valor_estimado || 0).toFixed(2).replace(".", ",")}\n\n`;
+    }
+
+    msg += `Informe esta chave para o vendedor confirmar.\n\n`;
+    msg += `Qualquer dúvida, estamos à disposição para atendê-lo(a)! 😊`;  
+
+        dadosUltimoPedido = {
       chave: data.chave,
       nome: nome,
       telefone: telefone,
       cidade: cidade || "—",
       totalPares: data.total_pares,
       valorEstimado: data.valor_estimado,
+      valorOriginal: data.valor_original,
+      descontoAplicado: data.desconto_aplicado,
+      revendedor: data.revendedor,
       msg: msg,
     };
 
