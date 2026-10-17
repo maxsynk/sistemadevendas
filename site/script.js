@@ -1,7 +1,7 @@
 // ============================================
-// MAX REPRESENTAÇÃO — SITE v3.7
+// MAX REPRESENTAÇÃO — SITE v3.8
 // script.js
-// Adicionado sistema de revendedores + descontos
+// Adicionado "Meu Pedido" (cliente edita o próprio pedido)
 // ============================================
 
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
@@ -1248,10 +1248,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const cl = document.getElementById("carrinhoLimpar");
   if (cl) cl.addEventListener("click", limparCarrinho);
 
-  // Finalizar pedido
-  const ce = document.getElementById("carrinhoEnviar");
-  if (ce) ce.addEventListener("click", abrirFormFechamento);
-
+    // Finalizar pedido — listener movido pra dentro do abrirModalCarrinho
+  // (porque o comportamento muda se estiver em modo adição)
+  
   // Modal de formulário
   const bf = document.getElementById("btnFecharModalForm");
   if (bf) bf.addEventListener("click", fecharFormFechamento);
