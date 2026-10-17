@@ -445,19 +445,30 @@ function abrirModalCarrinho() {
     });
   });
 
-  const totalPares = carrinho.reduce((s, c) => s + c.qtd, 0);
+   const totalPares = carrinho.reduce((s, c) => s + c.qtd, 0);
   const totalValor = carrinho.reduce((s, c) => s + c.qtd * c.preco, 0);
   document.getElementById("carrinhoTotalPares").textContent = totalPares;
   document.getElementById("carrinhoTotalValor").textContent = formatarMoeda(totalValor);
 
-  if (totalPares < MINIMO_PARES) {
-    aviso.classList.add("show");
-    aviso.innerHTML = `<i class="fas fa-info-circle"></i> Pedido mínimo: ${MINIMO_PARES} pares. Faltam ${MINIMO_PARES - totalPares}.`;
-    btnEnviar.disabled = true;
-  } else {
+  // Se tá em modo adição, muda o texto e o comportamento do botão
+  if (modoAdicaoAtivo && meuPedidoChave) {
     aviso.classList.remove("show");
-    btnEnviar.disabled = false;
-  }
+    btnEnviar.disabled = totalPares === 0;
+    btnEnviar.innerHTML = `<i class="fas fa-plus-circle"></i> Adicionar ao pedido ${meuPedidoChave}`;
+    btnEnviar.onclick = adicionarCarrinhoAoPedido;
+  } else {
+    // Modo normal
+    if (totalPares < MINIMO_PARES) {
+      aviso.classList.add("show");
+      aviso.innerHTML = `<i class="fas fa-info-circle"></i> Pedido mínimo: ${MINIMO_PARES} pares. Faltam ${MINIMO_PARES - totalPares}.`;
+      btnEnviar.disabled = true;
+    } else {
+      aviso.classList.remove("show");
+      btnEnviar.disabled = false;
+    }
+    btnEnviar.innerHTML = '<i class="fas fa-check-circle"></i> Finalizar Pedido';
+    btnEnviar.onclick = abrirFormFechamento;
+  } 
 
   modal.classList.add("active");
   document.body.style.overflow = "hidden";
