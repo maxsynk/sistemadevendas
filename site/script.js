@@ -995,13 +995,65 @@ function renderizarMeuPedido() {
 
   document.getElementById("meuPedidoValorTotal").textContent = formatarMoeda(p.valor_estimado);
 
-  // Botão adicionar (esconde se rejeitado)
+    // Botão adicionar (esconde se rejeitado)
   if (p.status === "rejeitado") {
     btnAdicionar.style.display = "none";
   } else {
     btnAdicionar.style.display = "flex";
     btnAdicionar.onclick = entrarModoAdicao;
   }
+
+  // Botão "Enviar aviso pro vendedor" (WhatsApp)
+  const btnConfirmar = document.getElementById("btnConfirmarMeuPedido");
+  if (btnConfirmar) {
+    btnConfirmar.onclick = () => {
+      enviarAvisoWhatsAppPedido();
+    };
+  }
+}
+
+// Envia aviso pelo WhatsApp sobre o pedido atualizado
+function enviarAvisoWhatsAppPedido() {
+  if (!meuPedidoAtual) return;
+
+  const p = meuPedidoAtual;
+  const whatsappNumero = WHATSAPP_NUMERO;
+
+  let msg = `*MAX REPRESENTAÇÃO*\n\nOlá! Atualizei meu pedido.\n\n`;
+  msg += `🔑 Chave: *${p.chave}*\n`;
+  msg += `👤 Nome: ${p.nome_cliente}\n`;
+  msg += `📱 WhatsApp: ${p.telefone_cliente}\n\n`;
+  msg += `📦 *ITENS ATUAIS:*\n`;
+
+  for (const it of p.itens) {
+    msg += `• ${it.modelo} — ${it.cor} · Nº ${it.numeracao} · ${it.quantidade} ${it.quantidade === 1 ? "par" : "pares"}\n`;
+  }
+
+  msg += `\n*Total de pares: ${p.total_pares}*\n`;
+
+  if (p.desconto_aplicado && p.desconto_aplicado > 0) {
+    msg += `Valor original: R$ ${(p.valor_original || 0).toFixed(2).replace(".", ",")}\n`;
+    msg += `Desconto: -R$ ${p.desconto_aplicado.toFixed(2).replace(".", ",")}\n`;
+    msg += `*Total: R$ ${(p.valor_estimado || 0).toFixed(2).replace(".", ",")}*\n`;
+  } else {
+    msg += `*Total: R$ ${(p.valor_estimado || 0).toFixed(2).replace(".", ",")}*\n`;
+  }
+
+  msg += `\nQualquer dúvida, estamos à disposição! 😊`;
+
+  const texto = encodeURIComponent(msg);
+  const urlApp = `whatsapp://send?phone=${whatsappNumero}&text=${texto}`;
+  const urlWeb = `https://wa.me/${whatsappNumero}?text=${texto}`;
+
+  let foiParaApp = false;
+  const t = setTimeout(() => {
+    if (!foiParaApp && !document.hidden) {
+      window.open(urlWeb, "_blank");
+    }
+  }, 1500);
+
+  window.addEventListener("blur", () => { foiParaApp = true; clearTimeout(t); }, { once: true });
+  window.location.href = urlApp;
 }
 
 // Remover item do pedido
