@@ -1,5 +1,5 @@
 // ============================================
-// MAX REPRESENTAÇÃO — SITE v3.6
+// MAX REPRESENTAÇÃO — SITE v3.7
 // script.js
 // Adicionado sistema de revendedores + descontos
 // ============================================
@@ -230,7 +230,7 @@ function renderizarProdutos() {
   const grid = document.getElementById("gridProdutos");
   grid.innerHTML = "";
 
-  for (const p of produtosCache) {
+    for (const p of produtosCache) {
     const card = document.createElement("article");
     card.className = "card-produto";
 
@@ -244,8 +244,19 @@ function renderizarProdutos() {
       return `<span class="grade-num ${cls}">${g.numeracao}</span>`;
     }).join("");
 
+    // Badge NOVIDADE / REPOSIÇÃO
+    let badgeHTML = "";
+    if (p.badge === "novidade") {
+      badgeHTML = `<div class="card-badge badge-novidade"><i class="fas fa-star"></i> NOVIDADE</div>`;
+    } else if (p.badge === "reposicao") {
+      badgeHTML = `<div class="card-badge badge-reposicao"><i class="fas fa-sync-alt"></i> REPOSIÇÃO</div>`;
+    }
+
     card.innerHTML = `
-      <div class="card-foto">${fotoHTML}</div>
+      <div class="card-foto">
+        ${badgeHTML}
+        ${fotoHTML}
+      </div>
       <div class="card-info">
         <h3 class="card-modelo">${escapeHtml(p.modelo)}</h3>
         <p class="card-grade-label">Numeração disponível</p>
