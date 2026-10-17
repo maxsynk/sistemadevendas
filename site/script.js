@@ -1,7 +1,8 @@
 // ============================================
-// MAX REPRESENTAÇÃO — SITE v4.1
+// MAX REPRESENTAÇÃO — SITE v4.2
 // script.js
-// Adicionado "Meu Pedido" (cliente edita o próprio pedido)
+// v4.1: "Meu Pedido" (cliente edita o próprio pedido)
+// v4.2: Carrinho persistente em localStorage
 // ============================================
 
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
@@ -795,10 +796,11 @@ async function confirmarFechamento() {
       msg: msg,
     };
 
-    mostrarTelaSucesso();
+        mostrarTelaSucesso();
 
     carrinho = [];
     atualizarCarrinho();
+    limparCarrinhoLocal(); // limpa do localStorage após pedido criado com sucesso
     fecharModalCarrinho();
 
   } catch (e) {
@@ -1405,6 +1407,10 @@ document.addEventListener("DOMContentLoaded", () => {
       fecharFormFechamento();
     }
   });
+
+    // Recupera carrinho salvo (se tiver)
+  recuperarCarrinhoLocal();
+  atualizarCarrinho();
 
   // Carrega categorias primeiro, depois produtos
   carregarCategorias();
