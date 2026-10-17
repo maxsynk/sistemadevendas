@@ -501,6 +501,10 @@ let meuPedidoChave = null;      // chave
 let meuPedidoWhatsapp = null;   // whatsapp usado pra validar
 let modoAdicaoAtivo = false;    // true quando tá adicionando ao pedido existente
 
+// Variáveis "congeladas" do modo adição (não são afetadas ao fechar modal)
+let modoAdicaoChave = null;
+let modoAdicaoWhatsapp = null;
+
 function abrirFormFechamento() {
   if (!carrinho || carrinho.length === 0) {
     return alert("Seu carrinho está vazio.");
@@ -847,9 +851,14 @@ function fecharBuscaPedido() {
 function fecharMeuPedido() {
   document.getElementById("modalMeuPedido").classList.remove("active");
   document.body.style.overflow = "";
-  meuPedidoAtual = null;
-  meuPedidoChave = null;
-  meuPedidoWhatsapp = null;
+
+  // NÃO limpa a chave/whatsapp se estamos em modo adição
+  // (precisa manter pra saber em qual pedido adicionar)
+  if (!modoAdicaoAtivo) {
+    meuPedidoAtual = null;
+    meuPedidoChave = null;
+    meuPedidoWhatsapp = null;
+  }
 }
 
 // Buscar pedido no servidor
@@ -1063,20 +1072,25 @@ async function recarregarMeuPedido() {
 
 // Entrar em modo adição (volta pro catálogo com banner)
 function entrarModoAdicao() {
+  // Salva as variáveis "congeladas" ANTES de fechar
+  modoAdicaoChave = meuPedidoChave;
+  modoAdicaoWhatsapp = meuPedidoWhatsapp;
   modoAdicaoAtivo = true;
+
   fecharMeuPedido();
 
   // Mostra o banner
-  document.getElementById("bannerPedidoChave").textContent = meuPedidoChave;
+  document.getElementById("bannerPedidoChave").textContent = modoAdicaoChave;
   document.getElementById("bannerVoltandoPedido").style.display = "block";
 
   // Rola pra cima (pro catálogo)
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
-
 // Cancelar modo adição
 function cancelarModoAdicao() {
   modoAdicaoAtivo = false;
+  modoAdicaoChave = null;
+  modoAdicaoWhatsapp = null;
   document.getElementById("bannerVoltandoPedido").style.display = "none";
   carrinho = [];
   atualizarCarrinho();
@@ -1084,7 +1098,10 @@ function cancelarModoAdicao() {
 
 // Adicionar carrinho atual ao pedido existente
 async function adicionarCarrinhoAoPedido() {
-  if (!modoAdicaoAtivo || !meuPedidoChave) return;
+  if (!modoAdicaoAtivo || !modoAdicaoChave) {
+    alert("Modo adição inativo. Busque seu pedido novamente.");
+    return;
+  }
   if (carrinho.length === 0) {
     alert("Seu carrinho está vazio.");
     return;
@@ -1108,9 +1125,9 @@ async function adicionarCarrinhoAoPedido() {
         "Content-Type": "application/json",
         "X-Site-Token": "max-site-2026",
       },
-      body: JSON.stringify({
-        chave: meuPedidoChave,
-        whatsapp: meuPedidoWhatsapp,
+            body: JSON.stringify({
+        chave: modoAdicaoChave,
+        whatsapp: modoAdicaoWhatsapp,
         itens,
       }),
     });
@@ -1131,11 +1148,20 @@ async function adicionarCarrinhoAoPedido() {
       return;
     }
 
-    // Sucesso
+        // Sucesso
     carrinho = [];
     atualizarCarrinho();
     fecharModalCarrinho();
+
+    // Guarda a chave ANTES de cancelar (pra reabrir o modal certo)
+    const chaveReabrir = modoAdicaoChave;
+    const whatsReabrir = modoAdicaoWhatsapp;
+
     cancelarModoAdicao();
+
+    // Restaura o contexto do pedido pra reabrir
+    meuPedidoChave = chaveReabrir;
+    meuPedidoWhatsapp = whatsReabrir;
 
     // Abre o modal do pedido atualizado
     await recarregarMeuPedido();
