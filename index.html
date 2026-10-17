@@ -10111,8 +10111,10 @@ async function salvarCategoria() {
 
     await carregarCategorias();
     // Atualiza os selects de produto também
-    carregarCategoriasSelect("prodCategoria", document.getElementById("prodCategoria")?.value || null);
-    carregarCategoriasSelect("editCategoria", document.getElementById("editCategoria")?.value || null);
+       const prodMarcadas = getCategoriasMarcadas("prodCategoriasWrap");
+    carregarCategoriasMultiSelect("prodCategoriasWrap", prodMarcadas);
+    const editMarcadas = getCategoriasMarcadas("editCategoriasWrap");
+    carregarCategoriasMultiSelect("editCategoriasWrap", editMarcadas); 
   } catch (e) {
     toast("Erro: " + e.message, "error");
   } finally {
