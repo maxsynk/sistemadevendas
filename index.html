@@ -7443,6 +7443,8 @@ async function carregarProdutos() {
       const totalEstoque = vars.reduce((s, v) => s + (v.estoque_atual || 0), 0);
       const div = document.createElement("div");
       div.className = "produto-item";
+            const badgesCats = (p.categorias || []).map(c => `<span style="display:inline-block; background:rgba(168,85,247,0.1); color:var(--neon); border:1px solid rgba(168,85,247,0.3); padding:2px 8px; border-radius:12px; font-size:10px; font-weight:700; margin-right:4px; margin-bottom:4px;">${escapeHtml(c.nome)}</span>`).join("");
+      
       div.innerHTML = `
         <div class="topo">
           <div class="foto-mini">
@@ -7450,6 +7452,7 @@ async function carregarProdutos() {
           </div>
           <div class="info">
             <h4>${p.modelo} — ${p.cor}</h4>
+            <div style="margin-bottom:8px">${badgesCats}</div>
             ${p.codigo_barras ? `<span class="codigo"><i class="fas fa-barcode"></i> ${p.codigo_barras}</span>` : ''}
             <div class="meta">
               <span>Custo: <strong>${formatarMoeda(p.preco_custo)}</strong></span>
@@ -7700,9 +7703,9 @@ document.getElementById("btnSalvarEdit").onclick = async () => {
   const unitario = parseFloat(document.getElementById("editUnitario").value) || 0;
   const codigo = document.getElementById("editCodigo").value.trim().toUpperCase();
   if (!modelo || !cor) return toast("Modelo e cor obrigatórios", "error");
-    const categoriaId = document.getElementById("editCategoria").value ? parseInt(document.getElementById("editCategoria").value) : null;
+       const categoriaIds = getCategoriasMarcadas("editCategoriasWrap");
 
-  const adicionar = [], remover = [];
+  const adicionar = [], remover = []; 
   document.querySelectorAll("#gradeEditWrap .grade-item").forEach(item => {
     const num = parseInt(item.dataset.num);
     const chk = item.querySelector(".chk-edit");
@@ -7733,8 +7736,7 @@ document.getElementById("btnSalvarEdit").onclick = async () => {
   try {
     const res = await api(`/produtos/${p.id}`, {
       method: "PUT",
-           body: JSON.stringify({ modelo, cor, preco_custo: custo, preco_venda_atacado: atacado, preco_venda_unitario: unitario, codigo_barras: codigo, categoria_id: categoriaId }), 
-    });
+                      body: JSON.stringify({ modelo, cor, preco_custo: custo, preco_venda_atacado: atacado, preco_venda_unitario: unitario, codigo_barras: codigo, categoria_ids: categoriaIds }), 
     const d = await res.json();
     if (!d.success) throw new Error(d.error);
 
