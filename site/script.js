@@ -1,5 +1,5 @@
 // ============================================
-// MAX REPRESENTAÇÃO — SITE v3.9
+// MAX REPRESENTAÇÃO — SITE v4.1
 // script.js
 // Adicionado "Meu Pedido" (cliente edita o próprio pedido)
 // ============================================
