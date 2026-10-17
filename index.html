@@ -4259,16 +4259,16 @@
         <div class="form-row"><label>Preço Atacado (R$)</label><input type="number" step="0.01" id="prodAtacado" placeholder="0.00"></div>
         <div class="form-row"><label>Preço Unitário (R$)</label><input type="number" step="0.01" id="prodUnitario" placeholder="0.00"></div>
       </div>
-       <div class="form-row" style="margin-top:8px">
-  <label>Categoria</label>
-  <select id="prodCategoria">
-    <option value="">— Sem categoria —</option>
-  </select>
+             <div class="form-row" style="margin-top:8px">
+  <label>Categorias (pode marcar várias)</label>
+  <div id="prodCategoriasWrap" style="display:flex; flex-wrap:wrap; gap:8px; padding:12px; background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:10px; max-height:180px; overflow-y:auto;">
+    <!-- Preenchido via JS -->
+  </div>
   <small style="font-size:11px;color:var(--text-dim);margin-top:6px;display:block">
     <i class="fas fa-info-circle"></i> Para cadastrar nova categoria, acesse
     <a href="#" onclick="event.preventDefault(); irParaAba('config'); setTimeout(() => { const c = document.querySelector('[data-collapse-id=categorias]'); if(c && !c.classList.contains('open')) c.querySelector('.card-header').click(); c && c.scrollIntoView({behavior:'smooth'}); }, 300)" style="color:var(--neon);text-decoration:underline">Configurações</a>.
   </small>
-</div> 
+</div>  
       <div class="form-row" style="margin-top:8px">
         <label>Foto do Produto</label>
         <div class="foto-upload-area" id="fotoUploadArea">
@@ -4997,11 +4997,11 @@
       <div class="form-row"><label>Preço Atacado (R$)</label><input type="number" step="0.01" id="editAtacado"></div>
       <div class="form-row"><label>Preço Unitário (R$)</label><input type="number" step="0.01" id="editUnitario"></div>
     </div>
-    <div class="form-row">
-  <label>Categoria</label>
-  <select id="editCategoria">
-    <option value="">— Sem categoria —</option>
-  </select>
+        <div class="form-row">
+  <label>Categorias (pode marcar várias)</label>
+  <div id="editCategoriasWrap" style="display:flex; flex-wrap:wrap; gap:8px; padding:12px; background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:10px; max-height:180px; overflow-y:auto;">
+    <!-- Preenchido via JS -->
+  </div>
 </div>
     <div class="form-row">
       <label>Foto do Produto</label>
@@ -7557,7 +7557,8 @@ function abrirEdicao(id) {
   document.getElementById("editAtacado").value = p.preco_venda_atacado || 0;
   document.getElementById("editUnitario").value = p.preco_venda_unitario || 0;
   document.getElementById("editCodigo").value = p.codigo_barras || "";
-  carregarCategoriasSelect("editCategoria", p.categoria_id || null);
+  const catsIds = p.categorias ? p.categorias.map(c => c.id) : (p.categoria_id ? [p.categoria_id] : []);
+  carregarCategoriasMultiSelect("editCategoriasWrap", catsIds);
   fotoEditFile = null; fotoEditRemover = false;
   if (p.foto_url) {
     document.getElementById("fotoPreviewEdit").src = p.foto_url;
@@ -9967,10 +9968,10 @@ function renderizarNodeCategoria(cat, ehFilha) {
   `;
 }
 
-// Preenche um <select> com as categorias (agrupadas por pai)
-function carregarCategoriasSelect(selectId, selecionadaId = null) {
-  const sel = document.getElementById(selectId);
-  if (!sel) return;
+// Preenche o multi-select de categorias (chips)
+function carregarCategoriasMultiSelect(wrapId, selecionadasIds = []) {
+  const wrap = document.getElementById(wrapId);
+  if (!wrap) return;
 
   const pais = categoriasCache.filter(c => !c.parent_id && c.ativo === 1);
   const filhasPorPai = {};
@@ -9981,26 +9982,42 @@ function carregarCategoriasSelect(selectId, selecionadaId = null) {
     }
   }
 
-  let html = '<option value="">— Sem categoria —</option>';
+  let html = '';
+  
+  // Função auxiliar para criar o chip (checkbox estilizado)
+  const criarChip = (cat, isFilha = false) => {
+    const checked = selecionadasIds.includes(cat.id) ? 'checked' : '';
+    const cls = checked ? 'background:rgba(168,85,247,0.2); border-color:var(--neon); color:var(--neon);' : 'background:rgba(0,0,0,0.3); border-color:var(--border); color:var(--text-secondary);';
+    return `
+      <label style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border:1px solid; border-radius:20px; cursor:pointer; font-size:12px; font-weight:600; transition:all 0.15s; ${cls}">
+        <input type="checkbox" value="${cat.id}" ${checked} style="display:none" onchange="this.parentElement.style.background = this.checked ? 'rgba(168,85,247,0.2)' : 'rgba(0,0,0,0.3)'; this.parentElement.style.borderColor = this.checked ? 'var(--neon)' : 'var(--border)'; this.parentElement.style.color = this.checked ? 'var(--neon)' : 'var(--text-secondary)';">
+        ${isFilha ? '<i class="fas fa-turn-up fa-rotate-90" style="opacity:0.5"></i>' : ''}
+        ${escapeHtml(cat.nome)}
+      </label>
+    `;
+  };
 
   for (const pai of pais) {
     const filhas = (filhasPorPai[pai.id] || []).sort((a,b) => (a.ordem || 0) - (b.ordem || 0));
     if (filhas.length > 0) {
-      // Pai tem filhas → aparece como optgroup, e as filhas como opções
-      html += `<optgroup label="${escapeHtml(pai.nome)}">`;
+      // Adiciona o pai (que não terá produtos diretamente, mas fica visível)
+      html += criarChip(pai, false);
       for (const f of filhas) {
-        const selStr = (selecionadaId && parseInt(selecionadaId) === f.id) ? " selected" : "";
-        html += `<option value="${f.id}"${selStr}>${escapeHtml(f.nome)}</option>`;
+        html += criarChip(f, true);
       }
-      html += `</optgroup>`;
     } else {
-      // Pai sem filhas → é uma folha direta
-      const selStr = (selecionadaId && parseInt(selecionadaId) === pai.id) ? " selected" : "";
-      html += `<option value="${pai.id}"${selStr}>${escapeHtml(pai.nome)}</option>`;
+      html += criarChip(pai, false);
     }
   }
 
-  sel.innerHTML = html;
+  wrap.innerHTML = html || '<span style="font-size:12px;color:var(--text-dim)">Nenhuma categoria ativa cadastrada.</span>';
+}
+
+// Pega os IDs marcados no multi-select
+function getCategoriasMarcadas(wrapId) {
+  const wrap = document.getElementById(wrapId);
+  if (!wrap) return [];
+  return Array.from(wrap.querySelectorAll('input[type="checkbox"]:checked')).map(inp => parseInt(inp.value));
 }
 
 // Preenche o <select> de "Categoria Pai" no modal (não permite escolher a si mesmo nem filhos)
@@ -10988,8 +11005,8 @@ async function iniciarApp() {
     restaurarColapsaveis();
   renderizarListaMsgModelos();
     await carregarCategorias();
-  carregarCategoriasSelect("prodCategoria");
-  carregarCategoriasSelect("editCategoria");
+  carregarCategoriasMultiSelect("prodCategoriasWrap", []);
+  carregarCategoriasMultiSelect("editCategoriasWrap", []);
   await carregarTabelasPreco();
   await carregarVendedores();
   await verificarStatus();
