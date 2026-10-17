@@ -7321,9 +7321,10 @@ document.getElementById("btnSalvarProduto").onclick = async () => {
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
   try {
-    const res = await api("/produtos", {
+        const res = await api("/produtos", {
       method: "POST",
-     body: JSON.stringify({ modelo, cor, preco_custo: custo, preco_venda_atacado: atacado, preco_venda_unitario: unitario, codigo_barras: codigo, categoria_ids: categoriaIds }), 
+      body: JSON.stringify({ modelo, cor, preco_custo: custo, preco_venda_atacado: atacado, preco_venda_unitario: unitario, codigo_barras: codigo, categoria_ids: categoriaIds }),
+    });
     const data = await res.json();
     if (!data.success) throw new Error(data.error);
     const produtoId = data.id;
