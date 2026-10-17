@@ -1,5 +1,5 @@
 // ============================================
-// MAX REPRESENTAÇÃO — SITE v3.8
+// MAX REPRESENTAÇÃO — SITE v3.9
 // script.js
 // Adicionado "Meu Pedido" (cliente edita o próprio pedido)
 // ============================================
@@ -450,11 +450,11 @@ function abrirModalCarrinho() {
   document.getElementById("carrinhoTotalPares").textContent = totalPares;
   document.getElementById("carrinhoTotalValor").textContent = formatarMoeda(totalValor);
 
-  // Se tá em modo adição, muda o texto e o comportamento do botão
-  if (modoAdicaoAtivo && meuPedidoChave) {
+    // Se tá em modo adição, muda o texto e o comportamento do botão
+  if (modoAdicaoAtivo && modoAdicaoChave) {
     aviso.classList.remove("show");
     btnEnviar.disabled = totalPares === 0;
-    btnEnviar.innerHTML = `<i class="fas fa-plus-circle"></i> Adicionar ao pedido ${meuPedidoChave}`;
+    btnEnviar.innerHTML = `<i class="fas fa-plus-circle"></i> Adicionar ao pedido ${modoAdicaoChave}`;
     btnEnviar.onclick = adicionarCarrinhoAoPedido;
   } else {
     // Modo normal
