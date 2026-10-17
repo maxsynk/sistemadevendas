@@ -814,6 +814,336 @@ function escapeHtml(s) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
+// ============================================
+// MEU PEDIDO — Funções principais
+// ============================================
+
+// Abrir modal de busca
+function abrirBuscaPedido() {
+  document.getElementById("buscaChave").value = "";
+  document.getElementById("buscaWhatsapp").value = "";
+  document.getElementById("buscaErro").style.display = "none";
+  document.getElementById("modalBuscarPedido").classList.add("active");
+  document.body.style.overflow = "hidden";
+  setTimeout(() => document.getElementById("buscaChave").focus(), 200);
+}
+
+function fecharBuscaPedido() {
+  document.getElementById("modalBuscarPedido").classList.remove("active");
+  document.body.style.overflow = "";
+}
+
+function fecharMeuPedido() {
+  document.getElementById("modalMeuPedido").classList.remove("active");
+  document.body.style.overflow = "";
+  meuPedidoAtual = null;
+  meuPedidoChave = null;
+  meuPedidoWhatsapp = null;
+}
+
+// Buscar pedido no servidor
+async function buscarMeuPedido() {
+  const chave = (document.getElementById("buscaChave").value || "").trim().toUpperCase();
+  const whatsapp = (document.getElementById("buscaWhatsapp").value || "").trim();
+  const erroEl = document.getElementById("buscaErro");
+  const btn = document.getElementById("btnBuscarPedido");
+
+  if (!chave || chave.length < 6) {
+    erroEl.style.display = "flex";
+    erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Digite a chave completa (6 caracteres)`;
+    return;
+  }
+  if (!whatsapp || whatsapp.replace(/\D/g, "").length < 10) {
+    erroEl.style.display = "flex";
+    erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Digite um WhatsApp válido`;
+    return;
+  }
+
+  erroEl.style.display = "none";
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
+
+  try {
+    const res = await fetch(API_BASE + "/publico/meu-pedido", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Site-Token": "max-site-2026",
+      },
+      body: JSON.stringify({ chave, whatsapp }),
+    });
+
+    const data = await res.json();
+
+    if (!data.success) {
+      erroEl.style.display = "flex";
+      erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${escapeHtml(data.error || "Pedido não encontrado")}`;
+      return;
+    }
+
+    // Salva estado
+    meuPedidoAtual = data.pedido;
+    meuPedidoChave = chave;
+    meuPedidoWhatsapp = whatsapp;
+
+    // Fecha busca, abre visualização
+    fecharBuscaPedido();
+    renderizarMeuPedido();
+    document.getElementById("modalMeuPedido").classList.add("active");
+    document.body.style.overflow = "hidden";
+
+  } catch (e) {
+    console.error("[buscarMeuPedido]", e);
+    erroEl.style.display = "flex";
+    erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Erro: ${escapeHtml(e.message)}`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-search"></i> Buscar Pedido';
+  }
+}
+
+// Renderizar o modal do pedido
+function renderizarMeuPedido() {
+  if (!meuPedidoAtual) return;
+
+  const p = meuPedidoAtual;
+
+  // Chave no título
+  document.getElementById("meuPedidoChave").textContent = p.chave;
+
+  // Status
+  const statusEl = document.getElementById("meuPedidoStatus");
+  statusEl.className = "meu-pedido-status " + (p.status || "pendente");
+  const statusTexto = {
+    pendente: "⏳ Aguardando aprovação do vendedor",
+    aprovado: "✅ Pedido aprovado e reservado",
+    rejeitado: "❌ Pedido rejeitado pelo vendedor",
+  };
+  statusEl.textContent = statusTexto[p.status] || p.status;
+
+  // Itens
+  const itensEl = document.getElementById("meuPedidoItens");
+  const rodapeEl = document.getElementById("meuPedidoRodape");
+  const vazioEl = document.getElementById("meuPedidoVazio");
+  const btnAdicionar = document.getElementById("btnAdicionarAoPedido");
+
+  if (!p.itens || p.itens.length === 0) {
+    itensEl.innerHTML = "";
+    vazioEl.style.display = "block";
+    rodapeEl.style.display = "none";
+    return;
+  }
+
+  vazioEl.style.display = "none";
+  rodapeEl.style.display = "block";
+
+  let html = "";
+  for (const it of p.itens) {
+    html += `
+      <div class="meu-pedido-item">
+        <div class="foto">
+          ${it.foto_url ? `<img src="${it.foto_url}" alt="">` : `<i class="fas fa-image"></i>`}
+        </div>
+        <div class="info">
+          <div class="nome">${escapeHtml(it.modelo)} — ${escapeHtml(it.cor)}</div>
+          <div class="det">Nº <b>${it.numeracao}</b></div>
+        </div>
+        <div class="qtd">${it.quantidade}x</div>
+        ${p.status !== "rejeitado" ? `<button class="btn-remover-item" data-variacao-id="${it.variacao_id}" title="Remover"><i class="fas fa-trash"></i></button>` : ""}
+      </div>
+    `;
+  }
+  itensEl.innerHTML = html;
+
+  // Bind dos botões de remover
+  itensEl.querySelectorAll("[data-variacao-id]").forEach(btn => {
+    btn.onclick = () => removerItemDoPedido(parseInt(btn.dataset.variacaoId), btn);
+  });
+
+  // Totais
+  document.getElementById("meuPedidoTotalPares").textContent = p.total_pares;
+
+  if (p.desconto_aplicado && p.desconto_aplicado > 0) {
+    document.getElementById("meuPedidoLinhaOriginal").style.display = "flex";
+    document.getElementById("meuPedidoLinhaDesconto").style.display = "flex";
+    document.getElementById("meuPedidoValorOriginal").textContent = formatarMoeda(p.valor_original || 0);
+    document.getElementById("meuPedidoDesconto").textContent = "- " + formatarMoeda(p.desconto_aplicado);
+  } else {
+    document.getElementById("meuPedidoLinhaOriginal").style.display = "none";
+    document.getElementById("meuPedidoLinhaDesconto").style.display = "none";
+  }
+
+  document.getElementById("meuPedidoValorTotal").textContent = formatarMoeda(p.valor_estimado);
+
+  // Botão adicionar (esconde se rejeitado)
+  if (p.status === "rejeitado") {
+    btnAdicionar.style.display = "none";
+  } else {
+    btnAdicionar.style.display = "flex";
+    btnAdicionar.onclick = entrarModoAdicao;
+  }
+}
+
+// Remover item do pedido
+async function removerItemDoPedido(variacaoId, btn) {
+  if (!confirm("Remover este item do pedido?")) return;
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+  try {
+    const res = await fetch(API_BASE + "/publico/meu-pedido/remover-item", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Site-Token": "max-site-2026",
+      },
+      body: JSON.stringify({
+        chave: meuPedidoChave,
+        whatsapp: meuPedidoWhatsapp,
+        variacao_id: variacaoId,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!data.success) {
+      alert("Erro: " + (data.error || "Não foi possível remover"));
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-trash"></i>';
+      return;
+    }
+
+    // Recarrega o pedido
+    await recarregarMeuPedido();
+    mostrarToastAdd("Item removido do pedido");
+
+  } catch (e) {
+    console.error("[removerItemDoPedido]", e);
+    alert("Erro: " + e.message);
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-trash"></i>';
+  }
+}
+
+// Recarrega o pedido do servidor
+async function recarregarMeuPedido() {
+  try {
+    const res = await fetch(API_BASE + "/publico/meu-pedido", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Site-Token": "max-site-2026",
+      },
+      body: JSON.stringify({
+        chave: meuPedidoChave,
+        whatsapp: meuPedidoWhatsapp,
+      }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      meuPedidoAtual = data.pedido;
+      renderizarMeuPedido();
+    }
+  } catch (e) {
+    console.error("[recarregarMeuPedido]", e);
+  }
+}
+
+// Entrar em modo adição (volta pro catálogo com banner)
+function entrarModoAdicao() {
+  modoAdicaoAtivo = true;
+  fecharMeuPedido();
+
+  // Mostra o banner
+  document.getElementById("bannerPedidoChave").textContent = meuPedidoChave;
+  document.getElementById("bannerVoltandoPedido").style.display = "block";
+
+  // Rola pra cima (pro catálogo)
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// Cancelar modo adição
+function cancelarModoAdicao() {
+  modoAdicaoAtivo = false;
+  document.getElementById("bannerVoltandoPedido").style.display = "none";
+  carrinho = [];
+  atualizarCarrinho();
+}
+
+// Adicionar carrinho atual ao pedido existente
+async function adicionarCarrinhoAoPedido() {
+  if (!modoAdicaoAtivo || !meuPedidoChave) return;
+  if (carrinho.length === 0) {
+    alert("Seu carrinho está vazio.");
+    return;
+  }
+
+  const itens = carrinho.map(it => ({
+    produto_id: it.produto_id,
+    numeracao: it.numeracao,
+    quantidade: it.qtd,
+  }));
+
+  const btn = document.querySelector("#modalCarrinho #carrinhoEnviar");
+  const btnOriginal = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adicionando...';
+
+  try {
+    const res = await fetch(API_BASE + "/publico/meu-pedido/adicionar-itens", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Site-Token": "max-site-2026",
+      },
+      body: JSON.stringify({
+        chave: meuPedidoChave,
+        whatsapp: meuPedidoWhatsapp,
+        itens,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!data.success) {
+      let msg = data.error || "Não foi possível adicionar";
+      if (data.itens_com_erro && data.itens_com_erro.length > 0) {
+        msg += "\n\nItens com problema:\n";
+        for (const err of data.itens_com_erro) {
+          msg += `• ${err.motivo}\n`;
+        }
+      }
+      alert(msg);
+      btn.disabled = false;
+      btn.innerHTML = btnOriginal;
+      return;
+    }
+
+    // Sucesso
+    carrinho = [];
+    atualizarCarrinho();
+    fecharModalCarrinho();
+    cancelarModoAdicao();
+
+    // Abre o modal do pedido atualizado
+    await recarregarMeuPedido();
+    document.getElementById("modalMeuPedido").classList.add("active");
+    document.body.style.overflow = "hidden";
+
+    let msg = `✅ ${data.itens_adicionados.length} item(ns) adicionado(s)!`;
+    if (data.itens_com_erro && data.itens_com_erro.length > 0) {
+      msg += ` (${data.itens_com_erro.length} com erro)`;
+    }
+    mostrarToastAdd(msg);
+
+  } catch (e) {
+    console.error("[adicionarCarrinhoAoPedido]", e);
+    alert("Erro: " + e.message);
+    btn.disabled = false;
+    btn.innerHTML = btnOriginal;
+  }
+}
 
 // ============================================
 // INICIALIZAÇÃO
@@ -828,6 +1158,54 @@ document.addEventListener("DOMContentLoaded", () => {
   // Tema
   const temaToggle = document.getElementById("temaToggle");
   if (temaToggle) temaToggle.addEventListener("click", alternarTema);
+    // ============================================
+  // MEU PEDIDO — Listeners
+  // ============================================
+  const btnMeuPedido = document.getElementById("headerMeuPedido");
+  if (btnMeuPedido) btnMeuPedido.addEventListener("click", abrirBuscaPedido);
+
+  const btnBuscarFechar = document.getElementById("modalBuscarPedidoFechar");
+  if (btnBuscarFechar) btnBuscarFechar.addEventListener("click", fecharBuscaPedido);
+
+  const modalBuscar = document.getElementById("modalBuscarPedido");
+  if (modalBuscar) modalBuscar.addEventListener("click", (e) => {
+    if (e.target.id === "modalBuscarPedido") fecharBuscaPedido();
+  });
+
+  const btnBuscar = document.getElementById("btnBuscarPedido");
+  if (btnBuscar) btnBuscar.addEventListener("click", buscarMeuPedido);
+
+  // Enter nos campos de busca
+  const buscaChaveInput = document.getElementById("buscaChave");
+  const buscaWhatsInput = document.getElementById("buscaWhatsapp");
+  if (buscaChaveInput) {
+    buscaChaveInput.addEventListener("input", (e) => {
+      e.target.value = e.target.value.toUpperCase();
+      if (e.target.value.length === 6 && buscaWhatsInput) buscaWhatsInput.focus();
+    });
+    buscaChaveInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") buscarMeuPedido();
+    });
+  }
+  if (buscaWhatsInput) {
+    buscaWhatsInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") buscarMeuPedido();
+    });
+  }
+
+  const btnFecharMeu = document.getElementById("modalMeuPedidoFechar");
+  if (btnFecharMeu) btnFecharMeu.addEventListener("click", fecharMeuPedido);
+
+  const btnFecharMeu2 = document.getElementById("btnFecharMeuPedido");
+  if (btnFecharMeu2) btnFecharMeu2.addEventListener("click", fecharMeuPedido);
+
+  const modalMeu = document.getElementById("modalMeuPedido");
+  if (modalMeu) modalMeu.addEventListener("click", (e) => {
+    if (e.target.id === "modalMeuPedido") fecharMeuPedido();
+  });
+
+  const btnCancelarModo = document.getElementById("btnCancelarModoAdicao");
+  if (btnCancelarModo) btnCancelarModo.addEventListener("click", cancelarModoAdicao);
 
   // Instalar PWA
   const btnInstalar = document.getElementById("btnInstalar");
