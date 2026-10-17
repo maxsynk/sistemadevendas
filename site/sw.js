@@ -3,7 +3,7 @@
 // Permite o mini site ser instalável como app
 // ============================================
 
-const CACHE_NOME = "max-catalogo-v10.0";
+const CACHE_NOME = "max-catalogo-v11.0";
 const ARQUIVOS_CACHE = [
   "./",
   "./index.html",
