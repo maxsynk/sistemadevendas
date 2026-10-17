@@ -7735,10 +7735,11 @@ document.getElementById("btnSalvarEdit").onclick = async () => {
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
   try {
-    const res = await api(`/produtos/${p.id}`, {
+       const res = await api(`/produtos/${p.id}`, {
       method: "PUT",
-                      body: JSON.stringify({ modelo, cor, preco_custo: custo, preco_venda_atacado: atacado, preco_venda_unitario: unitario, codigo_barras: codigo, categoria_ids: categoriaIds }), 
-    const d = await res.json();
+      body: JSON.stringify({ modelo, cor, preco_custo: custo, preco_venda_atacado: atacado, preco_venda_unitario: unitario, codigo_barras: codigo, categoria_ids: categoriaIds }),
+    });
+    const d = await res.json(); 
     if (!d.success) throw new Error(d.error);
 
     if (fotoEditFile) {
