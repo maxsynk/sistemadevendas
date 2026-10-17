@@ -8,7 +8,8 @@
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const WHATSAPP_NUMERO = "5537991021468";
 const WHATSAPP_MSG_PADRAO = "Olá! Vi o catálogo no site e gostaria de mais informações.";
-const MINIMO_PARES = 8;
+const MINIMO_PARES = 1; // Permite fechar pedido com 1 par
+const MINIMO_ENVIO = 6; // Aviso: pedidos abaixo disso não são despachados
 
 // ============================================
 // PWA — Registra o service worker
@@ -509,7 +510,7 @@ function abrirModalCarrinho() {
   document.getElementById("carrinhoTotalPares").textContent = totalPares;
   document.getElementById("carrinhoTotalValor").textContent = formatarMoeda(totalValor);
 
-    // Se tá em modo adição, muda o texto e o comportamento do botão
+     // Se tá em modo adição, muda o texto e o comportamento do botão
   if (modoAdicaoAtivo && modoAdicaoChave) {
     aviso.classList.remove("show");
     btnEnviar.disabled = totalPares === 0;
@@ -517,17 +518,19 @@ function abrirModalCarrinho() {
     btnEnviar.onclick = adicionarCarrinhoAoPedido;
   } else {
     // Modo normal
-    if (totalPares < MINIMO_PARES) {
+    btnEnviar.disabled = totalPares === 0;
+    
+    // Aviso sobre o mínimo de envio (6 pares)
+    if (totalPares > 0 && totalPares < MINIMO_ENVIO) {
       aviso.classList.add("show");
-      aviso.innerHTML = `<i class="fas fa-info-circle"></i> Pedido mínimo: ${MINIMO_PARES} pares. Faltam ${MINIMO_PARES - totalPares}.`;
-      btnEnviar.disabled = true;
+      aviso.innerHTML = `<i class="fas fa-exclamation-triangle"></i> <strong>Atenção:</strong> O pedido só será despachado a partir de ${MINIMO_ENVIO} pares. Faltam ${MINIMO_ENVIO - totalPares} pares.`;
     } else {
       aviso.classList.remove("show");
-      btnEnviar.disabled = false;
     }
+    
     btnEnviar.innerHTML = '<i class="fas fa-check-circle"></i> Finalizar Pedido';
     btnEnviar.onclick = abrirFormFechamento;
-  } 
+  }   
 
   modal.classList.add("active");
   document.body.style.overflow = "hidden";
