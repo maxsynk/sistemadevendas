@@ -814,6 +814,214 @@ body.tema-claro .hero {
 }
 .toast-add i { font-size: 18px; }
 /* ============================================ */
+/* MEU PEDIDO — botão header + modais + banner   */
+/* ============================================ */
+
+/* Botão "Meu Pedido" no header */
+.header-btn.pedido-btn {
+  background: rgba(168,85,247,0.08);
+  border-color: rgba(168,85,247,0.4);
+  color: var(--roxo);
+  font-weight: 700;
+  font-size: 12px;
+  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.header-btn.pedido-btn:hover {
+  background: rgba(168,85,247,0.2);
+  border-color: var(--roxo);
+  box-shadow: 0 0 16px var(--roxo-glow);
+}
+.header-btn.pedido-btn i { font-size: 14px; }
+
+/* Erro na busca */
+.busca-erro {
+  padding: 12px 14px;
+  background: rgba(239,68,68,0.1);
+  border: 1px solid var(--error);
+  border-radius: 10px;
+  color: var(--error);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+.busca-erro i { font-size: 16px; }
+
+/* Status do pedido no modal */
+.meu-pedido-status {
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.meu-pedido-status.pendente {
+  background: rgba(56,189,248,0.1);
+  border: 1px solid var(--info);
+  color: var(--info);
+}
+.meu-pedido-status.aprovado {
+  background: rgba(34,197,94,0.1);
+  border: 1px solid var(--verde);
+  color: var(--verde);
+}
+.meu-pedido-status.rejeitado {
+  background: rgba(239,68,68,0.1);
+  border: 1px solid var(--error);
+  color: var(--error);
+}
+
+/* Item do pedido (mais compacto que o do carrinho) */
+.meu-pedido-item {
+  display: grid;
+  grid-template-columns: 60px 1fr auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+.meu-pedido-item .foto {
+  width: 60px; height: 60px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.3);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; color: var(--text-dim);
+}
+.meu-pedido-item .foto img { width: 100%; height: 100%; object-fit: cover; }
+.meu-pedido-item .info .nome {
+  font-size: 13px; font-weight: 700;
+  color: var(--text); margin-bottom: 3px;
+}
+.meu-pedido-item .info .det {
+  font-size: 11px; color: var(--text-2);
+}
+.meu-pedido-item .info .det b { color: var(--roxo); }
+.meu-pedido-item .qtd {
+  font-size: 15px; font-weight: 800;
+  color: var(--roxo);
+  min-width: 40px;
+  text-align: center;
+}
+.meu-pedido-item .btn-remover-item {
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.3);
+  color: var(--error);
+  font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.meu-pedido-item .btn-remover-item:hover {
+  background: var(--error);
+  color: #fff;
+}
+
+/* Banner "modo adição" */
+.banner-voltando-pedido {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 600px;
+  width: calc(100% - 32px);
+  z-index: 400;
+  animation: slideUpBanner 0.3s ease-out;
+}
+@keyframes slideUpBanner {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+.banner-voltando-pedido-inner {
+  background: linear-gradient(135deg, rgba(168,85,247,0.95), rgba(217,70,239,0.95));
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 12px 32px rgba(168,85,247,0.5);
+  flex-wrap: wrap;
+}
+.banner-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  color: #fff;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.banner-info i { font-size: 20px; flex-shrink: 0; }
+.banner-info strong { font-weight: 800; }
+.banner-info span { display: block; font-size: 11px; opacity: 0.9; margin-top: 2px; }
+.btn-cancelar-modo {
+  padding: 8px 14px;
+  background: rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.4);
+  border-radius: 8px;
+  color: #fff;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-cancelar-modo:hover {
+  background: rgba(255,255,255,0.35);
+}
+
+/* Ajuste mobile */
+@media (max-width: 700px) {
+  .header-btn.pedido-btn {
+    padding: 0 12px;
+  }
+  .header-btn.pedido-btn .meu-pedido-label {
+    display: none;
+  }
+  .meu-pedido-item {
+    grid-template-columns: 50px 1fr auto;
+    gap: 10px;
+    padding: 10px;
+  }
+  .meu-pedido-item .foto {
+    width: 50px; height: 50px;
+  }
+  .meu-pedido-item .qtd {
+    grid-column: 3;
+    font-size: 14px;
+  }
+  .banner-voltando-pedido {
+    bottom: 90px;
+  }
+  .banner-voltando-pedido-inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .btn-cancelar-modo {
+    width: 100%;
+    justify-content: center;
+  }
+}
+/* ============================================ */
 /* BADGES NOVIDADE / REPOSIÇÃO                   */
 /* ============================================ */
 .card-produto {
