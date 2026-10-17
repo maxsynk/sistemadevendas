@@ -28,6 +28,62 @@ let carrinho = [];
 let deferredInstallPrompt = null;
 
 // ============================================
+// CARRINHO PERSISTENTE (localStorage)
+// ============================================
+const CARRINHO_STORAGE_KEY = "max_site_carrinho";
+
+// Salva o carrinho atual no localStorage
+function salvarCarrinhoLocal() {
+  // Não salva se estiver em modo adição (pra não misturar)
+  if (typeof modoAdicaoAtivo !== "undefined" && modoAdicaoAtivo) return;
+  try {
+    if (carrinho.length === 0) {
+      localStorage.removeItem(CARRINHO_STORAGE_KEY);
+    } else {
+      localStorage.setItem(CARRINHO_STORAGE_KEY, JSON.stringify(carrinho));
+    }
+  } catch (e) {
+    console.warn("[carrinho] Erro ao salvar:", e.message);
+  }
+}
+
+// Recupera o carrinho do localStorage
+function recuperarCarrinhoLocal() {
+  try {
+    const salvo = localStorage.getItem(CARRINHO_STORAGE_KEY);
+    if (!salvo) return;
+    const carrinhoSalvo = JSON.parse(salvo);
+    if (!Array.isArray(carrinhoSalvo) || carrinhoSalvo.length === 0) return;
+
+    // Recupera (com validação básica de cada item)
+    carrinho = carrinhoSalvo.filter(it =>
+      it &&
+      it.produto_id &&
+      it.numeracao &&
+      typeof it.qtd === "number" &&
+      it.qtd > 0
+    );
+
+    if (carrinho.length > 0) {
+      const totalPares = carrinho.reduce((s, c) => s + c.qtd, 0);
+      setTimeout(() => {
+        mostrarToastAdd(`🛒 Carrinho recuperado: ${totalPares} ${totalPares === 1 ? "par" : "pares"}`);
+      }, 2000);
+    }
+  } catch (e) {
+    console.warn("[carrinho] Erro ao recuperar:", e.message);
+    localStorage.removeItem(CARRINHO_STORAGE_KEY);
+  }
+}
+
+// Limpa o carrinho do localStorage
+function limparCarrinhoLocal() {
+  try {
+    localStorage.removeItem(CARRINHO_STORAGE_KEY);
+  } catch (e) {}
+}
+
+// ============================================
 // PWA — INSTALAÇÃO
 // ============================================
 window.addEventListener("beforeinstallprompt", (e) => {
@@ -398,6 +454,8 @@ function atualizarCarrinho() {
     badge.textContent = totalItens;
     badge.style.display = totalItens > 0 ? "flex" : "none";
   }
+  // Salva no localStorage sempre que muda
+  salvarCarrinhoLocal();
 }
 
 function abrirModalCarrinho() {
