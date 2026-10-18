@@ -8918,7 +8918,7 @@ function renderizarDetalhePedido() {
     if (temPermissao("editar_pedido")) acoesDiv.innerHTML += `<button class="btn btn-secondary" id="btnEditarPedido"><i class="fas fa-edit"></i> Editar Pedido</button>`;
     if (temPermissao("editar_pedido")) acoesDiv.innerHTML += `<button class="btn btn-secondary" id="btnLancarFrete"><i class="fas fa-truck"></i> Lançar Frete</button>`;
     if (pedido.valor_frete) acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarConfirmacao"><i class="fab fa-whatsapp"></i> Enviar Confirmação</button>`;
-    if (temPermissao("pagamento")) acoesDiv.innerHTML += `<button class="btn btn-primary" id="btnMarcarPago"><i class="fas fa-money-bill-wave"></i> Registrar Pagamento</button>`;
+    acoesDiv.innerHTML += `<button class="btn btn-primary" id="btnMarcarPago"><i class="fas fa-money-bill-wave"></i> Registrar Pagamento</button>`;
     if (temPermissao("despacho")) acoesDiv.innerHTML += `<button class="btn btn-warning" id="btnSeparar"><i class="fas fa-box-open"></i> Separar</button>`;
     if (temPermissao("cancelar_pedido")) acoesDiv.innerHTML += `<button class="btn btn-danger" id="btnCancelarPedido"><i class="fas fa-times"></i> Cancelar</button>`;
   } else if (status === "separado") {
