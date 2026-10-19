@@ -627,12 +627,67 @@ function abrirFormFechamento() {
     });
     inputTel.dataset.listenerAdded = "1";
   }
+    // NOVO: Buscar dados do cliente ao sair do campo WhatsApp
+  const inputTelCliente = document.getElementById("fpTelefone");
+  if (inputTelCliente && !inputTelCliente.dataset.buscaClienteAdded) {
+    inputTelCliente.addEventListener("blur", buscarDadosCliente);
+    inputTelCliente.dataset.buscaClienteAdded = "1";
+  }
 }
 
 // Agenda validação da chave (debounce de 800ms)
 function agendarValidacaoChave() {
   clearTimeout(validandoChaveTimer);
   validandoChaveTimer = setTimeout(() => validarChaveRevendedor(), 800);
+}
+// ============================================
+// BUSCAR DADOS DO CLIENTE NO BANCO (AUTOCOMPLETAR)
+// ============================================
+async function buscarDadosCliente() {
+  const telefone = document.getElementById("fpTelefone").value.trim();
+  const aviso = document.getElementById("avisoClienteCadastrado");
+  
+  // Só busca se tiver um número válido (mínimo 10 dígitos com DDD)
+  if (!telefone || telefone.replace(/\D/g, "").length < 10) {
+    if (aviso) aviso.style.display = "none";
+    return;
+  }
+
+  try {
+    const res = await fetch(API_BASE + "/publico/buscar-cliente", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Site-Token": "max-site-2026",
+      },
+      body: JSON.stringify({ whatsapp: telefone }),
+    });
+
+    const data = await res.json();
+
+    if (data.success && data.encontrado && data.cliente) {
+      const c = data.cliente;
+      
+      // Preenche os campos (se vierem vazios do banco, não sobrescreve o que já tá digitado, mas limpa)
+      if (c.nome) document.getElementById("fpNome").value = c.nome;
+      if (c.cpf) document.getElementById("fpCpf").value = c.cpf;
+      if (c.cep) document.getElementById("fpCep").value = c.cep;
+      if (c.endereco) document.getElementById("fpEndereco").value = c.endereco;
+      if (c.numero) document.getElementById("fpNumero").value = c.numero;
+      if (c.bairro) document.getElementById("fpBairro").value = c.bairro;
+      if (c.cidade) document.getElementById("fpCidade").value = c.cidade;
+      if (c.uf) document.getElementById("fpUf").value = c.uf;
+
+      // Mostra o aviso verde
+      if (aviso) aviso.style.display = "block";
+
+    } else {
+      // Cliente novo: esconde o aviso e não faz nada (deixa o cliente digitar)
+      if (aviso) aviso.style.display = "none";
+    }
+  } catch (e) {
+    console.error("[buscarDadosCliente]", e);
+  }
 }
 
 // Valida a chave do revendedor via API
@@ -709,10 +764,18 @@ function fecharFormFechamento() {
 }
 
 async function confirmarFechamento() {
-  const nome = document.getElementById("fpNome").value.trim();
+   const nome = document.getElementById("fpNome").value.trim();
   const telefone = document.getElementById("fpTelefone").value.trim();
-  const cidade = document.getElementById("fpCidade").value.trim();
   const chaveRevendedor = (document.getElementById("fpChaveRevendedor").value || "").trim().toUpperCase();
+  
+  // NOVOS CAMPOS
+  const cpf = document.getElementById("fpCpf").value.trim();
+  const cep = document.getElementById("fpCep").value.trim();
+  const endereco = document.getElementById("fpEndereco").value.trim();
+  const numero = document.getElementById("fpNumero").value.trim();
+  const bairro = document.getElementById("fpBairro").value.trim();
+  const cidade = document.getElementById("fpCidade").value.trim();
+  const uf = document.getElementById("fpUf").value.trim().toUpperCase();
   if (!nome) { alert("Preencha o nome"); document.getElementById("fpNome").focus(); return; }
   if (!telefone || telefone.replace(/\D/g, "").length < 10) {
     alert("Preencha um WhatsApp válido com DDD");
@@ -737,13 +800,21 @@ async function confirmarFechamento() {
         "Content-Type": "application/json",
         "X-Site-Token": "max-site-2026",
       },
-      body: JSON.stringify({
-        nome: nome,
-        telefone: telefone,
-        cidade_estado: cidade || null,
-        itens: itens,
-        chave_revendedor: chaveRevendedor || null,
-      }),
+        body: JSON.stringify({
+      nome: nome,
+      telefone: telefone,
+      cidade_estado: cidade ? `${cidade}/${uf}` : null, // Mantém compatibilidade
+      itens: itens,
+      chave_revendedor: chaveRevendedor || null,
+      // NOVOS CAMPOS
+      cpf: cpf || null,
+      cep: cep || null,
+      endereco: endereco || null,
+      numero: numero || null,
+      bairro: bairro || null,
+      cidade: cidade || null,
+      uf: uf || null,
+    }),  
     });
 
     const data = await res.json();
@@ -755,7 +826,11 @@ async function confirmarFechamento() {
     msg += `Chave: ${data.chave}\n`;
     msg += `Nome: ${nome}\n`;
     msg += `WhatsApp: ${telefone}\n`;
-    msg += `Cidade: ${cidade || "—"}\n\n`;
+    msg += `Cidade: ${cidade || "—"}${uf ? "/" + uf : ""}\n`;
+if (endereco) {
+  msg += `Endereço: ${endereco}, ${numero || "S/N"} - ${bairro || ""}\n`;
+}
+msg += `\n`;
     msg += `ITENS:\n`;
 
     const porProduto = {};
