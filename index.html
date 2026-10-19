@@ -11443,13 +11443,10 @@ async function verificarPedidosSite() {
       titulo.textContent = total === 1
         ? "Você tem 1 pedido recebido do site"
         : `Você tem ${total} pedidos recebidos do site`;
-
-      // Faz a aba Pedidos piscar
-            // Faz a aba Pedidos piscar (desktop)
-      if (abaPedidos) abaPedidos.classList.add("tab-pedidos-pendente");
-      // Faz o item do menu hamburger piscar (mobile)
-      if (drawerPedidos) drawerPedidos.classList.add("drawer-pedidos-pendente");
-
+     const abaPedidos = document.querySelector('.tab[data-aba="pedidos"]');
+  const drawerPedidos = document.querySelector('.drawer-item[data-aba="pedidos"]');
+  if (abaPedidos) abaPedidos.classList.add("tab-pedidos-pendente");
+  if (drawerPedidos) drawerPedidos.classList.add("drawer-pedidos-pendente"); 
       const ultimoTotal = parseInt(sessionStorage.getItem("max_ultimo_total_site") || "0");
       if (total > ultimoTotal) {
         tocarSomPedidoSite();
@@ -11457,6 +11454,8 @@ async function verificarPedidosSite() {
       sessionStorage.setItem("max_ultimo_total_site", String(total));
     } else {
       alerta.style.display = "none";
+      const abaPedidos = document.querySelector('.tab[data-aba="pedidos"]');
+  const drawerPedidos = document.querySelector('.drawer-item[data-aba="pedidos"]');
             // Para de piscar (desktop)
       if (abaPedidos) abaPedidos.classList.remove("tab-pedidos-pendente");
       // Para de piscar (mobile)
