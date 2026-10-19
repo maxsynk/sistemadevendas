@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v4.5
+  MAX REPRESENTAÇÃO — HTML v4.6
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -5543,7 +5543,7 @@
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "4.5";
+const APP_VERSION = "4.6";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -11530,32 +11530,7 @@ function renderizarDetalhePedidoSite(p) {
       </div>
     `;
   }
-  async function removerItemPedidoSite(pedidoId, variacaoId) {
-  if (!confirm("Remover este item do pedido? O cliente verá a alteração no site.")) return;
-
-  try {
-    const res = await api(`/pedidos-site/${pedidoId}/remover-item`, {
-      method: "POST",
-      body: JSON.stringify({ variacao_id: variacaoId })
-    });
-    
-    const data = await res.json();
-    if (!data.success) throw new Error(data.error);
-
-    toast("Item removido do pedido!");
-    
-    // Recarrega o detalhe do pedido para atualizar a tela
-    await abrirDetalhePedidoSite(pedidoId);
-    
-    // Se a modal de listagem estiver aberta ao fundo, atualiza ela também
-    if (document.getElementById("modalPedidosSite").classList.contains("active")) {
-      await carregarListaPedidosSite();
-    }
-  } catch (e) {
-    toast("Erro ao remover item: " + e.message, "error");
-  }
-}
-
+  
   let avisoFaltaHTML = "";
   if (temFalta) {
     avisoFaltaHTML = `<div class="detalhe-site-status falta"><i class="fas fa-exclamation-triangle"></i><span>Alguns itens não têm estoque suficiente. Você pode aprovar mesmo assim — os itens faltantes serão descontados.</span></div>`;
@@ -11627,7 +11602,32 @@ function renderizarDetalhePedidoSite(p) {
   const btnRejeitar = document.getElementById("btnRejeitarPedidoSite");
   if (btnRejeitar) btnRejeitar.onclick = () => rejeitarPedidoSite(p.id);
 }
+async function removerItemPedidoSite(pedidoId, variacaoId) {
+  if (!confirm("Remover este item do pedido? O cliente verá a alteração no site.")) return;
 
+  try {
+    const res = await api(`/pedidos-site/${pedidoId}/remover-item`, {
+      method: "POST",
+      body: JSON.stringify({ variacao_id: variacaoId })
+    });
+    
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+
+    toast("Item removido do pedido!");
+    
+    // Recarrega o detalhe do pedido para atualizar a tela
+    await abrirDetalhePedidoSite(pedidoId);
+    
+    // Se a modal de listagem estiver aberta ao fundo, atualiza ela também
+    if (document.getElementById("modalPedidosSite").classList.contains("active")) {
+      await carregarListaPedidosSite();
+    }
+  } catch (e) {
+    toast("Erro ao remover item: " + e.message, "error");
+  }
+}
+  
 async function aprovarPedidoSite(id) {
   const p = pedidoSiteDetalheAtual;
   if (!p) return;
