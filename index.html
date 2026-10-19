@@ -8881,7 +8881,7 @@ function renderizarDetalhePedido() {
   let avisoPago = "";
   if (pedido.pago) {
     avisoPago = `<div class="aviso-pagamento pago"><i class="fas fa-check-circle"></i><div class="txt"><div class="titulo">PAGO</div><div class="detalhes">${formatarMoeda(pedido.valor_pago)} em ${formatarData(pedido.data_pagamento)} · ${pedido.forma_pagamento || ""}</div></div></div>`;
-    if (pedido.comprovante_url) avisoPago += `<div style="text-align:center"><img class="comprovante-preview" src="${pedido.comprovante_url}" alt="Comprovante"></div>`;
+  if (pedido.comprovante_url) avisoPago += `<div style="text-align:center"><a href="${pedido.comprovante_url}" target="_blank"><img class="comprovante-preview" src="${pedido.comprovante_url}" alt="Comprovante" title="Clique para ampliar"></a></div>`; 
   } else {
     avisoPago = `<div class="aviso-pagamento pendente"><i class="fas fa-exclamation-triangle"></i><div class="txt"><div class="titulo">PENDENTE PAGAMENTO</div><div class="detalhes">Anexe o comprovante antes de despachar</div></div></div>`;
   }
