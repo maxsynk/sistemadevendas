@@ -11510,7 +11510,7 @@ function renderizarDetalhePedidoSite(p) {
     if (!temEstoque) temFalta = true;
     if (estoqueAgora > 0) temAlgoOk = true;
 
-    itensHTML += `
+        itensHTML += `
       <div class="detalhe-site-item" style="${temEstoque ? '' : 'border-left:4px solid var(--warning);'}">
         ${it.foto_url ? `<img src="${it.foto_url}">` : `<div class="vazio"><i class="fas fa-image"></i></div>`}
         <div class="info">
@@ -11522,6 +11522,11 @@ function renderizarDetalhePedidoSite(p) {
           </div>
         </div>
         <div class="qtd">${it.quantidade}x</div>
+        ${p.status === "pendente" ? `
+          <button class="btn btn-danger btn-sm" onclick="removerItemPedidoSite(${p.id}, ${it.variacao_id})" title="Remover item">
+            <i class="fas fa-trash"></i>
+          </button>
+        ` : ''}
       </div>
     `;
   }
