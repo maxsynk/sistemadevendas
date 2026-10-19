@@ -216,17 +216,50 @@
         Vamos gerar um <strong>código único</strong> pro seu pedido. Ele será enviado pro seu WhatsApp pra você confirmar com o vendedor.
       </div>
 
-      <div class="campo">
+            <div class="campo">
         <label>Nome completo *</label>
         <input type="text" id="fpNome" placeholder="Ex: João da Silva" autocomplete="name">
       </div>
       <div class="campo">
         <label>WhatsApp *</label>
         <input type="tel" id="fpTelefone" placeholder="(00) 00000-0000" autocomplete="tel">
+        <small id="avisoClienteCadastrado" style="display:none; color:var(--verde); font-size:11px; margin-top:4px;">
+          <i class="fas fa-check-circle"></i> Cliente cadastrado! Dados preenchidos.
+        </small>
       </div>
       <div class="campo">
-        <label>Cidade / Estado (opcional)</label>
-        <input type="text" id="fpCidade" placeholder="Ex: Formiga/MG">
+        <label>CPF / CNPJ</label>
+        <input type="text" id="fpCpf" placeholder="000.000.000-00">
+      </div>
+      <div class="campo">
+        <label>CEP</label>
+        <input type="text" id="fpCep" placeholder="00000-000">
+      </div>
+      <div class="campo">
+        <label>Endereço</label>
+        <input type="text" id="fpEndereco" placeholder="Rua, Avenida...">
+      </div>
+      
+      <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 10px;">
+        <div class="campo">
+          <label>Número</label>
+          <input type="text" id="fpNumero" placeholder="Nº">
+        </div>
+        <div class="campo">
+          <label>Bairro</label>
+          <input type="text" id="fpBairro" placeholder="Bairro">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 10px;">
+        <div class="campo">
+          <label>Cidade</label>
+          <input type="text" id="fpCidade" placeholder="Ex: Formiga">
+        </div>
+        <div class="campo">
+          <label>UF</label>
+          <input type="text" id="fpUf" placeholder="MG" maxlength="2">
+        </div>
       </div>
 
       <div class="campo">
