@@ -8927,7 +8927,6 @@ function renderizarDetalhePedido() {
     if (temPermissao("despacho")) acoesDiv.innerHTML += `<button class="btn btn-success" id="btnDespacharDireto"><i class="fas fa-truck"></i> Despachar Direto</button>`;
     acoesDiv.innerHTML += `<button class="btn btn-primary" id="btnMarcarPago"><i class="fas fa-money-bill-wave"></i> Registrar Pagamento</button>`;
     acoesDiv.innerHTML += `<button class="btn btn-danger" onclick="excluirPedidoSite(${pedido.id})"><i class="fas fa-trash"></i> Excluir Pedido</button>`;
-  }
   } else if (status === "conferido") {
     acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarWhatsConferido"><i class="fab fa-whatsapp"></i> Enviar WhatsApp</button>`;
     
