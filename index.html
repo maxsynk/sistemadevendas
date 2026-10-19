@@ -8908,9 +8908,56 @@ function renderizarDetalhePedido() {
     <div class="detalhe-secao"><h5><i class="fas fa-dollar-sign"></i> Financeiro</h5>${financeiroHTML}</div>
     <div class="detalhe-secao"><h5><i class="fas fa-info-circle"></i> Observações</h5><p style="font-size:13px;color:var(--text-secondary)">${pedido.observacoes || "Sem observações"}</p><div class="detalhe-row" style="margin-top:12px"><span class="label">Criado em</span><span class="valor">${formatarDataHora(pedido.criado_em)}</span></div><div class="detalhe-row"><span class="label">Operador</span><span class="valor">${pedido.operador || "—"}</span></div></div>
   `;
-  const acoesDiv = document.getElementById("modalPedidoAcoes");
+    const acoesDiv = document.getElementById("modalPedidoAcoes");
   acoesDiv.innerHTML = "";
   const status = pedido.status;
+
+  // Botão de Voltar Status (aparece em quase todos os status, exceto reservado e cancelado)
+  const podeVoltar = ["separado", "conferido", "despachado"].includes(status);
+  if (podeVoltar && temPermissao("despacho")) {
+    acoesDiv.innerHTML += `<button class="btn btn-warning" id="btnVoltarStatus" style="margin-bottom: 8px; width: 100%;"><i class="fas fa-undo"></i> Voltar Status (para ${status === 'despachado' ? 'Conferido' : status === 'conferido' ? 'Separado' : 'Reservado'})</button>`;
+    setTimeout(() => {
+      const btn = document.getElementById("btnVoltarStatus");
+      if (btn) btn.onclick = voltarStatusPedido;
+    }, 0);
+  }
+
+  if (status === "reservado") {
+    acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarWhatsReservado"><i class="fab fa-whatsapp"></i> Enviar WhatsApp</button>`;
+    if (!pedido.orcamento_enviado) acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarOrcamento"><i class="fab fa-whatsapp"></i> Enviar Orçamento</button>`;
+    if (temPermissao("editar_pedido")) acoesDiv.innerHTML += `<button class="btn btn-secondary" id="btnEditarPedido"><i class="fas fa-edit"></i> Editar Pedido</button>`;
+    if (temPermissao("editar_pedido")) acoesDiv.innerHTML += `<button class="btn btn-secondary" id="btnLancarFrete"><i class="fas fa-truck"></i> Lançar Frete</button>`;
+    if (pedido.valor_frete) acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarConfirmacao"><i class="fab fa-whatsapp"></i> Enviar Confirmação</button>`;
+    acoesDiv.innerHTML += `<button class="btn btn-primary" id="btnMarcarPago"><i class="fas fa-money-bill-wave"></i> Registrar Pagamento</button>`;
+    if (temPermissao("despacho")) acoesDiv.innerHTML += `<button class="btn btn-warning" id="btnSeparar"><i class="fas fa-box-open"></i> Separar</button>`;
+    if (temPermissao("cancelar_pedido")) acoesDiv.innerHTML += `<button class="btn btn-danger" id="btnCancelarPedido"><i class="fas fa-times"></i> Cancelar</button>`;
+  
+  } else if (status === "separado") {
+    acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarWhatsSeparado"><i class="fab fa-whatsapp"></i> Enviar WhatsApp</button>`;
+    if (temPermissao("despacho")) acoesDiv.innerHTML += `<button class="btn btn-primary" id="btnConferir"><i class="fas fa-check-double"></i> Conferir</button>`;
+    if (temPermissao("despacho")) acoesDiv.innerHTML += `<button class="btn btn-success" id="btnDespacharDireto"><i class="fas fa-truck"></i> Despachar Direto</button>`;
+    acoesDiv.innerHTML += `<button class="btn btn-primary" id="btnMarcarPago"><i class="fas fa-money-bill-wave"></i> Registrar Pagamento</button>`;
+    if (temPermissao("cancelar_pedido")) acoesDiv.innerHTML += `<button class="btn btn-danger" id="btnCancelarPedido"><i class="fas fa-times"></i> Cancelar</button>`;
+  } else if (status === "conferido") {
+    acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarWhatsConferido"><i class="fab fa-whatsapp"></i> Enviar WhatsApp</button>`;
+    acoesDiv.innerHTML += `<button class="btn btn-primary" id="btnMarcarPago"><i class="fas fa-money-bill-wave"></i> Registrar Pagamento</button>`;
+    if (temPermissao("despacho")) acoesDiv.innerHTML += `<button class="btn btn-success" id="btnDespachar"><i class="fas fa-truck"></i> Despachar</button>`;
+    if (temPermissao("cancelar_pedido")) acoesDiv.innerHTML += `<button class="btn btn-danger" id="btnCancelarPedido"><i class="fas fa-times"></i> Cancelar</button>`;
+  } else if (status === "despachado") {
+    const statusPago = pedido.pago ? "pago" : null;
+    if (statusPago) {
+      acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarWhatsPago"><i class="fab fa-whatsapp"></i> Enviar WhatsApp</button>`;
+    } else {
+      acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarWhatsDespachado"><i class="fab fa-whatsapp"></i> Enviar WhatsApp</button>`;
+    }
+    acoesDiv.innerHTML += `<button class="btn btn-primary" id="btnImprimirEtiqueta"><i class="fas fa-tag"></i> Imprimir Etiqueta</button>`;
+    acoesDiv.innerHTML += `<button class="btn btn-secondary" id="btnImprimirRomaneio"><i class="fas fa-print"></i> Imprimir Romaneio</button>`;
+  } else if (status === "cancelado") {
+    acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarWhatsCancelado"><i class="fab fa-whatsapp"></i> Enviar WhatsApp</button>`;
+    acoesDiv.innerHTML += `<span style="color:var(--error);font-weight:700;padding:12px"><i class="fas fa-ban"></i> PEDIDO CANCELADO</span>`;
+  }
+
+  acoesDiv.innerHTML += `<button class="btn btn-secondary" id="btnFecharPedido"><i class="fas fa-times"></i> Fechar</button>`;
     if (status === "reservado") {
     acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarWhatsReservado"><i class="fab fa-whatsapp"></i> Enviar WhatsApp</button>`;
     if (!pedido.orcamento_enviado) acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarOrcamento"><i class="fab fa-whatsapp"></i> Enviar Orçamento</button>`;
@@ -8993,6 +9040,38 @@ async function editarPedidoAtual() {
   document.querySelector('.tab[data-aba="pedidos"]').scrollIntoView({ behavior: "smooth" });
   toast("Modo edição ativado.", "info");
 }
+async function voltarStatusPedido() {
+  if (!pedidoAtual) return;
+  const id = pedidoAtual.pedido.id;
+  const statusAtual = pedidoAtual.pedido.status;
+  
+  let msg = "";
+  if (statusAtual === "despachado") {
+    msg = `Voltar pedido #${id} para CONFERIDO?\n\n⚠️ O estoque será devolvido (estorno).`;
+  } else if (statusAtual === "conferido") {
+    msg = `Voltar pedido #${id} para SEPARADO?`;
+  } else if (statusAtual === "separado") {
+    msg = `Voltar pedido #${id} para RESERVADO?`;
+  }
+
+  if (!confirm(msg)) return;
+
+  try {
+    const res = await api(`/pedidos/${id}/voltar-status`, { method: "POST" });
+    const d = await res.json();
+    if (!d.success) throw new Error(d.error);
+    
+    toast(d.mensagem || "Status voltado com sucesso!");
+    
+    // Recarrega o detalhe do pedido e as listas
+    await abrirDetalhePedido(id);
+    await carregarPedidos();
+    await carregarProdutos();
+    await carregarDashboard();
+  } catch (e) {
+    toast("Erro: " + e.message, "error");
+  }
+}  
 async function mudarStatusPedido(acao, sucessoMsg) {
   if (!pedidoAtual) return;
   const id = pedidoAtual.pedido.id;
