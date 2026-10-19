@@ -5537,13 +5537,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v4.7
+// MAX REPRESENTAÇÃO — HTML v4.8
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "4.7";
+const APP_VERSION = "4.8";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -8925,9 +8925,17 @@ function renderizarDetalhePedido() {
     acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarWhatsSeparado"><i class="fab fa-whatsapp"></i> Enviar WhatsApp</button>`;
     if (temPermissao("despacho")) acoesDiv.innerHTML += `<button class="btn btn-primary" id="btnConferir"><i class="fas fa-check-double"></i> Conferir</button>`;
     if (temPermissao("despacho")) acoesDiv.innerHTML += `<button class="btn btn-success" id="btnDespacharDireto"><i class="fas fa-truck"></i> Despachar Direto</button>`;
-  } else if (status === "conferido") {
+    } else if (status === "conferido") {
     acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarWhatsConferido"><i class="fab fa-whatsapp"></i> Enviar WhatsApp</button>`;
+    
+    // BOTÃO DE PAGAMENTO PARA PEDIDOS CONFERIDOS
+    acoesDiv.innerHTML += `<button class="btn btn-primary" id="btnMarcarPago"><i class="fas fa-money-bill-wave"></i> Registrar Pagamento</button>`;
+    
     if (temPermissao("despacho")) acoesDiv.innerHTML += `<button class="btn btn-success" id="btnDespachar"><i class="fas fa-truck"></i> Despachar</button>`;
+    
+    // BOTÃO DE EXCLUIR PEDIDO (O NOVO QUE VOCÊ PEDIU)
+    acoesDiv.innerHTML += `<button class="btn btn-danger" onclick="excluirPedidoSite(${pedido.id})"><i class="fas fa-trash"></i> Excluir Pedido</button>`;
+  }
   } else if (status === "despachado") {
     const statusPago = pedido.pago ? "pago" : null;
     if (statusPago) {
