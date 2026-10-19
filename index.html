@@ -11521,12 +11521,12 @@ function renderizarDetalhePedidoSite(p) {
             Estoque agora: <strong style="color:${temEstoque ? 'var(--success)' : 'var(--error)'}">${estoqueAgora}</strong>
           </div>
         </div>
-        <div class="qtd">${it.quantidade}x</div>
+        <div class="qtd" style="margin-right: 10px;">${it.quantidade}x</div>
         ${p.status === "pendente" ? `
-          <button class="btn btn-danger btn-sm" onclick="removerItemPedidoSite(${p.id}, ${it.variacao_id})" title="Remover item">
-            <i class="fas fa-trash"></i>
+          <button style="background:transparent; border:none; color:var(--text-dim); cursor:pointer; font-size:16px; padding:8px; transition:all 0.2s;" onmouseover="this.style.color='var(--error)'; this.style.transform='scale(1.1)'" onmouseout="this.style.color='var(--text-dim)'; this.style.transform='scale(1)'" onclick="removerItemPedidoSite(${p.id}, ${it.variacao_id})" title="Remover item">
+            <i class="fas fa-trash-alt"></i>
           </button>
-        ` : ''}
+        ` : ''} 
       </div>
     `;
   }
