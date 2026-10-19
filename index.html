@@ -8850,6 +8850,8 @@ async function renderizarListaPedidos() {
 
 async function abrirDetalhePedido(id) {
   try {
+    // ADICIONE ESTA LINHA PARA LIMPAR OS BOTÕES ANTIGOS
+    document.getElementById("modalPedidoAcoes").innerHTML = ""; 
     const res = await api(`/pedidos/${id}`);
     const data = await res.json();
     if (!data.success) throw new Error(data.error);
