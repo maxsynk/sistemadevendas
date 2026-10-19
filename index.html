@@ -5537,13 +5537,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v3.7
+// MAX REPRESENTAÇÃO — HTML v4.7
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "4.6";
+const APP_VERSION = "4.7";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -9108,17 +9108,24 @@ document.getElementById("btnConfirmarPago").onclick = async () => {
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
   try {
-    if (comprovanteFile) {
+        if (comprovanteFile) {
       try {
         const fd = new FormData();
         fd.append("comprovante", comprovanteFile);
         fd.append("pedido_id", pedidoPagoId);
-        await fetch(API_BASE + "/comprovante/upload", {
+        const resComprovante = await fetch(API_BASE + "/comprovante/upload", {
           method: "POST",
           headers: { "Authorization": "Bearer " + tokenAtual },
           body: fd,
         });
-      } catch (e) {}
+        if (!resComprovante.ok) {
+          const erroComprovante = await resComprovante.json().catch(() => ({}));
+          console.warn("[comprovante] Erro ao subir:", erroComprovante.error || "Erro desconhecido");
+          toast("Aviso: comprovante não foi salvo (" + (erroComprovante.error || "erro") + ")", "error");
+        }
+      } catch (e) {
+        console.error("[comprovante] Exceção:", e.message);
+      }
     }
     const res = await api(`/pedidos/${pedidoPagoId}/marcar-pago`, {
       method: "POST",
