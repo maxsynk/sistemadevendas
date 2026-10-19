@@ -8911,7 +8911,7 @@ function renderizarDetalhePedido() {
   const acoesDiv = document.getElementById("modalPedidoAcoes");
   acoesDiv.innerHTML = "";
   const status = pedido.status;
-  if (status === "reservado") {
+    if (status === "reservado") {
     acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarWhatsReservado"><i class="fab fa-whatsapp"></i> Enviar WhatsApp</button>`;
     if (!pedido.orcamento_enviado) acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarOrcamento"><i class="fab fa-whatsapp"></i> Enviar Orçamento</button>`;
     if (temPermissao("editar_pedido")) acoesDiv.innerHTML += `<button class="btn btn-secondary" id="btnEditarPedido"><i class="fas fa-edit"></i> Editar Pedido</button>`;
@@ -8920,22 +8920,18 @@ function renderizarDetalhePedido() {
     acoesDiv.innerHTML += `<button class="btn btn-primary" id="btnMarcarPago"><i class="fas fa-money-bill-wave"></i> Registrar Pagamento</button>`;
     if (temPermissao("despacho")) acoesDiv.innerHTML += `<button class="btn btn-warning" id="btnSeparar"><i class="fas fa-box-open"></i> Separar</button>`;
     if (temPermissao("cancelar_pedido")) acoesDiv.innerHTML += `<button class="btn btn-danger" id="btnCancelarPedido"><i class="fas fa-times"></i> Cancelar</button>`;
+  
   } else if (status === "separado") {
     acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarWhatsSeparado"><i class="fab fa-whatsapp"></i> Enviar WhatsApp</button>`;
     if (temPermissao("despacho")) acoesDiv.innerHTML += `<button class="btn btn-primary" id="btnConferir"><i class="fas fa-check-double"></i> Conferir</button>`;
     if (temPermissao("despacho")) acoesDiv.innerHTML += `<button class="btn btn-success" id="btnDespacharDireto"><i class="fas fa-truck"></i> Despachar Direto</button>`;
     acoesDiv.innerHTML += `<button class="btn btn-primary" id="btnMarcarPago"><i class="fas fa-money-bill-wave"></i> Registrar Pagamento</button>`;
-    acoesDiv.innerHTML += `<button class="btn btn-danger" onclick="excluirPedidoSite(${pedido.id})"><i class="fas fa-trash"></i> Excluir Pedido</button>`;
+    if (temPermissao("cancelar_pedido")) acoesDiv.innerHTML += `<button class="btn btn-danger" id="btnCancelarPedido"><i class="fas fa-times"></i> Cancelar</button>`;
   } else if (status === "conferido") {
     acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarWhatsConferido"><i class="fab fa-whatsapp"></i> Enviar WhatsApp</button>`;
-    
-    // BOTÃO DE PAGAMENTO PARA PEDIDOS CONFERIDOS
     acoesDiv.innerHTML += `<button class="btn btn-primary" id="btnMarcarPago"><i class="fas fa-money-bill-wave"></i> Registrar Pagamento</button>`;
-    
     if (temPermissao("despacho")) acoesDiv.innerHTML += `<button class="btn btn-success" id="btnDespachar"><i class="fas fa-truck"></i> Despachar</button>`;
-    
-    // BOTÃO DE EXCLUIR PEDIDO (O NOVO QUE VOCÊ PEDIU)
-    acoesDiv.innerHTML += `<button class="btn btn-danger" onclick="excluirPedidoSite(${pedido.id})"><i class="fas fa-trash"></i> Excluir Pedido</button>`;
+    if (temPermissao("cancelar_pedido")) acoesDiv.innerHTML += `<button class="btn btn-danger" id="btnCancelarPedido"><i class="fas fa-times"></i> Cancelar</button>`;
   } else if (status === "despachado") {
     const statusPago = pedido.pago ? "pago" : null;
     if (statusPago) {
@@ -8962,7 +8958,7 @@ function renderizarDetalhePedido() {
   if (document.getElementById("btnConferir")) document.getElementById("btnConferir").onclick = () => mudarStatusPedido("conferir", "Pedido conferido!");
   if (document.getElementById("btnDespachar")) document.getElementById("btnDespachar").onclick = () => tentarDespachar();
   if (document.getElementById("btnDespacharDireto")) document.getElementById("btnDespacharDireto").onclick = () => tentarDespachar();
-  if (document.getElementById("btnCancelarPedido")) document.getElementById("btnCancelarPedido").onclick = cancelarPedidoAtual;
+  if (document.getElementById("btnCancelarPedido")) document.getElementById("btnCancelarPedido").onclick = cancelarPedidoAtual; // <-- AQUI ESTÁ A CORREÇÃO
   if (document.getElementById("btnEnviarOrcamento")) document.getElementById("btnEnviarOrcamento").onclick = enviarOrcamento;
   if (document.getElementById("btnEnviarConfirmacao")) document.getElementById("btnEnviarConfirmacao").onclick = enviarConfirmacao;
   if (document.getElementById("btnImprimirRomaneio")) document.getElementById("btnImprimirRomaneio").onclick = imprimirRomaneio;
