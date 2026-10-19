@@ -11602,6 +11602,7 @@ function renderizarDetalhePedidoSite(p) {
     }
   }
 
+  acoes.innerHTML += `<button class="btn btn-danger" onclick="excluirPedidoSite(${p.id})"><i class="fas fa-trash"></i> Excluir Pedido</button>`;
   acoes.innerHTML += `<button class="btn btn-secondary" onclick="document.getElementById('modalDetalhePedidoSite').classList.remove('active')"><i class="fas fa-times"></i> Fechar</button>`;
 
   const btnAprovar = document.getElementById("btnAprovarPedidoSite");
