@@ -8807,6 +8807,7 @@ async function carregarPedidos() {
 async function renderizarListaPedidos() {
   const wrap = document.getElementById("listaPedidos");
   let lista = pedidosCache;
+  
   if (filtroTextoPedidos) {
     lista = lista.filter(p => {
       const nome = (p.cliente_nome || "").toLowerCase();
@@ -8814,26 +8815,25 @@ async function renderizarListaPedidos() {
       return nome.includes(filtroTextoPedidos) || id.includes(filtroTextoPedidos);
     });
   }
+  
   if (lista.length === 0) {
     wrap.innerHTML = `<div class="empty"><h2>Nenhum pedido${filtroTextoPedidos ? " encontrado" : ""}</h2></div>`;
     return;
   }
+  
   wrap.innerHTML = "";
   for (const p of lista) {
-    let fotoUrl = null;
-    try {
-      const resDet = await api(`/pedidos/${p.id}`);
-      const dataDet = await resDet.json();
-      if (dataDet.success && dataDet.itens.length > 0) fotoUrl = dataDet.itens[0].foto_url;
-    } catch (e) {}
     const badgePago = p.pago
       ? `<span class="badge-pagamento badge-pago"><i class="fas fa-check"></i> PAGO</span>`
       : `<span class="badge-pagamento badge-naopago"><i class="fas fa-hourglass-half"></i> NÃO PAGO</span>`;
+      
     const div = document.createElement("div");
     div.className = "pedido-item";
+    
+    // Removemos a requisição individual de foto. O ícone padrão carrega na hora!
     div.innerHTML = `
       <div class="foto-mini">
-        ${fotoUrl ? `<img src="${fotoUrl}" onerror="this.parentNode.innerHTML='<span class=\\'vazio\\'><i class=\\'fas fa-shopping-cart\\'></i></span>'">` : `<span class="vazio"><i class="fas fa-shopping-cart"></i></span>`}
+        <span class="vazio"><i class="fas fa-shopping-cart"></i></span>
       </div>
       <div class="info">
         <h4>Pedido #${p.id} — ${p.cliente_nome || "sem cliente"}</h4>
@@ -8846,27 +8846,36 @@ async function renderizarListaPedidos() {
           ${badgePago}
         </div>
       </div>
-           <div class="acoes">
+      <div class="acoes">
         <button class="btn btn-primary btn-sm" data-abrir="${p.id}"><i class="fas fa-eye"></i> Abrir</button>
         ${p.status !== "despachado" ? `<button class="btn btn-danger btn-sm" data-excluir-pedido="${p.id}" title="Excluir Pedido"><i class="fas fa-trash"></i></button>` : ''}
       </div>
     `;
     wrap.appendChild(div);
   }
-    wrap.querySelectorAll("[data-excluir-pedido]").forEach(b => b.onclick = () => excluirPedidoCompleto(parseInt(b.dataset.excluirPedido)));
+  
+  wrap.querySelectorAll("[data-abrir]").forEach(b => b.onclick = () => abrirDetalhePedido(parseInt(b.dataset.abrir)));
+  wrap.querySelectorAll("[data-excluir-pedido]").forEach(b => b.onclick = () => excluirPedidoCompleto(parseInt(b.dataset.excluirPedido)));
 }
 
 async function abrirDetalhePedido(id) {
+  // Abre o modal na hora e limpa o conteúdo anterior
+  document.getElementById("modalPedidoAcoes").innerHTML = "";
+  document.getElementById("modalPedidoNum").textContent = "#" + id;
+  document.getElementById("modalPedidoConteudo").innerHTML = '<div class="loader"></div>';
+  document.getElementById("modalPedido").classList.add("active");
+
   try {
-    // ADICIONE ESTA LINHA PARA LIMPAR OS BOTÕES ANTIGOS
-    document.getElementById("modalPedidoAcoes").innerHTML = ""; 
     const res = await api(`/pedidos/${id}`);
     const data = await res.json();
     if (!data.success) throw new Error(data.error);
+    
     pedidoAtual = data;
-    renderizarDetalhePedido();
-    document.getElementById("modalPedido").classList.add("active");
-  } catch (e) { toast("Erro: " + e.message, "error"); }
+    renderizarDetalhePedido(); // Preenche os detalhes com os itens e fotos
+  } catch (e) { 
+    document.getElementById("modalPedidoConteudo").innerHTML = `<div class="empty"><h2>Erro</h2><p>${e.message}</p></div>`;
+    toast("Erro ao carregar pedido", "error"); 
+  }
 }
 async function excluirPedidoCompleto(id) {
   if (!confirm(`⚠️ Tem certeza que deseja EXCLUIR o pedido #${id}?\n\nO estoque dos produtos voltará para o sistema.`)) return;
