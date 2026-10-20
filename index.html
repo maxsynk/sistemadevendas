@@ -11519,7 +11519,6 @@ async function carregarListaPedidosSite() {
     wrap.innerHTML = `<div class="empty"><h2>Erro</h2><p>${e.message}</p></div>`;
   }
 }
-
     wrap.innerHTML = "";
     for (const p of lista) {
       const classeStatus = p.status === "aprovado" ? "aprovado"
