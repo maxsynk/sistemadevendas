@@ -8832,11 +8832,9 @@ async function renderizarListaPedidos() {
     
     // Removemos a requisição individual de foto. O ícone padrão carrega na hora!
     div.innerHTML = `
-           <div class="foto-mini">
-        ${p.foto_capa 
-          ? `<img src="${p.foto_capa}" onerror="this.parentNode.innerHTML='<span class=\\'vazio\\'><i class=\\'fas fa-shopping-cart\\'></i></span>'">` 
-          : `<span class="vazio"><i class="fas fa-shopping-cart"></i></span>`}
-      </div> 
+             <div class="foto-mini" id="foto-pedido-${p.id}">
+        ${p.foto_capa ? `<img src="${p.foto_capa}">` : `<span class="vazio"><i class="fas fa-shopping-cart"></i></span>`}
+      </div>    
       <div class="info">
         <h4>Pedido #${p.id} — ${p.cliente_nome || "sem cliente"}</h4>
         <div class="meta">
@@ -8855,6 +8853,12 @@ async function renderizarListaPedidos() {
     `;
     wrap.appendChild(div);
   }
+      const img = div.querySelector("img");
+    if (img) {
+      img.onerror = function() {
+        this.parentNode.innerHTML = '<span class="vazio"><i class="fas fa-shopping-cart"></i></span>';
+      };
+    }
   
   wrap.querySelectorAll("[data-abrir]").forEach(b => b.onclick = () => abrirDetalhePedido(parseInt(b.dataset.abrir)));
   wrap.querySelectorAll("[data-excluir-pedido]").forEach(b => b.onclick = () => excluirPedidoCompleto(parseInt(b.dataset.excluirPedido)));
