@@ -6109,8 +6109,15 @@ async function fazerLogin() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ usuario, senha }),
     });
+
+    // 🔧 Verifica se resposta é JSON antes de fazer .json()
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      throw new Error("Servidor indisponível (HTTP " + res.status + "). Tente novamente.");
+    }
+
     const data = await res.json();
-    if (!data.success) throw new Error(data.error || "Erro ao fazer login");
+    if (!data.success) throw new Error(data.error || "Usuário ou senha inválidos");
 
     tokenAtual = data.token;
     usuarioLogado = data.usuario;
