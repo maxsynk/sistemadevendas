@@ -8986,7 +8986,6 @@ function renderizarDetalhePedido() {
   if (document.getElementById("btnEnviarWhatsDespachado")) document.getElementById("btnEnviarWhatsDespachado").onclick = () => enviarNotificacaoWhatsApp("despachado");
   if (document.getElementById("btnEnviarWhatsCancelado")) document.getElementById("btnEnviarWhatsCancelado").onclick = () => enviarNotificacaoWhatsApp("cancelado");
 }
-
 async function editarPedidoAtual() {
   if (!pedidoAtual) return;
   const { pedido, itens } = pedidoAtual;
