@@ -5536,13 +5536,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v4.9
+// MAX REPRESENTAÇÃO — HTML v5.0
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "4.9";
+const APP_VERSION = "5.0";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -8846,13 +8846,14 @@ async function renderizarListaPedidos() {
           ${badgePago}
         </div>
       </div>
-      <div class="acoes">
+           <div class="acoes">
         <button class="btn btn-primary btn-sm" data-abrir="${p.id}"><i class="fas fa-eye"></i> Abrir</button>
+        ${p.status !== "despachado" ? `<button class="btn btn-danger btn-sm" data-excluir-pedido="${p.id}" title="Excluir Pedido"><i class="fas fa-trash"></i></button>` : ''}
       </div>
     `;
     wrap.appendChild(div);
   }
-  wrap.querySelectorAll("[data-abrir]").forEach(b => b.onclick = () => abrirDetalhePedido(parseInt(b.dataset.abrir)));
+    wrap.querySelectorAll("[data-excluir-pedido]").forEach(b => b.onclick = () => excluirPedidoCompleto(parseInt(b.dataset.excluirPedido)));
 }
 
 async function abrirDetalhePedido(id) {
@@ -8867,6 +8868,32 @@ async function abrirDetalhePedido(id) {
     document.getElementById("modalPedido").classList.add("active");
   } catch (e) { toast("Erro: " + e.message, "error"); }
 }
+async function excluirPedidoCompleto(id) {
+  if (!confirm(`⚠️ Tem certeza que deseja EXCLUIR o pedido #${id}?\n\nO estoque dos produtos voltará para o sistema.`)) return;
+  if (!confirm("TEM CERTEZA? Essa ação não pode ser desfeita.")) return;
+
+  try {
+    // A API DELETE /pedidos/:id já está configurada no Worker para devolver o estoque e mudar o status para cancelado
+    const res = await api(`/pedidos/${id}`, { method: "DELETE" });
+    const d = await res.json();
+    if (!d.success) throw new Error(d.error);
+    
+    toast("Pedido excluído e estoque devolvido!");
+    
+    // Se o modal estiver aberto com esse pedido, fecha ele
+    if (pedidoAtual && pedidoAtual.pedido.id === id) {
+      document.getElementById("modalPedido").classList.remove("active");
+      pedidoAtual = null;
+    }
+    
+    // Atualiza as listas
+    await carregarPedidos();
+    await carregarProdutos();
+    await carregarDashboard();
+  } catch (e) {
+    toast("Erro ao excluir: " + e.message, "error");
+  }
+}  
 function renderizarDetalhePedido() {
   const { pedido, itens } = pedidoAtual;
   document.getElementById("modalPedidoNum").textContent = "#" + pedido.id;
