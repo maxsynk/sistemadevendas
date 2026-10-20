@@ -11520,11 +11520,6 @@ async function carregarListaPedidosSite() {
   }
 }
 
-    if (lista.length === 0) {
-      wrap.innerHTML = `<div class="empty" style="padding:40px 20px"><h2 style="font-size:14px">Nenhum pedido ${filtroStatusPedidosSite || ""}</h2></div>`;
-      return;
-    }
-
     wrap.innerHTML = "";
     for (const p of lista) {
       const classeStatus = p.status === "aprovado" ? "aprovado"
