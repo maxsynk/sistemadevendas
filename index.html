@@ -7083,6 +7083,7 @@ async function carregarDashboard() {
           <div class="valor">${formatarMoedaCompact(p.valor)}</div>
         </div>`;
       });
+    }
 
     html += `</div>
       <div class="dash-top-lista">
@@ -7161,6 +7162,7 @@ async function carregarDashboard() {
         </div>
       </div>
     </div>`;
+
     wrap.innerHTML = html;
   } catch (e) {
     wrap.innerHTML = `<div class="empty"><h2>Erro</h2><p style="color:var(--error)">${e.message}</p></div>`;
