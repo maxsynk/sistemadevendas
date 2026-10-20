@@ -8832,9 +8832,11 @@ async function renderizarListaPedidos() {
     
     // Removemos a requisição individual de foto. O ícone padrão carrega na hora!
     div.innerHTML = `
-      <div class="foto-mini">
-        <span class="vazio"><i class="fas fa-shopping-cart"></i></span>
-      </div>
+           <div class="foto-mini">
+        ${p.foto_capa 
+          ? `<img src="${p.foto_capa}" onerror="this.parentNode.innerHTML='<span class=\\'vazio\\'><i class=\\'fas fa-shopping-cart\\'></i></span>'">` 
+          : `<span class="vazio"><i class="fas fa-shopping-cart"></i></span>`}
+      </div> 
       <div class="info">
         <h4>Pedido #${p.id} — ${p.cliente_nome || "sem cliente"}</h4>
         <div class="meta">
