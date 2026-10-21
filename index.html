@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v5.7
+  MAX REPRESENTAÇÃO — HTML v5.8
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -4320,24 +4320,7 @@
   <div class="hero-sub">Sistema de Estoque</div>
 </div>
 
-    <!-- ============================================ -->
-    <!-- PEDIDOS DO SITE — Faixa de alerta            -->
-    <!-- ============================================ -->
-    <div class="pedidos-site-alerta" id="pedidosSiteAlerta" style="display:none">
-      <div class="pedidos-site-alerta-icon">
-        <i class="fas fa-bell"></i>
-      </div>
-      <div class="pedidos-site-alerta-txt">
-        <strong id="pedidosSiteAlertaTitulo">Você tem 0 pedidos recebidos do site</strong>
-        <span id="pedidosSiteAlertaSub">Aguardando sua aprovação</span>
-      </div>
-      <button class="btn btn-warning btn-sm" id="btnVerPedidosSite">
-        <i class="fas fa-eye"></i> Ver Pedidos
-        <span class="badge-pedidos-site" id="badgePedidosSite">0</span>
-      </button>
-    </div>
-
-<div class="tabs">
+  <div class="tabs">
   <button class="tab active" data-aba="dashboard"><i class="fas fa-chart-line"></i> Dashboard</button>
   <button class="tab" data-aba="produtos"><i class="fas fa-box"></i> Produtos</button>
   <button class="tab" data-aba="entrada"><i class="fas fa-arrow-down"></i> Entrada</button>
@@ -4497,7 +4480,26 @@
         <span class="badge-pedidos-site" id="badgePedidosSite">0</span>
       </button>
     </div>
+<div class="aba" id="aba-pedidos">
+    <!-- ============================================ -->
+    <!-- PEDIDOS DO SITE — Faixa de alerta (DENTRO DA ABA) -->
+    <!-- ============================================ -->
+    <div class="pedidos-site-alerta" id="pedidosSiteAlerta" style="display:none">
+      <div class="pedidos-site-alerta-icon">
+        <i class="fas fa-bell"></i>
+      </div>
+      <div class="pedidos-site-alerta-txt">
+        <strong id="pedidosSiteAlertaTitulo">Você tem 0 pedidos recebidos do site</strong>
+        <span id="pedidosSiteAlertaSub">Aguardando sua aprovação</span>
+      </div>
+      <button class="btn btn-warning btn-sm" id="btnVerPedidosSite">
+        <i class="fas fa-eye"></i> Ver Pedidos
+        <span class="badge-pedidos-site" id="badgePedidosSite">0</span>
+      </button>
+    </div>
 
+    <!-- Resto do conteúdo da aba Pedidos (Novo Pedido Manual, Pedidos Cadastrados, etc.) -->
+    
     <!-- ============================================ -->
     <!-- MODAL: LISTA DE PEDIDOS RECEBIDOS DO SITE    -->
     <!-- ============================================ -->
@@ -5661,13 +5663,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v5.7
+// MAX REPRESENTAÇÃO — HTML v5.8
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "5.7";
+const APP_VERSION = "5.8";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -6363,7 +6365,7 @@ function irParaAba(nomeAba) {
   if (nomeAba === "dashboard") carregarDashboard();
   if (nomeAba === "entrada") { carregarEntradaProdutos(); carregarUltimasEntradas(); }
   if (nomeAba === "clientes") carregarClientes();
-  if (nomeAba === "pedidos") { carregarPedidos(); carregarClientesPedido(); carregarProdutosPedido(); }
+  if (nomeAba === "pedidos") { carregarPedidos(); carregarClientesPedido(); carregarProdutosPedido(); verificarPedidosSite(); }
   if (nomeAba === "produtos") carregarProximoCodigo();
   if (nomeAba === "config") {
     restaurarColapsaveis();
@@ -11572,7 +11574,7 @@ async function verificarPedidosSite() {
     if (!data.success) return;
 
     const total = data.total || 0;
-    const alerta = document.getElementById("pedidosSiteAlerta"); // Pega o banner principal (agora único)
+    const alerta = document.getElementById("pedidosSiteAlerta");
     const badge = document.getElementById("badgePedidosSite");
     const titulo = document.getElementById("pedidosSiteAlertaTitulo");
     const abaPedidos = document.querySelector('.tab[data-aba="pedidos"]');
@@ -11580,27 +11582,34 @@ async function verificarPedidosSite() {
 
     if (!alerta) return;
 
+    // Verifica se a aba "Pedidos" está ativa no momento
+    const abaPedidosAtiva = document.getElementById("aba-pedidos").classList.contains("active");
+
     if (total > 0) {
-      // Força a exibição do banner com display: flex
-      alerta.style.setProperty("display", "flex", "important");
-      
+      // Se tem pedidos, sempre pulsa a aba e o menu lateral
+      if (abaPedidos) abaPedidos.classList.add("tab-pedidos-pendente");
+      if (drawerPedidos) drawerPedidos.classList.add("drawer-pedidos-pendente");
+
+      // Atualiza o conteúdo do banner
       badge.textContent = total;
       titulo.textContent = total === 1
         ? "Você tem 1 pedido recebido do site"
         : `Você tem ${total} pedidos recebidos do site`;
 
-      // Adiciona a classe de pulso na aba e no menu lateral
-      if (abaPedidos) abaPedidos.classList.add("tab-pedidos-pendente");
-      if (drawerPedidos) drawerPedidos.classList.add("drawer-pedidos-pendente");
+      // SÓ MOSTRA O BANNER SE A ABA PEDIDOS ESTIVER ATIVA
+      if (abaPedidosAtiva) {
+        alerta.style.setProperty("display", "flex", "important");
+      } else {
+        alerta.style.setProperty("display", "none", "important");
+      }
 
       // Toca o som se for um pedido novo
       const ultimoTotal = parseInt(sessionStorage.getItem("max_ultimo_total_site") || "0");
       if (total > ultimoTotal) tocarSomPedidoSite();
       sessionStorage.setItem("max_ultimo_total_site", String(total));
     } else {
-      // Esconde o banner
+      // Se não tem pedidos, esconde tudo
       alerta.style.setProperty("display", "none", "important");
-      // Remove as classes de pulso
       if (abaPedidos) abaPedidos.classList.remove("tab-pedidos-pendente");
       if (drawerPedidos) drawerPedidos.classList.remove("drawer-pedidos-pendente");
       sessionStorage.setItem("max_ultimo_total_site", "0");
