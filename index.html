@@ -3850,12 +3850,13 @@
   margin-bottom: 20px;
   display: flex;
   align-items: center;
-  gap: 16px;
-  flex-wrap: wrap; /* Permite quebrar linha no celular/tela cheia */
-  width: 100%; /* Força ocupar a tela toda */
+  justify-content: space-between; /* Isso joga o botão pra direita e espaça o texto */
+  flex-wrap: wrap; /* Se a tela for pequena, o botão desce */
+  width: 100%;
   box-sizing: border-box;
   box-shadow: 0 0 24px rgba(245,158,11,0.2);
   animation: pulseAlerta 2s infinite;
+  gap: 16px;
 }
 /* Aba Pedidos piscando quando tem pedido do site pendente */
 .tab.tab-pedidos-pendente {
@@ -3948,7 +3949,10 @@
   20%, 40% { transform: rotate(15deg); }
   50% { transform: rotate(0deg); }
 }
-.pedidos-site-alerta-txt { flex: 1; min-width: 200px; }
+.pedidos-site-alerta-txt { 
+  flex: 1; 
+  min-width: 250px; 
+}
 .pedidos-site-alerta-txt strong {
   display: block;
   font-size: 14px; font-weight: 700;
