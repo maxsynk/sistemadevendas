@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v5.5
+  MAX REPRESENTAÇÃO — HTML v5.6
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -3852,16 +3852,10 @@
   border-left: 4px solid var(--warning);
   border-radius: 14px;
   padding: 16px 20px;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between; 
-  flex-wrap: wrap; 
-  width: 100%; /* Ocupa toda a largura */
-  box-sizing: border-box;
-  box-shadow: 0 0 24px rgba(245,158,11,0.2);
-  animation: pulseAlerta 2s infinite;
-  gap: 16px;
+  margin: 0 24px 20px 24px;
+  max-width: 1552px;
+  margin-left: auto;
+  margin-right: auto;
 }
 /* Aba Pedidos piscando quando tem pedido do site pendente */
 .tab.tab-pedidos-pendente {
@@ -4225,6 +4219,23 @@
 <div class="hero">
   <div class="hero-logo" id="heroLogo">MAX <span>REPRESENTAÇÃO</span></div>
   <div class="hero-sub">Sistema de Estoque</div>
+</div>
+
+<!-- ============================================ -->
+<!-- PEDIDOS DO SITE — Faixa de alerta (FORA DA ABA) -->
+<!-- ============================================ -->
+<div class="pedidos-site-alerta" id="pedidosSiteAlerta" style="display:none">
+  <div class="pedidos-site-alerta-icon">
+    <i class="fas fa-bell"></i>
+  </div>
+  <div class="pedidos-site-alerta-txt">
+    <strong id="pedidosSiteAlertaTitulo">Você tem 0 pedidos recebidos do site</strong>
+    <span id="pedidosSiteAlertaSub">Aguardando sua aprovação</span>
+  </div>
+  <button class="btn btn-warning btn-sm" id="btnVerPedidosSite">
+    <i class="fas fa-eye"></i> Ver Pedidos
+    <span class="badge-pedidos-site" id="badgePedidosSite">0</span>
+  </button>
 </div>
 
 <div class="tabs">
@@ -5551,13 +5562,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v5.5
+// MAX REPRESENTAÇÃO — HTML v5.6
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "5.5";
+const APP_VERSION = "5.6";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -11467,26 +11478,11 @@ async function verificarPedidosSite() {
     const titulo = document.getElementById("pedidosSiteAlertaTitulo");
     const abaPedidos = document.querySelector('.tab[data-aba="pedidos"]');
     const drawerPedidos = document.querySelector('.drawer-item[data-aba="pedidos"]');
-    const abaAtiva = document.getElementById("aba-pedidos");
 
     if (!alerta) return;
 
     if (total > 0) {
-      // 1. Força a aba de pedidos a ficar visível (mas não ativa) pra o banner existir no DOM
-      if (abaAtiva) {
-        abaAtiva.style.display = "block";
-        abaAtiva.style.visibility = "hidden";
-        abaAtiva.style.position = "absolute";
-        abaAtiva.style.height = "0";
-        abaAtiva.style.overflow = "hidden";
-      }
-
-      // 2. Força o banner a aparecer SEMPRE
       alerta.style.setProperty("display", "flex", "important");
-      alerta.style.setProperty("margin-bottom", "16px", "important");
-      alerta.style.setProperty("visibility", "visible", "important");
-      alerta.style.setProperty("position", "relative", "important");
-      alerta.style.setProperty("height", "auto", "important");
       
       badge.textContent = total;
       titulo.textContent = total === 1
@@ -11497,22 +11493,8 @@ async function verificarPedidosSite() {
       if (drawerPedidos) drawerPedidos.classList.add("drawer-pedidos-pendente");
 
       const ultimoTotal = parseInt(sessionStorage.getItem("max_ultimo_total_site") || "0");
-      if (total > ultimoTotal) {
-        tocarSomPedidoSite();
-      }
+      if (total > ultimoTotal) tocarSomPedidoSite();
       sessionStorage.setItem("max_ultimo_total_site", String(total));
-
-      // 3. Restaura a aba de pedidos depois de 100ms (só pro banner existir no DOM, ele não aparece visualmente na aba)
-      setTimeout(() => {
-        if (abaAtiva) {
-          abaAtiva.style.display = "";
-          abaAtiva.style.visibility = "";
-          abaAtiva.style.position = "";
-          abaAtiva.style.height = "";
-          abaAtiva.style.overflow = "";
-        }
-      }, 100);
-
     } else {
       alerta.style.setProperty("display", "none", "important");
       if (abaPedidos) abaPedidos.classList.remove("tab-pedidos-pendente");
