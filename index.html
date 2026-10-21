@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v5.9
+  MAX REPRESENTAÇÃO — HTML v6.0
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -5666,13 +5666,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v5.9
+// MAX REPRESENTAÇÃO — HTML v6.0
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "5.9";
+const APP_VERSION = "6.0";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -6357,7 +6357,7 @@ async function restaurarSessao() {
   }
 }
 
-// NAVEGAÇÃO
+// APAGUE ELA INTEIRA (desde 'function irParaAba' até a última chave '}') E COLE ESTA:
 function irParaAba(nomeAba) {
   document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b.dataset.aba === nomeAba));
   document.querySelectorAll(".aba").forEach(a => a.classList.remove("active"));
@@ -6368,12 +6368,12 @@ function irParaAba(nomeAba) {
   if (nomeAba === "dashboard") carregarDashboard();
   if (nomeAba === "entrada") { carregarEntradaProdutos(); carregarUltimasEntradas(); }
   if (nomeAba === "clientes") carregarClientes();
-  // Dentro da função irParaAba:
-if (nomeAba === "pedidos") {
-  carregarPedidos();
-  carregarClientesPedido();
-  carregarProdutosPedido();
-  verificarPedidosSite(); // <-- ADICIONE ESTA LINHA
+  if (nomeAba === "pedidos") { 
+    carregarPedidos(); 
+    carregarClientesPedido(); 
+    carregarProdutosPedido(); 
+    verificarPedidosSite(); // <-- Chamada para atualizar o banner ao clicar
+  }
   if (nomeAba === "produtos") carregarProximoCodigo();
   if (nomeAba === "config") {
     restaurarColapsaveis();
@@ -6388,7 +6388,7 @@ if (nomeAba === "pedidos") {
       carregarBackups();
     }
   }
-    if (nomeAba === "relatorios") carregarRelatorio(relatorioAtual);
+  if (nomeAba === "relatorios") carregarRelatorio(relatorioAtual);
   if (nomeAba === "catalogo-dia") carregarFiltrosCatalogoDia();
 }
 document.querySelectorAll(".tab").forEach(btn => { btn.onclick = () => irParaAba(btn.dataset.aba); });
@@ -11574,6 +11574,7 @@ function tocarSomPedidoSite() {
   }
 }
 
+// APAGUE ELA INTEIRA E COLE ESTA:
 async function verificarPedidosSite() {
   if (!usuarioLogado || !tokenAtual) return;
   try {
@@ -11606,7 +11607,6 @@ async function verificarPedidosSite() {
 
       // 3. Mostra o banner APENAS se a aba Pedidos estiver ativa
       if (abaPedidosAtiva) {
-        // Não usamos '!important' aqui, deixamos o CSS controlar o layout
         alerta.style.display = "flex";
       } else {
         alerta.style.display = "none";
