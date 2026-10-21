@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v4.6
+  MAX REPRESENTAÇÃO — HTML v5.5
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -5551,13 +5551,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v5.4
+// MAX REPRESENTAÇÃO — HTML v5.5
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "5.4";
+const APP_VERSION = "5.5";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -11465,23 +11465,34 @@ async function verificarPedidosSite() {
     const alerta = document.getElementById("pedidosSiteAlerta");
     const badge = document.getElementById("badgePedidosSite");
     const titulo = document.getElementById("pedidosSiteAlertaTitulo");
-
-    // Achar a aba Pedidos pra piscar
     const abaPedidos = document.querySelector('.tab[data-aba="pedidos"]');
     const drawerPedidos = document.querySelector('.drawer-item[data-aba="pedidos"]');
+    const abaAtiva = document.getElementById("aba-pedidos");
 
     if (!alerta) return;
 
     if (total > 0) {
+      // 1. Força a aba de pedidos a ficar visível (mas não ativa) pra o banner existir no DOM
+      if (abaAtiva) {
+        abaAtiva.style.display = "block";
+        abaAtiva.style.visibility = "hidden";
+        abaAtiva.style.position = "absolute";
+        abaAtiva.style.height = "0";
+        abaAtiva.style.overflow = "hidden";
+      }
+
+      // 2. Força o banner a aparecer SEMPRE
       alerta.style.setProperty("display", "flex", "important");
-      alerta.style.setProperty("margin-bottom", "16px", "important"); // Força o espaço
+      alerta.style.setProperty("margin-bottom", "16px", "important");
+      alerta.style.setProperty("visibility", "visible", "important");
+      alerta.style.setProperty("position", "relative", "important");
+      alerta.style.setProperty("height", "auto", "important");
       
       badge.textContent = total;
       titulo.textContent = total === 1
         ? "Você tem 1 pedido recebido do site"
         : `Você tem ${total} pedidos recebidos do site`;
 
-      // Faz a aba Pedidos piscar (desktop e mobile)
       if (abaPedidos) abaPedidos.classList.add("tab-pedidos-pendente");
       if (drawerPedidos) drawerPedidos.classList.add("drawer-pedidos-pendente");
 
@@ -11490,13 +11501,22 @@ async function verificarPedidosSite() {
         tocarSomPedidoSite();
       }
       sessionStorage.setItem("max_ultimo_total_site", String(total));
+
+      // 3. Restaura a aba de pedidos depois de 100ms (só pro banner existir no DOM, ele não aparece visualmente na aba)
+      setTimeout(() => {
+        if (abaAtiva) {
+          abaAtiva.style.display = "";
+          abaAtiva.style.visibility = "";
+          abaAtiva.style.position = "";
+          abaAtiva.style.height = "";
+          abaAtiva.style.overflow = "";
+        }
+      }, 100);
+
     } else {
       alerta.style.setProperty("display", "none", "important");
-      
-      // Para de piscar (desktop e mobile)
       if (abaPedidos) abaPedidos.classList.remove("tab-pedidos-pendente");
       if (drawerPedidos) drawerPedidos.classList.remove("drawer-pedidos-pendente");
-
       sessionStorage.setItem("max_ultimo_total_site", "0");
     }
 
