@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v5.8
+  MAX REPRESENTAÇÃO — HTML v5.9
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -3846,16 +3846,19 @@
 /* BLOCO PEDIDOS DO SITE — Etapa 2 (CORRIGIDO)  */
 /* ============================================ */
 
-/* Banner de Alerta (Fora das Abas) */
+/* ============================================ */
+/* BLOCO PEDIDOS DO SITE — Etapa 2 (CORRIGIDO)  */
+/* ============================================ */
+
+/* Banner de Alerta (Dentro da Aba) */
 .pedidos-site-alerta {
   background: linear-gradient(135deg, rgba(245,158,11,0.12), rgba(239,68,68,0.08));
   border: 1px solid var(--warning);
   border-left: 4px solid var(--warning);
   border-radius: 14px;
   padding: 16px 20px;
-  margin: 0 auto 20px auto; /* Centraliza e dá margem */
-  max-width: 1552px; /* Alinha com o conteúdo */
-  width: calc(100% - 48px); /* Ajusta para telas menores */
+  margin-bottom: 20px; /* Margem para não colar no conteúdo abaixo */
+  width: 100%; /* Ocupa toda a largura da aba */
   display: none; /* Controlado via JS */
   align-items: center;
   gap: 16px;
@@ -3992,7 +3995,7 @@
     background: rgba(245, 158, 11, 0.2);
     box-shadow: 0 0 16px rgba(245,158,11,0.5);
   }
-}   
+}
 
 /* ↓↓ COLA ISSO AQUI ↓↓ */
 /* Drawer (mobile) — item Pedidos piscando quando tiver pedido do site */
@@ -5663,13 +5666,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v5.8
+// MAX REPRESENTAÇÃO — HTML v5.9
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "5.8";
+const APP_VERSION = "5.9";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -6365,7 +6368,12 @@ function irParaAba(nomeAba) {
   if (nomeAba === "dashboard") carregarDashboard();
   if (nomeAba === "entrada") { carregarEntradaProdutos(); carregarUltimasEntradas(); }
   if (nomeAba === "clientes") carregarClientes();
-  if (nomeAba === "pedidos") { carregarPedidos(); carregarClientesPedido(); carregarProdutosPedido(); verificarPedidosSite(); }
+  // Dentro da função irParaAba:
+if (nomeAba === "pedidos") {
+  carregarPedidos();
+  carregarClientesPedido();
+  carregarProdutosPedido();
+  verificarPedidosSite(); // <-- ADICIONE ESTA LINHA
   if (nomeAba === "produtos") carregarProximoCodigo();
   if (nomeAba === "config") {
     restaurarColapsaveis();
@@ -11586,21 +11594,22 @@ async function verificarPedidosSite() {
     const abaPedidosAtiva = document.getElementById("aba-pedidos").classList.contains("active");
 
     if (total > 0) {
-      // Se tem pedidos, sempre pulsa a aba e o menu lateral
+      // 1. Adiciona a classe de pulso na aba e no menu
       if (abaPedidos) abaPedidos.classList.add("tab-pedidos-pendente");
       if (drawerPedidos) drawerPedidos.classList.add("drawer-pedidos-pendente");
 
-      // Atualiza o conteúdo do banner
+      // 2. Atualiza o texto do banner
       badge.textContent = total;
       titulo.textContent = total === 1
         ? "Você tem 1 pedido recebido do site"
         : `Você tem ${total} pedidos recebidos do site`;
 
-      // SÓ MOSTRA O BANNER SE A ABA PEDIDOS ESTIVER ATIVA
+      // 3. Mostra o banner APENAS se a aba Pedidos estiver ativa
       if (abaPedidosAtiva) {
-        alerta.style.setProperty("display", "flex", "important");
+        // Não usamos '!important' aqui, deixamos o CSS controlar o layout
+        alerta.style.display = "flex";
       } else {
-        alerta.style.setProperty("display", "none", "important");
+        alerta.style.display = "none";
       }
 
       // Toca o som se for um pedido novo
@@ -11608,8 +11617,8 @@ async function verificarPedidosSite() {
       if (total > ultimoTotal) tocarSomPedidoSite();
       sessionStorage.setItem("max_ultimo_total_site", String(total));
     } else {
-      // Se não tem pedidos, esconde tudo
-      alerta.style.setProperty("display", "none", "important");
+      // Se não tem pedidos, esconde tudo e remove o pulso
+      alerta.style.display = "none";
       if (abaPedidos) abaPedidos.classList.remove("tab-pedidos-pendente");
       if (drawerPedidos) drawerPedidos.classList.remove("drawer-pedidos-pendente");
       sessionStorage.setItem("max_ultimo_total_site", "0");
