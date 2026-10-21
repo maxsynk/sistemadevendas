@@ -359,11 +359,17 @@
   }
 
   .tabs {
-    display: flex; gap: 4px; padding: 0 24px;
-    max-width: 1600px; margin: 0 auto 20px;
-    border-bottom: 1px solid var(--border); overflow-x: auto;
-  }
-  .tabs::-webkit-scrollbar { height: 0; }
+  display: flex;
+  gap: 4px; 
+  padding: 0 24px;
+  max-width: 1600px; 
+  margin: 0 auto 20px;
+  border-bottom: 1px solid var(--border); 
+  overflow-x: auto;
+  position: relative;
+  z-index: 10; /* Garante que a aba fique acima do conteúdo */
+}
+.tabs::-webkit-scrollbar { height: 0; }
   .tab {
     padding: 14px 22px; background: transparent; border: none;
     color: var(--text-secondary); cursor: pointer;
@@ -3841,11 +3847,13 @@
   border-left: 4px solid var(--warning);
   border-radius: 14px;
   padding: 16px 20px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   display: flex;
   align-items: center;
   gap: 16px;
-  flex-wrap: wrap;
+  flex-wrap: wrap; /* Permite quebrar linha no celular/tela cheia */
+  width: 100%; /* Força ocupar a tela toda */
+  box-sizing: border-box;
   box-shadow: 0 0 24px rgba(245,158,11,0.2);
   animation: pulseAlerta 2s infinite;
 }
@@ -6151,6 +6159,11 @@ function entrarNoSistema() {
   aplicarRestricoes();
   iniciarApp();
   verificarBannerBackup();
+  
+  // FORÇA A CHECAGEM DE PEDIDOS DO SITE ASSIM QUE LOGAR
+  setTimeout(() => {
+    verificarPedidosSite();
+  }, 1000); 
 }
 
 function aplicarRestricoes() {
