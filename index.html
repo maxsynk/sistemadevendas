@@ -11764,7 +11764,7 @@ function renderizarDetalhePedidoSite(p) {
     </div>
   `;  
 
-  acoes.innerHTML = "";
+    acoes.innerHTML = "";
 
   if (p.status === "pendente") {
     acoes.innerHTML += `<button class="btn btn-danger" id="btnRejeitarPedidoSite"><i class="fas fa-times"></i> Rejeitar</button>`;
@@ -11773,13 +11773,18 @@ function renderizarDetalhePedidoSite(p) {
     }
   }
 
-    acoes.innerHTML += `<button class="btn btn-danger" onclick="excluirPedidoSiteCompleto(${p.id})"><i class="fas fa-trash"></i> Excluir Pedido</button>`;
+  acoes.innerHTML += `<button class="btn btn-danger" id="btnExcluirPedidoSite"><i class="fas fa-trash"></i> Excluir Pedido</button>`;
   acoes.innerHTML += `<button class="btn btn-secondary" onclick="document.getElementById('modalDetalhePedidoSite').classList.remove('active')"><i class="fas fa-times"></i> Fechar</button>`;
 
   const btnAprovar = document.getElementById("btnAprovarPedidoSite");
   if (btnAprovar) btnAprovar.onclick = () => aprovarPedidoSite(p.id);
+  
   const btnRejeitar = document.getElementById("btnRejeitarPedidoSite");
   if (btnRejeitar) btnRejeitar.onclick = () => rejeitarPedidoSite(p.id);
+
+  // NOVA LINHA AQUI:
+  const btnExcluir = document.getElementById("btnExcluirPedidoSite");
+  if (btnExcluir) btnExcluir.onclick = () => excluirPedidoSiteCompleto(p.id);
 }
 async function removerItemPedidoSite(pedidoId, variacaoId) {
   if (!confirm("Remover este item do pedido? O cliente verá a alteração no site.")) return;
