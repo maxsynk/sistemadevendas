@@ -3868,39 +3868,45 @@
   display: flex !important;
 }
 
-/* Aba Pedidos pulsando */
+/* Aba Pedidos piscando quando tem pedido do site pendente */
 .tab.tab-pedidos-pendente {
   color: #f59e0b !important;
   border-bottom-color: #f59e0b !important;
   animation: piscarAbaPedidos 1.5s ease-in-out infinite;
-  display: inline-flex !important;
-  align-items: center;
-  position: relative;
-  overflow: visible !important;
 }
-
 .tab.tab-pedidos-pendente::after {
   content: '';
   display: inline-block;
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: #ef4444;
-  margin-left: 8px;
-  box-shadow: 0 0 10px rgba(239,68,68,0.9);
+  margin-left: 6px;
+  box-shadow: 0 0 8px rgba(239,68,68,0.8);
   animation: pulsarBolota 1.5s ease-in-out infinite;
 }
-
 @keyframes piscarAbaPedidos {
-  0%, 100% { color: #f59e0b; text-shadow: 0 0 8px rgba(245,158,11,0.4); }
-  50% { color: #fbbf24; text-shadow: 0 0 16px rgba(245,158,11,0.9); }
+  0%, 100% { 
+    color: #f59e0b;
+    text-shadow: 0 0 8px rgba(245,158,11,0.4);
+    transform: scale(1);
+  }
+  50% { 
+    color: #fbbf24;
+    text-shadow: 0 0 16px rgba(245,158,11,0.9);
+    transform: scale(1.05);
+  }
 }
-
 @keyframes pulsarBolota {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.4); opacity: 0.7; }
+  0%, 100% { 
+    transform: scale(1); 
+    opacity: 1;
+  }
+  50% { 
+    transform: scale(1.4); 
+    opacity: 0.7;
+  }
 }
-
 /* Drawer (menu mobile) também pulsa */
 .drawer-item.drawer-pedidos-pendente {
   color: #f59e0b !important;
@@ -11507,34 +11513,32 @@ async function verificarPedidosSite() {
     const alerta = document.getElementById("pedidosSiteAlerta");
     const badge = document.getElementById("badgePedidosSite");
     const titulo = document.getElementById("pedidosSiteAlertaTitulo");
+
+    // Achar a aba Pedidos pra piscar
     const abaPedidos = document.querySelector('.tab[data-aba="pedidos"]');
-    const drawerPedidos = document.querySelector('.drawer-item[data-aba="pedidos"]');
 
     if (!alerta) return;
 
     if (total > 0) {
-      // Atualiza textos
+      alerta.style.display = "flex";
       badge.textContent = total;
       titulo.textContent = total === 1
         ? "Você tem 1 pedido recebido do site"
         : `Você tem ${total} pedidos recebidos do site`;
 
-      // Coloca a classe de alerta no banner (o CSS vai decidir se mostra)
-      alerta.classList.add("alerta-ativo");
-      
-      // Faz a aba e o menu pulsarem
+      // Faz a aba Pedidos piscar
       if (abaPedidos) abaPedidos.classList.add("tab-pedidos-pendente");
-      if (drawerPedidos) drawerPedidos.classList.add("drawer-pedidos-pendente");
 
-      // Som
       const ultimoTotal = parseInt(sessionStorage.getItem("max_ultimo_total_site") || "0");
-      if (total > ultimoTotal) tocarSomPedidoSite();
+      if (total > ultimoTotal) {
+        tocarSomPedidoSite();
+      }
       sessionStorage.setItem("max_ultimo_total_site", String(total));
     } else {
-      // Remove tudo
-      alerta.classList.remove("alerta-ativo");
+      alerta.style.display = "none";
+      // Para de piscar
       if (abaPedidos) abaPedidos.classList.remove("tab-pedidos-pendente");
-      if (drawerPedidos) drawerPedidos.classList.remove("drawer-pedidos-pendente");
+
       sessionStorage.setItem("max_ultimo_total_site", "0");
     }
 
