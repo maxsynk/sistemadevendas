@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v6.4
+  MAX REPRESENTAÇÃO — HTML v6.5
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -5594,13 +5594,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v6.4
+// MAX REPRESENTAÇÃO — HTML v6.5
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "6.4";
+const APP_VERSION = "6.5";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -11773,7 +11773,7 @@ function renderizarDetalhePedidoSite(p) {
     }
   }
 
-  acoes.innerHTML += `<button class="btn btn-danger" onclick="excluirPedidoSite(${p.id})"><i class="fas fa-trash"></i> Excluir Pedido</button>`;
+    acoes.innerHTML += `<button class="btn btn-danger" onclick="excluirPedidoSiteCompleto(${p.id})"><i class="fas fa-trash"></i> Excluir Pedido</button>`;
   acoes.innerHTML += `<button class="btn btn-secondary" onclick="document.getElementById('modalDetalhePedidoSite').classList.remove('active')"><i class="fas fa-times"></i> Fechar</button>`;
 
   const btnAprovar = document.getElementById("btnAprovarPedidoSite");
@@ -11820,6 +11820,32 @@ async function aprovarPedidoSite(id) {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aprovando...';
   }
 
+  async function excluirPedidoSiteCompleto(id) {
+  if (!confirm(`⚠️ ATENÇÃO!\n\nDeseja EXCLUIR DEFINITIVAMENTE o pedido do site #${id}?\n\nSe ele já tiver sido aprovado, o pedido oficial e o estoque também serão apagados/devolvidos.`)) return;
+  if (!confirm("TEM CERTEZA? Essa ação não pode ser desfeita.")) return;
+
+  try {
+    const res = await api(`/pedidos-site/${id}/excluir`, { method: "DELETE" });
+    const data = await res.json();
+    
+    if (!data.success) throw new Error(data.error);
+
+    toast("Pedido excluído com sucesso!");
+    
+    // Fecha o modal de detalhes e o de listagem se estiverem abertos
+    document.getElementById("modalDetalhePedidoSite").classList.remove("active");
+    document.getElementById("modalPedidosSite").classList.remove("active");
+    
+    // Atualiza as listas
+    await verificarPedidosSite();
+    await carregarPedidos();
+    await carregarProdutos();
+    await carregarDashboard();
+  } catch (e) {
+    toast("Erro ao excluir: " + e.message, "error");
+  }
+}
+  
   try {
     const res = await api(`/pedidos-site/${id}/aprovar`, { method: "POST" });
     const data = await res.json();
