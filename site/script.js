@@ -1,12 +1,16 @@
 // ============================================
-// MAX REPRESENTAÇÃO — SITE v4.2
+// MAX REPRESENTAÇÃO — SITE v4.3
 // script.js
 // v4.1: "Meu Pedido" (cliente edita o próprio pedido)
 // v4.2: Carrinho persistente em localStorage
+// v4.3: Validação de estoque em tempo real no carrinho
 // ============================================
 
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
-const WHATSAPP_NUMERO = "5537991021468";
+const ATENDENTES = [
+  { nome: "Max", numero: "5537991021468" },
+  { nome: "Suellen", numero: "5537991477086" }
+];
 const WHATSAPP_MSG_PADRAO = "Olá! Vi o catálogo no site e gostaria de mais informações.";
 const MINIMO_PARES = 1; // Permite fechar pedido com 1 par
 const MINIMO_ENVIO = 6; // Aviso: pedidos abaixo disso não são despachados
@@ -481,8 +485,16 @@ function abrirModalCarrinho() {
   }
 
   rodape.style.display = "block";
-  lista.innerHTML = carrinho.map((it, i) => `
-    <div class="carrinho-item">
+  
+  // Renderiza os itens, incluindo a verificação de estoque em tempo real se já tiver sido feita
+  lista.innerHTML = carrinho.map((it, i) => {
+    const semEstoque = it.estoque_atual !== undefined && it.estoque_atual < it.qtd;
+    const textoEstoque = semEstoque 
+      ? `<div class="det" style="color:var(--error); font-weight:bold;"><i class="fas fa-exclamation-triangle"></i> Indisponível (Restam ${it.estoque_atual || 0})</div>` 
+      : (it.estoque_atual !== undefined ? `<div class="det" style="color:var(--success)"><i class="fas fa-check"></i> Em estoque</div>` : "");
+
+    return `
+    <div class="carrinho-item" style="${semEstoque ? 'border: 1px solid var(--error); background: rgba(239,68,68,0.05);' : ''}">
       <div class="carrinho-foto">
         ${it.foto_url ? `<img src="${it.foto_url}" alt="">` : `<i class="fas fa-image"></i>`}
       </div>
@@ -490,12 +502,13 @@ function abrirModalCarrinho() {
         <div class="nome">${escapeHtml(it.modelo)} — ${escapeHtml(it.cor)}</div>
         <div class="det">Nº <b>${it.numeracao}</b> · ${it.qtd} ${it.qtd === 1 ? "par" : "pares"}</div>
         <div class="det">${formatarMoeda(it.preco)} /par</div>
+        ${textoEstoque}
       </div>
       <button class="carrinho-remover" data-idx="${i}" aria-label="Remover">
         <i class="fas fa-trash"></i>
       </button>
     </div>
-  `).join("");
+  `}).join("");
 
   lista.querySelectorAll(".carrinho-remover").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -505,12 +518,12 @@ function abrirModalCarrinho() {
     });
   });
 
-   const totalPares = carrinho.reduce((s, c) => s + c.qtd, 0);
+  const totalPares = carrinho.reduce((s, c) => s + c.qtd, 0);
   const totalValor = carrinho.reduce((s, c) => s + c.qtd * c.preco, 0);
   document.getElementById("carrinhoTotalPares").textContent = totalPares;
   document.getElementById("carrinhoTotalValor").textContent = formatarMoeda(totalValor);
 
-     // Se tá em modo adição, muda o texto e o comportamento do botão
+  // Se tá em modo adição, muda o texto e o comportamento do botão
   if (modoAdicaoAtivo && modoAdicaoChave) {
     aviso.classList.remove("show");
     btnEnviar.disabled = totalPares === 0;
@@ -567,9 +580,86 @@ let modoAdicaoAtivo = false;    // true quando tá adicionando ao pedido existen
 let modoAdicaoChave = null;
 let modoAdicaoWhatsapp = null;
 
-function abrirFormFechamento() {
+// ============================================
+// VALIDAÇÃO DE ESTOQUE EM TEMPO REAL
+// ============================================
+async function validarEstoqueCarrinho() {
+  if (!carrinho || carrinho.length === 0) return false;
+
+  try {
+    // Busca todos os produtos atualizados da API
+    const res = await fetch(API_BASE + "/publico/produtos");
+    const data = await res.json();
+    
+    if (!data.success) {
+      console.warn("Não foi possível validar o estoque agora.");
+      return false;
+    }
+
+    const produtosAtualizados = data.produtos || [];
+    let temItemSemEstoque = false;
+
+    // Atualiza o estoque_atual de cada item no carrinho
+    for (const itemCarrinho of carrinho) {
+      const prod = produtosAtualizados.find(p => p.id === itemCarrinho.produto_id);
+      
+      if (prod) {
+        const gradeAtualizada = prod.grade || [];
+        const variacao = gradeAtualizada.find(g => g.numeracao === itemCarrinho.numeracao);
+        
+        if (variacao) {
+          itemCarrinho.estoque_atual = variacao.disponivel || 0;
+          if (itemCarrinho.estoque_atual < itemCarrinho.qtd) {
+            temItemSemEstoque = true;
+          }
+        } else {
+          // Variação não existe mais
+          itemCarrinho.estoque_atual = 0;
+          temItemSemEstoque = true;
+        }
+      } else {
+        // Produto não existe mais
+        itemCarrinho.estoque_atual = 0;
+        temItemSemEstoque = true;
+      }
+    }
+
+    return temItemSemEstoque;
+  } catch (e) {
+    console.error("Erro ao validar estoque:", e);
+    return false; // Se a API falhar, deixa o Worker barrar no final
+  }
+}
+
+async function abrirFormFechamento() {
   if (!carrinho || carrinho.length === 0) {
     return alert("Seu carrinho está vazio.");
+  }
+
+  const btnEnviar = document.getElementById("carrinhoEnviar");
+  const textoOriginal = btnEnviar.innerHTML;
+  btnEnviar.disabled = true;
+  btnEnviar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando estoque...';
+
+  // Valida o estoque antes de abrir o form
+  const temErroEstoque = await validarEstoqueCarrinho();
+
+  btnEnviar.disabled = false;
+  btnEnviar.innerHTML = textoOriginal;
+
+  if (temErroEstoque) {
+    // Atualiza visual do carrinho para mostrar os erros
+    abrirModalCarrinho(); 
+    
+    let msgErro = "⚠️ ATENÇÃO!\n\nAlguns itens do seu carrinho não têm mais estoque suficiente:\n\n";
+    carrinho.forEach(item => {
+      if (item.estoque_atual !== undefined && item.estoque_atual < item.qtd) {
+        msgErro += `❌ ${item.modelo} (Nº ${item.numeracao}) — Você pediu ${item.qtd}, mas restam apenas ${item.estoque_atual}.\n`;
+      }
+    });
+    msgErro += "\nPor favor, remova ou diminua a quantidade desses itens para continuar.";
+    alert(msgErro);
+    return;
   }
 
   chavePedidoGerada = null;
@@ -934,12 +1024,51 @@ function mostrarTelaSucesso() {
 }
 
 // ============================================
-// WHATSAPP — Desktop first
+// WHATSAPP — Escolha de Atendente
 // ============================================
+let mensagemWhatsAppAtual = "";
+
 function abrirWhatsApp(mensagem) {
-  const texto = encodeURIComponent(mensagem);
-  const urlApp = `whatsapp://send?phone=${WHATSAPP_NUMERO}&text=${texto}`;
-  const urlWeb = `https://wa.me/${WHATSAPP_NUMERO}?text=${texto}`;
+  mensagemWhatsAppAtual = mensagem; // Salva a mensagem
+
+  const modal = document.getElementById("modalEscolherAtendente");
+  const lista = document.getElementById("listaAtendentes");
+  
+  if (!modal || !lista) {
+    // Fallback: se o modal não existir no HTML, usa o primeiro da lista
+    enviarParaAtendente(ATENDENTES[0].numero);
+    return;
+  }
+
+  // Cria os botões para cada atendente
+  lista.innerHTML = ATENDENTES.map((atendente, index) => `
+    <button class="btn-escolher-atendente" onclick="enviarParaAtendente('${atendente.numero}')">
+      <div class="avatar-atendente"><i class="fab fa-whatsapp"></i></div>
+      <div class="info-atendente">
+        <strong>${atendente.nome}</strong>
+        <span>Chamar no WhatsApp</span>
+      </div>
+      <i class="fas fa-chevron-right seta-atendente"></i>
+    </button>
+  `).join("");
+
+  modal.classList.add("active");
+  document.body.style.overflow = "hidden";
+}
+
+function fecharModalAtendente() {
+  const modal = document.getElementById("modalEscolherAtendente");
+  if (modal) modal.classList.remove("active");
+  document.body.style.overflow = "";
+}
+
+function enviarParaAtendente(numero) {
+  fecharModalAtendente();
+  if (!mensagemWhatsAppAtual) return;
+  
+  const texto = encodeURIComponent(mensagemWhatsAppAtual);
+  const urlApp = `whatsapp://send?phone=${numero}&text=${texto}`;
+  const urlWeb = `https://wa.me/${numero}?text=${texto}`;
 
   let foiParaApp = false;
   const t = setTimeout(() => {
@@ -1191,7 +1320,7 @@ function enviarAvisoWhatsAppPedido() {
   }, 1500);
 
   window.addEventListener("blur", () => { foiParaApp = true; clearTimeout(t); }, { once: true });
-  window.location.href = urlApp;
+  abrirWhatsApp(msg);
 }
 
 // Remover item do pedido
