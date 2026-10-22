@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v6.1
+  MAX REPRESENTAÇÃO — HTML v6.2
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -3843,94 +3843,42 @@
   }
 }
 /* ============================================ */
-/* BLOCO PEDIDOS DO SITE — Etapa 2 (CORRIGIDO)  */
+/* SOLUÇÃO DEFINITIVA: BANNER E PULSO           */
 /* ============================================ */
 
-/* ============================================ */
-/* BLOCO PEDIDOS DO SITE — Etapa 2 (CORRIGIDO)  */
-/* ============================================ */
-
-/* Banner de Alerta (Dentro da Aba) */
+/* O Banner Amarelo */
 .pedidos-site-alerta {
   background: linear-gradient(135deg, rgba(245,158,11,0.12), rgba(239,68,68,0.08));
   border: 1px solid var(--warning);
   border-left: 4px solid var(--warning);
   border-radius: 14px;
   padding: 16px 20px;
-  margin-bottom: 20px; /* Margem para não colar no conteúdo abaixo */
-  width: 100%; /* Ocupa toda a largura da aba */
-  display: none; /* Controlado via JS */
+  margin-bottom: 20px;
+  width: 100%;
+  /* Começa escondido */
+  display: none; 
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
   box-shadow: 0 0 24px rgba(245,158,11,0.15);
-  animation: slideDown 0.4s ease-out;
 }
 
-/* Animação de entrada do banner */
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+/* MÁGICA: Se a aba Pedidos estiver ativa E tiver a classe de alerta, mostra o banner */
+#aba-pedidos.active .pedidos-site-alerta.alerta-ativo {
+  display: flex !important;
 }
 
-/* Ícone do Sino */
-.pedidos-site-alerta-icon {
-  width: 44px; height: 44px; border-radius: 12px;
-  background: rgba(245,158,11,0.2);
-  display: flex; align-items: center; justify-content: center;
-  color: var(--warning); font-size: 20px;
-  flex-shrink: 0;
-  animation: balancarSino 2s infinite;
-}
-
-@keyframes balancarSino {
-  0%, 100% { transform: rotate(0deg); }
-  10%, 30% { transform: rotate(-15deg); }
-  20%, 40% { transform: rotate(15deg); }
-  50% { transform: rotate(0deg); }
-}
-
-.pedidos-site-alerta-txt { 
-  flex: 1; 
-  min-width: 250px; 
-}
-.pedidos-site-alerta-txt strong {
-  display: block;
-  font-size: 14px; font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 4px;
-}
-.pedidos-site-alerta-txt span {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.badge-pedidos-site {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-width: 24px; height: 24px; padding: 0 8px;
-  background: var(--error); color: #fff;
-  border-radius: 12px;
-  font-size: 12px; font-weight: 900;
-  margin-left: 8px;
-  box-shadow: 0 0 12px rgba(239,68,68,0.6);
-}
-
-/* ============================================ */
-/* PULSO NA ABA PEDIDOS (Desktop e Mobile)      */
-/* ============================================ */
-
-/* Garante que a aba pisque em qualquer tela */
+/* Aba Pedidos pulsando */
 .tab.tab-pedidos-pendente {
   color: #f59e0b !important;
   border-bottom-color: #f59e0b !important;
-  animation: piscarAbaPedidos 1.5s ease-in-out infinite !important;
-  position: relative;
-  overflow: visible !important; /* Impede que a bolinha seja cortada */
+  animation: piscarAbaPedidos 1.5s ease-in-out infinite;
   display: inline-flex !important;
   align-items: center;
+  position: relative;
+  overflow: visible !important;
 }
 
-/* A bolinha vermelha na aba */
 .tab.tab-pedidos-pendente::after {
   content: '';
   display: inline-block;
@@ -3941,24 +3889,13 @@
   margin-left: 8px;
   box-shadow: 0 0 10px rgba(239,68,68,0.9);
   animation: pulsarBolota 1.5s ease-in-out infinite;
-  vertical-align: middle;
 }
 
-/* Animação do texto piscando */
 @keyframes piscarAbaPedidos {
-  0%, 100% { 
-    color: #f59e0b;
-    text-shadow: 0 0 8px rgba(245,158,11,0.4);
-    border-bottom-color: #f59e0b;
-  }
-  50% { 
-    color: #fbbf24;
-    text-shadow: 0 0 16px rgba(245,158,11,0.9);
-    border-bottom-color: #fbbf24;
-  }
+  0%, 100% { color: #f59e0b; text-shadow: 0 0 8px rgba(245,158,11,0.4); }
+  50% { color: #fbbf24; text-shadow: 0 0 16px rgba(245,158,11,0.9); }
 }
 
-/* Animação da bolinha pulsando */
 @keyframes pulsarBolota {
   0%, 100% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.4); opacity: 0.7; }
@@ -4466,42 +4403,27 @@
     </div>
   </div>
 
+    <!-- O banner deve estar dentro da aba pedidos, como o primeiro elemento -->
   <div class="aba" id="aba-pedidos">
-        <!-- ============================================ -->
-    <!-- PEDIDOS DO SITE — Faixa de alerta            -->
-    <!-- ============================================ -->
-    <div class="pedidos-site-alerta" id="pedidosSiteAlerta" style="display:none">
-      <div class="pedidos-site-alerta-icon">
-        <i class="fas fa-bell"></i>
+      <!-- ============================================ -->
+      <!-- PEDIDOS DO SITE — Faixa de alerta            -->
+      <!-- ============================================ -->
+      <div class="pedidos-site-alerta" id="pedidosSiteAlerta">
+        <div class="pedidos-site-alerta-icon">
+          <i class="fas fa-bell"></i>
+        </div>
+        <div class="pedidos-site-alerta-txt">
+          <strong id="pedidosSiteAlertaTitulo">Você tem 0 pedidos recebidos do site</strong>
+          <span id="pedidosSiteAlertaSub">Aguardando sua aprovação</span>
+        </div>
+        <button class="btn btn-warning btn-sm" id="btnVerPedidosSite">
+          <i class="fas fa-eye"></i> Ver Pedidos
+          <span class="badge-pedidos-site" id="badgePedidosSite">0</span>
+        </button>
       </div>
-      <div class="pedidos-site-alerta-txt">
-        <strong id="pedidosSiteAlertaTitulo">Você tem 0 pedidos recebidos do site</strong>
-        <span id="pedidosSiteAlertaSub">Aguardando sua aprovação</span>
-      </div>
-      <button class="btn btn-warning btn-sm" id="btnVerPedidosSite">
-        <i class="fas fa-eye"></i> Ver Pedidos
-        <span class="badge-pedidos-site" id="badgePedidosSite">0</span>
-      </button>
-    </div>
-<div class="aba" id="aba-pedidos">
-    <!-- ============================================ -->
-    <!-- PEDIDOS DO SITE — Faixa de alerta (DENTRO DA ABA) -->
-    <!-- ============================================ -->
-    <div class="pedidos-site-alerta" id="pedidosSiteAlerta" style="display:none">
-      <div class="pedidos-site-alerta-icon">
-        <i class="fas fa-bell"></i>
-      </div>
-      <div class="pedidos-site-alerta-txt">
-        <strong id="pedidosSiteAlertaTitulo">Você tem 0 pedidos recebidos do site</strong>
-        <span id="pedidosSiteAlertaSub">Aguardando sua aprovação</span>
-      </div>
-      <button class="btn btn-warning btn-sm" id="btnVerPedidosSite">
-        <i class="fas fa-eye"></i> Ver Pedidos
-        <span class="badge-pedidos-site" id="badgePedidosSite">0</span>
-      </button>
-    </div>
 
-    <!-- Resto do conteúdo da aba Pedidos (Novo Pedido Manual, Pedidos Cadastrados, etc.) -->
+      <!-- AQUI CONTINUA O RESTO DO CONTEÚDO DA ABA PEDIDOS -->
+      <!-- (Novo Pedido Manual, Lista de Pedidos, Modais, etc.) -->
     
     <!-- ============================================ -->
     <!-- MODAL: LISTA DE PEDIDOS RECEBIDOS DO SITE    -->
@@ -5666,13 +5588,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v6.1
+// MAX REPRESENTAÇÃO — HTML v6.2
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "6.1";
+const APP_VERSION = "6.2";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -11591,29 +11513,26 @@ async function verificarPedidosSite() {
     if (!alerta) return;
 
     if (total > 0) {
+      // Atualiza textos
       badge.textContent = total;
       titulo.textContent = total === 1
         ? "Você tem 1 pedido recebido do site"
         : `Você tem ${total} pedidos recebidos do site`;
 
-      // 1. Faz a aba e o menu lateral piscarem (SEMPRE, em qualquer tela)
+      // Coloca a classe de alerta no banner (o CSS vai decidir se mostra)
+      alerta.classList.add("alerta-ativo");
+      
+      // Faz a aba e o menu pulsarem
       if (abaPedidos) abaPedidos.classList.add("tab-pedidos-pendente");
       if (drawerPedidos) drawerPedidos.classList.add("drawer-pedidos-pendente");
 
-      // 2. Só mostra o banner amarelo se a aba Pedidos estiver ativa!
-      const abaPedidosAtiva = document.getElementById("aba-pedidos").classList.contains("active");
-      if (abaPedidosAtiva) {
-        alerta.style.display = "flex";
-      } else {
-        alerta.style.display = "none";
-      }
-
+      // Som
       const ultimoTotal = parseInt(sessionStorage.getItem("max_ultimo_total_site") || "0");
       if (total > ultimoTotal) tocarSomPedidoSite();
       sessionStorage.setItem("max_ultimo_total_site", String(total));
     } else {
-      // Sem pedidos: esconde tudo e tira o pulso
-      alerta.style.display = "none";
+      // Remove tudo
+      alerta.classList.remove("alerta-ativo");
       if (abaPedidos) abaPedidos.classList.remove("tab-pedidos-pendente");
       if (drawerPedidos) drawerPedidos.classList.remove("drawer-pedidos-pendente");
       sessionStorage.setItem("max_ultimo_total_site", "0");
