@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v6.3
+  MAX REPRESENTAÇÃO — HTML v6.4
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -5594,13 +5594,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v6.3
+// MAX REPRESENTAÇÃO — HTML v6.4
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "6.3";
+const APP_VERSION = "6.4";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -10415,34 +10415,44 @@ function imagemDeDataURL(dataURL) {
   });
 }
 
-// Desenha a imagem final no canvas (1080x1080)
-// Desenha a imagem final no canvas (1080x1080) sem faixas brancas
+// Desenha a imagem final no canvas (1080x1080) com fundo esticado da própria foto
 function desenharImagemProduto(imgFoto, produto, variacoesDisponiveis) {
   const SIZE = 1080;
-  const FOOTER_H = 200; // Altura da faixa preta inferior
-  const FOTO_H = SIZE - FOOTER_H; // Altura disponível para a foto (880px)
+  const FOOTER_H = 200;
+  const FOTO_H = SIZE - FOOTER_H;
 
   const canvas = document.createElement("canvas");
   canvas.width = SIZE;
   canvas.height = SIZE;
   const ctx = canvas.getContext("2d");
 
-  // Fundo branco (caso a foto não cubra tudo)
+  // Fundo branco (caso a foto não carregue)
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, SIZE, SIZE);
 
-  // FOTO DO PRODUTO (Recorte Inteligente - Cover)
   if (imgFoto) {
-    const escala = Math.max(SIZE / imgFoto.width, FOTO_H / imgFoto.height);
-    const w = imgFoto.width * escala;
-    const h = imgFoto.height * escala;
-    const x = (SIZE - w) / 2;
-    const y = (FOTO_H - h) / 2;
+    // 1. FUNDO: Estica a foto para preencher o espaço, sem cortar, e escurece
+    ctx.globalAlpha = 0.4; // Deixa bem clarinho para não brigar com a foto principal
+    const escalaFundo = Math.max(SIZE / imgFoto.width, FOTO_H / imgFoto.height);
+    const wFundo = imgFoto.width * escalaFundo;
+    const hFundo = imgFoto.height * escalaFundo;
+    const xFundo = (SIZE - wFundo) / 2;
+    const yFundo = (FOTO_H - hFundo) / 2;
     
-    // Desenha a imagem preenchendo o espaço
-    ctx.drawImage(imgFoto, x, y, w, h);
+    // Desenha o fundo esticado (pode cortar as bordas)
+    ctx.drawImage(imgFoto, xFundo, yFundo, wFundo, hFundo);
+    ctx.globalAlpha = 1.0;
+
+    // 2. FOTO PRINCIPAL: Inteira e centralizada
+    const escalaFoto = Math.min(SIZE / imgFoto.width, FOTO_H / imgFoto.height);
+    const wFoto = imgFoto.width * escalaFoto;
+    const hFoto = imgFoto.height * escalaFoto;
+    const xFoto = (SIZE - wFoto) / 2;
+    const yFoto = (FOTO_H - hFoto) / 2;
+    
+    ctx.drawImage(imgFoto, xFoto, yFoto, wFoto, hFoto);
+
   } else {
-    // Sem foto: desenha um placeholder cinza
     ctx.fillStyle = "#e5e7eb";
     ctx.fillRect(0, 0, SIZE, FOTO_H);
     ctx.fillStyle = "#9ca3af";
@@ -10460,7 +10470,7 @@ function desenharImagemProduto(imgFoto, produto, variacoesDisponiveis) {
   ctx.fillStyle = "#a855f7";
   ctx.fillRect(0, FOTO_H, SIZE, 6);
 
-  // REF (código de barras)
+  // REF
   const ref = (produto.codigo_barras || "").toUpperCase();
   ctx.fillStyle = "#ffffff";
   ctx.font = "bold 34px Arial";
@@ -10473,7 +10483,7 @@ function desenharImagemProduto(imgFoto, produto, variacoesDisponiveis) {
   ctx.fillStyle = "rgba(168,85,247,0.3)";
   ctx.fillRect(40, FOTO_H + 82, SIZE - 80, 2);
 
-  // Numerações disponíveis
+  // Numerações
   if (variacoesDisponiveis.length === 0) {
     ctx.fillStyle = "#9a94a8";
     ctx.font = "24px Arial";
@@ -10488,7 +10498,7 @@ function desenharImagemProduto(imgFoto, produto, variacoesDisponiveis) {
     const y = FOTO_H + 108;
 
     for (const n of nums) {
-      ctx.fillStyle = "#22c55e"; // Verde para números
+      ctx.fillStyle = "#22c55e";
       roundRect(ctx, x, y, chipW, chipH, 12);
       ctx.fill();
 
