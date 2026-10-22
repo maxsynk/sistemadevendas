@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v6.2
+  MAX REPRESENTAÇÃO — HTML v6.3
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -5594,13 +5594,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v6.2
+// MAX REPRESENTAÇÃO — HTML v6.3
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "6.2";
+const APP_VERSION = "6.3";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -10416,27 +10416,30 @@ function imagemDeDataURL(dataURL) {
 }
 
 // Desenha a imagem final no canvas (1080x1080)
+// Desenha a imagem final no canvas (1080x1080) sem faixas brancas
 function desenharImagemProduto(imgFoto, produto, variacoesDisponiveis) {
   const SIZE = 1080;
-  const FOOTER_H = 200;
-  const FOTO_H = SIZE - FOOTER_H;
+  const FOOTER_H = 200; // Altura da faixa preta inferior
+  const FOTO_H = SIZE - FOOTER_H; // Altura disponível para a foto (880px)
 
   const canvas = document.createElement("canvas");
   canvas.width = SIZE;
   canvas.height = SIZE;
   const ctx = canvas.getContext("2d");
 
-  // Fundo branco
+  // Fundo branco (caso a foto não cubra tudo)
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, SIZE, SIZE);
 
-  // Foto do produto (recortada pra caber em 1080x880 mantendo proporção)
+  // FOTO DO PRODUTO (Recorte Inteligente - Cover)
   if (imgFoto) {
-    const escala = Math.min(SIZE / imgFoto.width, FOTO_H / imgFoto.height);
+    const escala = Math.max(SIZE / imgFoto.width, FOTO_H / imgFoto.height);
     const w = imgFoto.width * escala;
     const h = imgFoto.height * escala;
     const x = (SIZE - w) / 2;
     const y = (FOTO_H - h) / 2;
+    
+    // Desenha a imagem preenchendo o espaço
     ctx.drawImage(imgFoto, x, y, w, h);
   } else {
     // Sem foto: desenha um placeholder cinza
@@ -10476,7 +10479,6 @@ function desenharImagemProduto(imgFoto, produto, variacoesDisponiveis) {
     ctx.font = "24px Arial";
     ctx.fillText("Sem numeração disponível", 40, FOTO_H + 120);
   } else {
-    // Numeros em "chips" centralizados
     const nums = variacoesDisponiveis.map(v => String(v.numeracao));
     const chipW = 92;
     const chipH = 68;
@@ -10486,12 +10488,10 @@ function desenharImagemProduto(imgFoto, produto, variacoesDisponiveis) {
     const y = FOTO_H + 108;
 
     for (const n of nums) {
-      // Fundo do chip
-      ctx.fillStyle = "#22c55e";
+      ctx.fillStyle = "#22c55e"; // Verde para números
       roundRect(ctx, x, y, chipW, chipH, 12);
       ctx.fill();
 
-      // Texto da numeração
       ctx.fillStyle = "#ffffff";
       ctx.font = "bold 40px Arial";
       ctx.textAlign = "center";
