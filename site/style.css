@@ -1365,3 +1365,54 @@ body.tema-claro .hero {
   .sucesso-chave .caixa-chave .chave { font-size: 34px; letter-spacing: 5px; }
   .toast-add { bottom: 90px; font-size: 13px; padding: 12px 18px; }
 }
+
+/* ============================================ */
+/* MODAL DE ESCOLHA DE ATENDENTE                */
+/* ============================================ */
+#modalEscolherAtendente {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px);
+  display: none; align-items: center; justify-content: center; padding: 20px;
+}
+
+#modalEscolherAtendente.active { display: flex; }
+
+#modalEscolherAtendente .modal-box {
+  background: #13101e; border: 1px solid rgba(168, 85, 247, 0.3);
+  border-radius: 16px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.btn-escolher-atendente {
+  display: flex; align-items: center; gap: 16px;
+  padding: 16px; background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px;
+  cursor: pointer; transition: all 0.2s; width: 100%; text-align: left;
+}
+
+.btn-escolher-atendente:hover {
+  background: rgba(37, 211, 102, 0.1); border-color: #25D366;
+  transform: translateY(-2px);
+}
+
+.avatar-atendente {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: linear-gradient(135deg, #25D366, #128C7E);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 22px; flex-shrink: 0;
+}
+
+.info-atendente { display: flex; flex-direction: column; flex: 1; }
+.info-atendente strong { color: #fff; font-size: 15px; margin-bottom: 2px; }
+.info-atendente span { color: #aaa; font-size: 12px; }
+
+.seta-atendente { color: #555; transition: all 0.2s; }
+.btn-escolher-atendente:hover .seta-atendente { color: #25D366; transform: translateX(4px); }
+
+.btn-cancelar-atendente {
+  width: 100%; margin-top: 20px; padding: 14px;
+  background: transparent; border: 1px solid #333; border-radius: 12px;
+  color: #aaa; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s;
+}
+
+.btn-cancelar-atendente:hover { background: rgba(255,255,255,0.05); color: #fff; }
