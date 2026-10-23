@@ -11764,7 +11764,7 @@ function renderizarDetalhePedidoSite(p) {
     </div>
   `;  
 
-    acoes.innerHTML = "";
+   acoes.innerHTML = "";
 
   if (p.status === "pendente") {
     acoes.innerHTML += `<button class="btn btn-danger" id="btnRejeitarPedidoSite"><i class="fas fa-times"></i> Rejeitar</button>`;
@@ -11773,19 +11773,34 @@ function renderizarDetalhePedidoSite(p) {
     }
   }
 
+  // Botão Excluir (com ID para o JS achar)
   acoes.innerHTML += `<button class="btn btn-danger" id="btnExcluirPedidoSite"><i class="fas fa-trash"></i> Excluir Pedido</button>`;
-  acoes.innerHTML += `<button class="btn btn-secondary" onclick="document.getElementById('modalDetalhePedidoSite').classList.remove('active')"><i class="fas fa-times"></i> Fechar</button>`;
+  
+  // Botão Fechar
+  acoes.innerHTML += `<button class="btn btn-secondary" id="btnFecharDetalheSite"><i class="fas fa-times"></i> Fechar</button>`;
 
+  // --- AQUI ESTÁ O SEGREDO: Amarrando os cliques ---
+  
   const btnAprovar = document.getElementById("btnAprovarPedidoSite");
   if (btnAprovar) btnAprovar.onclick = () => aprovarPedidoSite(p.id);
   
   const btnRejeitar = document.getElementById("btnRejeitarPedidoSite");
   if (btnRejeitar) btnRejeitar.onclick = () => rejeitarPedidoSite(p.id);
 
-  // NOVA LINHA AQUI:
   const btnExcluir = document.getElementById("btnExcluirPedidoSite");
-  if (btnExcluir) btnExcluir.onclick = () => excluirPedidoSiteCompleto(p.id);
-}
+  if (btnExcluir) {
+    btnExcluir.onclick = () => {
+      excluirPedidoSiteCompleto(p.id);
+    };
+  }
+
+  const btnFecharDetalhe = document.getElementById("btnFecharDetalheSite");
+  if (btnFecharDetalhe) {
+    btnFecharDetalhe.onclick = () => {
+      document.getElementById("modalDetalhePedidoSite").classList.remove("active");
+    };
+  }
+}   
 async function removerItemPedidoSite(pedidoId, variacaoId) {
   if (!confirm("Remover este item do pedido? O cliente verá a alteração no site.")) return;
 
@@ -11824,32 +11839,6 @@ async function aprovarPedidoSite(id) {
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aprovando...';
   }
-
-  async function excluirPedidoSiteCompleto(id) {
-  if (!confirm(`⚠️ ATENÇÃO!\n\nDeseja EXCLUIR DEFINITIVAMENTE o pedido do site #${id}?\n\nSe ele já tiver sido aprovado, o pedido oficial e o estoque também serão apagados/devolvidos.`)) return;
-  if (!confirm("TEM CERTEZA? Essa ação não pode ser desfeita.")) return;
-
-  try {
-    const res = await api(`/pedidos-site/${id}/excluir`, { method: "DELETE" });
-    const data = await res.json();
-    
-    if (!data.success) throw new Error(data.error);
-
-    toast("Pedido excluído com sucesso!");
-    
-    // Fecha o modal de detalhes e o de listagem se estiverem abertos
-    document.getElementById("modalDetalhePedidoSite").classList.remove("active");
-    document.getElementById("modalPedidosSite").classList.remove("active");
-    
-    // Atualiza as listas
-    await verificarPedidosSite();
-    await carregarPedidos();
-    await carregarProdutos();
-    await carregarDashboard();
-  } catch (e) {
-    toast("Erro ao excluir: " + e.message, "error");
-  }
-}
   
   try {
     const res = await api(`/pedidos-site/${id}/aprovar`, { method: "POST" });
@@ -11909,6 +11898,32 @@ async function rejeitarPedidoSite(id) {
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-times"></i> Rejeitar';
     }
+  }
+}
+
+  async function excluirPedidoSiteCompleto(id) {
+  if (!confirm(`⚠️ ATENÇÃO!\n\nDeseja EXCLUIR DEFINITIVAMENTE o pedido do site #${id}?\n\nSe ele já tiver sido aprovado, o pedido oficial e o estoque também serão apagados/devolvidos.`)) return;
+  if (!confirm("TEM CERTEZA? Essa ação não pode ser desfeita.")) return;
+
+  try {
+    const res = await api(`/pedidos-site/${id}/excluir`, { method: "DELETE" });
+    const data = await res.json();
+    
+    if (!data.success) throw new Error(data.error);
+
+    toast("Pedido excluído com sucesso!");
+    
+    // Fecha o modal de detalhes e o de listagem se estiverem abertos
+    document.getElementById("modalDetalhePedidoSite").classList.remove("active");
+    document.getElementById("modalPedidosSite").classList.remove("active");
+    
+    // Atualiza as listas
+    await verificarPedidosSite();
+    await carregarPedidos();
+    await carregarProdutos();
+    await carregarDashboard();
+  } catch (e) {
+    toast("Erro ao excluir: " + e.message, "error");
   }
 }
 
