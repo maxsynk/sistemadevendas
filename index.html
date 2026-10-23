@@ -9471,7 +9471,9 @@ async function abrirModalEtiqueta() {
     document.getElementById("etqPontoReferencia").value = data.destinatario.ponto_referencia || "";
     renderizarPreviewEtiqueta();
     document.getElementById("modalEtiqueta").classList.add("active");
-    setTimeout(() => document.getElementById("etqNotaFiscal").focus(), 200);
+    
+    // REMOVIDO O SETTIMEOUT QUE FORÇAVA O FOCO NO CAMPO (O QUE CAUSAVA O PISCAR)
+    
   } catch (e) {
     toast("Erro: " + e.message, "error");
   }
@@ -9678,6 +9680,8 @@ document.getElementById("btnImprimirEtiqueta").onclick = () => {
   docIframe.write(html);
   docIframe.close();
 
+  // Aguarda 1 segundo (1000ms) para o navegador processar antes de abrir a janela de impressão
+  // e não perde o foco se o usuário estiver digitando no campo de NF/Volume
   setTimeout(() => {
     try {
       iframe.contentWindow.focus();
@@ -9685,7 +9689,7 @@ document.getElementById("btnImprimirEtiqueta").onclick = () => {
     } catch (e) {
       toast("Erro ao abrir impressão: " + e.message, "error");
     }
-  }, 500);
+  }, 500); // Aumentei de 0 para 500ms para garantir que o navegador não ignore o clique
 };
 
 // RELATÓRIOS
