@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v6.6
+  MAX REPRESENTAÇÃO — HTML v6.7
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -5594,13 +5594,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v6.6
+// MAX REPRESENTAÇÃO — HTML v6.7
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "6.6";
+const APP_VERSION = "6.7";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -11515,21 +11515,6 @@ function tocarSomPedidoSite() {
     console.log("[som] Erro:", e.message);
   }
 }
-// Pede permissão de notificação (só na primeira vez)
-if ("Notification" in window && Notification.permission === "default") {
-  Notification.requestPermission();
-}
-
-// Se detectou pedido novo e tem permissão, dispara notificação local
-if (total > ultimoTotal && Notification.permission === "granted") {
-  new Notification("🛒 Novo pedido no site!", {
-    body: `${total} pedido(s) aguardando aprovação`,
-    icon: "icon-192.png",
-    badge: "icon-192.png",
-    tag: "pedido-site",
-    requireInteraction: true,
-  });
-}
   
 async function verificarPedidosSite() {
   if (!usuarioLogado || !tokenAtual) return;
@@ -11562,6 +11547,22 @@ async function verificarPedidosSite() {
       if (total > ultimoTotal) {
         tocarSomPedidoSite();
       }
+      // Pede permissão uma vez
+if ("Notification" in window && Notification.permission === "default") {
+  Notification.requestPermission();
+}
+
+// Dispara notificação local se tiver permissão
+if (Notification.permission === "granted") {
+  const ultimoTotal = parseInt(sessionStorage.getItem("max_ultimo_total_site") || "0");
+  if (total > ultimoTotal) {
+    new Notification("🛒 Novo pedido no site!", {
+      body: `${total} pedido(s) aguardando aprovação`,
+      icon: "icon-192.png",
+      tag: "pedido-site",
+    });
+  }
+}
       sessionStorage.setItem("max_ultimo_total_site", String(total));
     } else {
       alerta.style.display = "none";
