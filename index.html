@@ -11521,61 +11521,53 @@ async function verificarPedidosSite() {
   try {
     const res = await api("/pedidos-site/pendentes");
     const data = await res.json();
-    if (!data.success) return;
+    if (!data.success) { console.warn("[pedidos-site]", data.error); return; }
 
     const total = data.total || 0;
     const alerta = document.getElementById("pedidosSiteAlerta");
     const badge = document.getElementById("badgePedidosSite");
     const titulo = document.getElementById("pedidosSiteAlertaTitulo");
-
-    // Achar a aba Pedidos pra piscar
     const abaPedidos = document.querySelector('.tab[data-aba="pedidos"]');
-
-    if (!alerta) return;
+    const drawerPedidos = document.querySelector('.drawer-item[data-aba="pedidos"]');
+    const ultimoTotal = parseInt(sessionStorage.getItem("max_ultimo_total_site") || "0");
 
     if (total > 0) {
-      alerta.style.display = "flex";
-      badge.textContent = total;
-      titulo.textContent = total === 1
-        ? "Você tem 1 pedido recebido do site"
-        : `Você tem ${total} pedidos recebidos do site`;
-
-      // Faz a aba Pedidos piscar
-      if (abaPedidos) abaPedidos.classList.add("tab-pedidos-pendente");
-
-      const ultimoTotal = parseInt(sessionStorage.getItem("max_ultimo_total_site") || "0");
-      if (total > ultimoTotal) {
-        tocarSomPedidoSite();
+      if (alerta) {
+        alerta.classList.add("alerta-ativo");
+        alerta.style.display = "flex";
+        badge.textContent = total;
+        titulo.textContent = total === 1
+          ? "Você tem 1 pedido recebido do site"
+          : `Você tem ${total} pedidos recebidos do site`;
       }
-      // Pede permissão uma vez
-if ("Notification" in window && Notification.permission === "default") {
-  Notification.requestPermission();
-}
+      if (abaPedidos) abaPedidos.classList.add("tab-pedidos-pendente");
+      if (drawerPedidos) drawerPedidos.classList.add("drawer-pedidos-pendente");
 
-// Dispara notificação local se tiver permissão
-if (Notification.permission === "granted") {
-  const ultimoTotal = parseInt(sessionStorage.getItem("max_ultimo_total_site") || "0");
-  if (total > ultimoTotal) {
-    new Notification("🛒 Novo pedido no site!", {
-      body: `${total} pedido(s) aguardando aprovação`,
-      icon: "icon-192.png",
-      tag: "pedido-site",
-    });
-  }
-}
+      if (total > ultimoTotal) {
+        try { tocarSomPedidoSite(); } catch (e) {}
+        if ("Notification" in window) {
+          if (Notification.permission === "default") Notification.requestPermission();
+          else if (Notification.permission === "granted") {
+            new Notification("🛒 Novo pedido no site!", {
+              body: `${total} pedido(s) aguardando aprovação`,
+              icon: "icon-192.png",
+              tag: "pedido-site",
+            });
+          }
+        }
+      }
       sessionStorage.setItem("max_ultimo_total_site", String(total));
     } else {
-      alerta.style.display = "none";
-      // Para de piscar
+      if (alerta) { alerta.classList.remove("alerta-ativo"); alerta.style.display = "none"; }
       if (abaPedidos) abaPedidos.classList.remove("tab-pedidos-pendente");
-
+      if (drawerPedidos) drawerPedidos.classList.remove("drawer-pedidos-pendente");
       sessionStorage.setItem("max_ultimo_total_site", "0");
     }
 
     const modalAberto = document.getElementById("modalPedidosSite").classList.contains("active");
     if (modalAberto) carregarListaPedidosSite();
   } catch (e) {
-    console.log("[pedidos-site] Erro:", e.message);
+    console.warn("[pedidos-site] Erro:", e.message);
   }
 }
 // Loop de alerta sonoro a cada 30s
