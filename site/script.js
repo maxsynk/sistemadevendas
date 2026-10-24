@@ -1402,8 +1402,7 @@ function entrarModoAdicao() {
   document.getElementById("bannerPedidoChave").textContent = modoAdicaoChave;
   document.getElementById("bannerVoltandoPedido").style.display = "block";
 
-  // Rola pra cima (pro catálogo)
-    // Rola pra cima, mas deixa um espaço pro banner não cobrir o header
+  // Rola pra cima, mas deixa um espaço pro banner não cobrir o header
   const yOffset = -150; // Compensa a altura do header + banner
   const catalogo = document.getElementById("produtos");
   if (catalogo) {
@@ -1412,6 +1411,8 @@ function entrarModoAdicao() {
   } else {
     window.scrollTo({ top: 150, behavior: "smooth" });
   }
+} // <-- ESSA CHAVE ESTAVA FALTANDO AQUI
+
 // Cancelar modo adição
 function cancelarModoAdicao() {
   modoAdicaoAtivo = false;
