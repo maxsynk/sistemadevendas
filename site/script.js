@@ -1403,8 +1403,15 @@ function entrarModoAdicao() {
   document.getElementById("bannerVoltandoPedido").style.display = "block";
 
   // Rola pra cima (pro catálogo)
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
+    // Rola pra cima, mas deixa um espaço pro banner não cobrir o header
+  const yOffset = -150; // Compensa a altura do header + banner
+  const catalogo = document.getElementById("produtos");
+  if (catalogo) {
+    const y = catalogo.getBoundingClientRect().top + window.pageYOffset + yOffset;
+    window.scrollTo({ top: y, behavior: "smooth" });
+  } else {
+    window.scrollTo({ top: 150, behavior: "smooth" });
+  }
 // Cancelar modo adição
 function cancelarModoAdicao() {
   modoAdicaoAtivo = false;
