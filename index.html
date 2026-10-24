@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v6.5
+  MAX REPRESENTAÇÃO — HTML v6.6
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -5594,13 +5594,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v6.5
+// MAX REPRESENTAÇÃO — HTML v6.6
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "6.5";
+const APP_VERSION = "6.6";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -9132,11 +9132,11 @@ async function voltarStatusPedido() {
   
   let msg = "";
   if (statusAtual === "despachado") {
-    msg = `Voltar pedido #${id} para CONFERIDO?\n\n⚠️ O estoque será devolvido (estorno).`;
+    msg = `Voltar pedido #${id} para CONFERIDO?`;
   } else if (statusAtual === "conferido") {
     msg = `Voltar pedido #${id} para SEPARADO?`;
   } else if (statusAtual === "separado") {
-    msg = `Voltar pedido #${id} para RESERVADO?`;
+    msg = `⚠️ ATENÇÃO: Voltar pedido #${id} para RESERVADO?\n\nO ESTOQUE DOS PRODUTOS SERÁ DEVOLVIDO AO SITE (ESTORNADO) e o pedido voltará a ficar pendente de aprovação.`;
   }
 
   if (!confirm(msg)) return;
@@ -9156,7 +9156,7 @@ async function voltarStatusPedido() {
   } catch (e) {
     toast("Erro: " + e.message, "error");
   }
-}  
+}
 async function mudarStatusPedido(acao, sucessoMsg) {
   if (!pedidoAtual) return;
   const id = pedidoAtual.pedido.id;
