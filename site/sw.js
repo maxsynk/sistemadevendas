@@ -1,65 +1,70 @@
-// ============================================
-// MAX REPRESENTAÇÃO — SERVICE WORKER do MINI SITE
-// Permite o mini site ser instalável como app
-// ============================================
+// MAX REPRESENTAÇÃO — SERVICE WORKER
+// Mude a versão sempre que publicar uma atualização.
+const CACHE_NOME = "max-representacao-v6.8";
+const ARQUIVOS_CACHE = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 
-const CACHE_NOME = "max-catalogo-v18.0";
-const ARQUIVOS_CACHE = [
-  "./",
-  "./index.html",
-  "./style.css",
-  "./script.js",
-  "./manifest.json"
-];
-
-// INSTALL
 self.addEventListener("install", (event) => {
-  console.log("[SW Catálogo] Instalando...");
   event.waitUntil(
     caches.open(CACHE_NOME)
       .then((cache) => cache.addAll(ARQUIVOS_CACHE))
       .then(() => self.skipWaiting())
-      .catch((err) => console.error("[SW Catálogo] Erro no cache:", err))
+      .catch((err) => console.error("[SW] Erro no cache:", err))
   );
 });
 
-// ACTIVATE
 self.addEventListener("activate", (event) => {
-  console.log("[SW Catálogo] Ativando...");
   event.waitUntil(
-    caches.keys().then((nomes) => {
-      return Promise.all(
-        nomes.map((nome) => {
-          if (nome !== CACHE_NOME && nome.startsWith("max-catalogo")) {
-            return caches.delete(nome);
-          }
-        })
-      );
-    }).then(() => self.clients.claim())
+    caches.keys()
+      .then((nomes) => Promise.all(nomes.filter((n) => n !== CACHE_NOME).map((n) => caches.delete(n))))
+      .then(() => self.clients.claim())
   );
 });
 
-// FETCH — cache-first
 self.addEventListener("fetch", (event) => {
-  const url = new URL(event.request.url);
+  const req = event.request;
+  const url = new URL(req.url);
 
-  // Chama a API direto (sem cache)
-  if (url.hostname !== self.location.hostname) {
+  // Só GET e só do mesmo domínio (API e CDNs passam direto)
+  if (req.method !== "GET" || url.hostname !== self.location.hostname) return;
+
+  const ehPagina =
+    req.mode === "navigate" ||
+    url.pathname.endsWith(".html") ||
+    url.pathname.endsWith("/") ||
+    url.pathname.endsWith(".js") ||
+    url.pathname.endsWith(".css");
+
+  if (ehPagina) {
+    // REDE PRIMEIRO: sempre pega a versão nova; cache só se estiver offline
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          if (res && res.status === 200) {
+            const copia = res.clone();
+            caches.open(CACHE_NOME).then((c) => c.put(req, copia));
+          }
+          return res;
+        })
+        .catch(() => caches.match(req).then((c) => c || caches.match("./index.html")))
+    );
     return;
   }
 
+  // Imagens/ícones: cache primeiro
   event.respondWith(
-    caches.match(event.request).then((cached) => {
+    caches.match(req).then((cached) => {
       if (cached) return cached;
-      return fetch(event.request).then((response) => {
-        if (event.request.method === "GET" && response.status === 200) {
-          const responseClone = response.clone();
-          caches.open(CACHE_NOME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
+      return fetch(req).then((res) => {
+        if (res && res.status === 200) {
+          const copia = res.clone();
+          caches.open(CACHE_NOME).then((c) => c.put(req, copia));
         }
-        return response;
+        return res;
       });
     })
   );
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.tipo === "SKIP_WAITING") self.skipWaiting();
 });
