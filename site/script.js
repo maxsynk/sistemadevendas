@@ -1621,11 +1621,57 @@ document.addEventListener("DOMContentLoaded", () => {
       fecharModalCarrinho();
       fecharFormFechamento();
     }
+    // ============================================
+// MENSAGEM BÍBLICA DO DIA
+// ============================================
+const MENSAGENS_BIBLICAS = [
+  "O Senhor é o meu pastor; nada me faltará. (Salmos 23:1)",
+  "Tudo posso naquele que me fortalece. (Filipenses 4:13)",
+  "O Senhor é a minha luz e a minha salvação; a quem temerei? (Salmos 27:1)",
+  "Confia no Senhor de todo o teu coração. (Provérbios 3:5)",
+  "Alegrai-vos na esperança, sede pacientes na tribulação, perseverai na oração. (Romanos 12:12)",
+  "O amor é paciente, o amor é bondoso. Não inveja, não se vangloria, não se orgulha. (1 Coríntios 13:4)",
+  "Buscai primeiro o Reino de Deus e a sua justiça, e todas essas coisas vos serão acrescentadas. (Mateus 6:33)",
+  "O Senhor te abençoe e te guarde. (Números 6:24)",
+  "Não temas, porque eu sou contigo; não te assombres, porque eu sou o teu Deus. (Isaías 41:10)",
+  "A fé é a certeza daquilo que esperamos e a prova das coisas que não vemos. (Hebreus 11:1)",
+  "Se Deus é por nós, quem será contra nós? (Romanos 8:31)",
+  "A graça do Senhor Jesus Cristo esteja com todos. (Apocalipse 22:21)",
+  "Portanto, não vos preocupeis com o amanhã, pois o amanhã trará as suas próprias preocupações. (Mateus 6:34)",
+  "O Senhor é bom, um refúgio em tempos de angústia. Ele protege os que nele confiam. (Naum 1:7)",
+  "Vinde a mim, todos os que estais cansados e oprimidos, e eu vos aliviarei. (Mateus 11:28)",
+  "O choro pode durar uma noite, mas a alegria vem pela manhã. (Salmos 30:5)",
+  "Ainda que eu ande pelo vale da sombra da morte, não temerei mal algum, porque tu estás comigo. (Salmos 23:4)",
+  "O Senhor é o meu rochedo, a minha fortaleza e o meu libertador. (Salmos 18:2)",
+  "Sê forte e corajoso; não temas, nem te espantes, porque o Senhor teu Deus é contigo. (Josué 1:9)",
+  "Lançando sobre ele toda a vossa ansiedade, porque ele tem cuidado de vós. (1 Pedro 5:7)"
+];
+
+function carregarMensagemDoDia() {
+  const el = document.getElementById("mensagemBiblica");
+  if (!el) return;
+
+  // Pega o dia do ano (1 a 365) para variar a mensagem
+  const hoje = new Date();
+  const inicio = new Date(hoje.getFullYear(), 0, 0);
+  const diff = hoje - inicio;
+  const diaDoAno = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+  // Usa o dia do ano para escolher a mensagem de forma determinística
+  const index = diaDoAno % MENSAGENS_BIBLICAS.length;
+  el.innerHTML = `<i class="fas fa-book-open" style="margin-right:4px; opacity:0.6"></i> "${MENSAGENS_BIBLICAS[index]}"`;
+}
   });
 
     // Recupera carrinho salvo (se tiver)
   recuperarCarrinhoLocal();
   atualizarCarrinho();
+    // Recupera carrinho salvo (se tiver)
+  recuperarCarrinhoLocal();
+  atualizarCarrinho();
+  
+  // Carrega a frase bíblica do dia
+  carregarMensagemDoDia(); // <-- ADICIONE ESTA LINHA AQUI
 
   // Carrega categorias primeiro, depois produtos
   carregarCategorias();
