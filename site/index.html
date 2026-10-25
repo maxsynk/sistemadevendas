@@ -219,77 +219,105 @@
     <button class="modal-fechar" id="btnFecharModalForm" aria-label="Fechar">
       <i class="fas fa-times"></i>
     </button>
-    <div class="form-fechamento" id="formFechamento">
+      <div class="form-fechamento" id="formFechamento">
       <div class="form-titulo">
         <i class="fas fa-clipboard-check"></i> Finalizar Pedido
       </div>
-      <div class="form-aviso">
-        <strong><i class="fas fa-info-circle"></i> Preencha seus dados</strong><br>
-        Vamos gerar um <strong>código único</strong> pro seu pedido. Ele será enviado pro seu WhatsApp pra você confirmar com o vendedor.
+
+      <!-- Etapa 1: identificar cliente -->
+      <div id="fpIdentificacao">
+        <div class="form-aviso">
+          <strong><i class="fas fa-info-circle"></i> Identifique-se</strong><br>
+          Digite seu <strong>WhatsApp</strong>. Se já tem cadastro, pedimos sua <strong>senha</strong>. Se é a primeira vez, você cria uma senha e completa seus dados.
+        </div>
+
+        <div class="campo">
+          <label>WhatsApp *</label>
+          <input type="tel" id="fpTelefone" placeholder="(00) 00000-0000" autocomplete="tel">
+        </div>
+
+        <div class="campo" id="fpSenhaWrap" style="display:none">
+          <label>Senha *</label>
+          <input type="password" id="fpSenha" placeholder="Sua senha" autocomplete="current-password">
+        </div>
+
+        <div class="busca-erro" id="fpErroIdent" style="display:none"></div>
+
+        <button class="btn-fechar-sucesso" id="btnContinuarIdent" style="background:linear-gradient(135deg,var(--roxo),var(--roxo-alt));color:#fff;border-color:var(--roxo);padding:16px;font-size:13px;">
+          <i class="fas fa-arrow-right"></i> Continuar
+        </button>
       </div>
 
-            <div class="campo">
-        <label>Nome completo *</label>
-        <input type="text" id="fpNome" placeholder="Ex: João da Silva" autocomplete="name">
-      </div>
-      <div class="campo">
-        <label>WhatsApp *</label>
-        <input type="tel" id="fpTelefone" placeholder="(00) 00000-0000" autocomplete="tel">
-        <small id="avisoClienteCadastrado" style="display:none; color:var(--verde); font-size:11px; margin-top:4px;">
-          <i class="fas fa-check-circle"></i> Cliente cadastrado! Dados preenchidos.
-        </small>
-      </div>
-      <div class="campo">
-        <label>CPF / CNPJ</label>
-        <input type="text" id="fpCpf" placeholder="000.000.000-00">
-      </div>
-      <div class="campo">
-        <label>CEP</label>
-        <input type="text" id="fpCep" placeholder="00000-000">
-      </div>
-      <div class="campo">
-        <label>Endereço</label>
-        <input type="text" id="fpEndereco" placeholder="Rua, Avenida...">
-      </div>
-      
-      <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 10px;">
+      <!-- Etapa 2: dados do cliente + resumo -->
+      <div id="fpDados" style="display:none">
         <div class="campo">
-          <label>Número</label>
-          <input type="text" id="fpNumero" placeholder="Nº">
+          <label>Nome completo *</label>
+          <input type="text" id="fpNome" placeholder="Ex: João da Silva" autocomplete="name">
         </div>
         <div class="campo">
-          <label>Bairro</label>
-          <input type="text" id="fpBairro" placeholder="Bairro">
-        </div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 10px;">
-        <div class="campo">
-          <label>Cidade</label>
-          <input type="text" id="fpCidade" placeholder="Ex: Formiga">
+          <label>CPF / CNPJ *</label>
+          <input type="text" id="fpCpf" placeholder="000.000.000-00">
         </div>
         <div class="campo">
-          <label>UF</label>
-          <input type="text" id="fpUf" placeholder="MG" maxlength="2" style="text-transform:uppercase">
+          <label>CEP *</label>
+          <input type="text" id="fpCep" placeholder="00000-000">
         </div>
+        <div class="campo">
+          <label>Endereço *</label>
+          <input type="text" id="fpEndereco" placeholder="Rua, Avenida...">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 10px;">
+          <div class="campo">
+            <label>Número *</label>
+            <input type="text" id="fpNumero" placeholder="Nº">
+          </div>
+          <div class="campo">
+            <label>Bairro *</label>
+            <input type="text" id="fpBairro" placeholder="Bairro">
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 10px;">
+          <div class="campo">
+            <label>Cidade *</label>
+            <input type="text" id="fpCidade" placeholder="Ex: Formiga">
+          </div>
+          <div class="campo">
+            <label>UF *</label>
+            <input type="text" id="fpUf" placeholder="MG" maxlength="2" style="text-transform:uppercase">
+          </div>
+        </div>
+
+        <div class="campo" id="fpSenhaNovaWrap" style="display:none">
+          <label>Criar senha *</label>
+          <input type="password" id="fpSenhaNova" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+          <small style="font-size:11px;color:var(--text-dim);margin-top:4px;display:block">
+            <i class="fas fa-shield-alt"></i> Você vai usar essa senha + WhatsApp pra acessar seus pedidos depois.
+          </small>
+        </div>
+        <div class="campo" id="fpSenhaNova2Wrap" style="display:none">
+          <label>Confirmar senha *</label>
+          <input type="password" id="fpSenhaNova2" placeholder="Repita a senha" autocomplete="new-password">
+        </div>
+
+        <div class="campo">
+          <label>Chave de Revendedor (opcional)</label>
+          <input type="text" id="fpChaveRevendedor" placeholder="Ex: REV-ABC123" autocomplete="off" style="text-transform:uppercase">
+          <small style="font-size:11px;color:var(--text-dim);margin-top:6px;display:block">
+            <i class="fas fa-info-circle"></i> Se você é revendedor registrado, digite sua chave pra ganhar desconto.
+          </small>
+        </div>
+
+        <div class="desconto-aviso" id="descontoAviso" style="display:none"></div>
+
+        <div class="resumo-itens" id="fpResumo"></div>
+
+        <div class="busca-erro" id="fpErroDados" style="display:none"></div>
+
+        <button class="btn-fechar-sucesso" id="btnConfirmarFechamento" style="background:linear-gradient(135deg,var(--roxo),var(--roxo-alt));color:#fff;border-color:var(--roxo);padding:16px;font-size:13px;">
+          <i class="fas fa-check"></i> Confirmar Pedido
+        </button>
       </div>
-
-      <div class="campo">
-        <label>Chave de Revendedor (opcional)</label>
-        <input type="text" id="fpChaveRevendedor" placeholder="Ex: REV-ABC123" autocomplete="off" style="text-transform:uppercase">
-        <small style="font-size:11px;color:var(--text-dim);margin-top:6px;display:block">
-          <i class="fas fa-info-circle"></i> Se você é revendedor registrado, digite sua chave pra ganhar desconto.
-        </small>
-      </div>
-
-      <div class="desconto-aviso" id="descontoAviso" style="display:none"></div>
-
-      <div class="resumo-itens" id="fpResumo"></div>
-
-      <button class="btn-fechar-sucesso" id="btnConfirmarFechamento" style="background:linear-gradient(135deg,var(--roxo),var(--roxo-alt));color:#fff;border-color:var(--roxo);padding:16px;font-size:13px;">
-        <i class="fas fa-check"></i> Confirmar Pedido
-      </button>
-    </div>
+    </div>  
 
     <!-- MODAL ESCOLHER ATENDENTE -->
 <div class="modal-overlay" id="modalEscolherAtendente">
@@ -314,39 +342,146 @@
   </div>
 </div>
 
-  <!-- MODAL BUSCAR PEDIDO -->
-<div class="modal" id="modalBuscarPedido">
-  <div class="modal-box" style="max-width:480px">
-    <button class="modal-fechar" id="modalBuscarPedidoFechar" aria-label="Fechar">
-      <i class="fas fa-times"></i>
-    </button>
-    <div class="form-fechamento">
-      <div class="form-titulo">
-        <i class="fas fa-search"></i> Buscar Pedido
-      </div>
-      <div class="form-aviso">
-        <strong><i class="fas fa-info-circle"></i> Como funciona?</strong><br>
-        Digite a <strong>chave de 6 caracteres</strong> que você recebeu quando fez o pedido + o <strong>WhatsApp</strong> que você usou. Você poderá <strong>adicionar ou remover itens</strong> do pedido.
-      </div>
-
-      <div class="campo">
-        <label>Chave do Pedido *</label>
-        <input type="text" id="buscaChave" placeholder="Ex: S6QEZ9" maxlength="6" autocomplete="off" style="text-transform:uppercase;font-family:'Consolas',monospace;font-size:18px;font-weight:800;letter-spacing:3px;text-align:center">
-      </div>
-
-      <div class="campo">
-        <label>WhatsApp (usado no pedido) *</label>
-        <input type="tel" id="buscaWhatsapp" placeholder="(00) 00000-0000" autocomplete="tel">
-      </div>
-
-      <div class="busca-erro" id="buscaErro" style="display:none"></div>
-
-      <button class="btn-fechar-sucesso" id="btnBuscarPedido" style="background:linear-gradient(135deg,var(--roxo),var(--roxo-alt));color:#fff;border-color:var(--roxo);padding:16px;font-size:13px;">
-        <i class="fas fa-search"></i> Buscar Pedido
+    <!-- MODAL ACESSAR (login/cadastro unificado) -->
+  <div class="modal" id="modalAcessar">
+    <div class="modal-box" style="max-width:480px">
+      <button class="modal-fechar" id="modalAcessarFechar" aria-label="Fechar">
+        <i class="fas fa-times"></i>
       </button>
+      <div class="form-fechamento" id="acessarForm">
+        <div class="form-titulo">
+          <i class="fas fa-user-circle"></i> Acessar meus pedidos
+        </div>
+        <div class="form-aviso" id="acessarAviso">
+          <strong><i class="fas fa-info-circle"></i> Como funciona?</strong><br>
+          Informe seu <strong>WhatsApp</strong> e a <strong>senha</strong> que você criou. Se tiver um pedido em aberto, você pode adicionar mais itens nele.
+        </div>
+
+        <div class="campo">
+          <label>WhatsApp *</label>
+          <input type="tel" id="acessarWhatsapp" placeholder="(00) 00000-0000" autocomplete="tel">
+        </div>
+
+        <div class="campo" id="acessarSenhaWrap">
+          <label>Senha *</label>
+          <input type="password" id="acessarSenha" placeholder="Mínimo 6 caracteres" autocomplete="current-password">
+          <small id="acessarSenhaAjuda" style="display:none; color:var(--text-dim); font-size:11px; margin-top:4px;">
+            É a primeira vez? <a href="#" id="linkCriarSenha" style="color:var(--roxo); text-decoration:underline;">Criar senha</a>
+          </small>
+        </div>
+
+        <div class="busca-erro" id="acessarErro" style="display:none"></div>
+
+        <button class="btn-fechar-sucesso" id="btnAcessar" style="background:linear-gradient(135deg,var(--roxo),var(--roxo-alt));color:#fff;border-color:var(--roxo);padding:16px;font-size:13px;">
+          <i class="fas fa-sign-in-alt"></i> Entrar
+        </button>
+
+        <button class="carrinho-btn-limpar" id="btnAcessarComCodigo" style="margin-top:10px">
+          <i class="fas fa-key"></i> Tenho só o código do pedido
+        </button>
+      </div>
+
+      <!-- Tela de criar senha (escondida) -->
+      <div class="form-fechamento" id="criarSenhaForm" style="display:none">
+        <div class="form-titulo">
+          <i class="fas fa-lock"></i> Criar senha
+        </div>
+        <div class="form-aviso" id="criarSenhaAviso">
+          <strong><i class="fas fa-shield-alt"></i> Crie uma senha pra acessar seus pedidos</strong><br>
+          Mínimo de <strong>6 caracteres</strong>. Você vai usar essa senha junto com seu WhatsApp pra acessar seus pedidos depois.
+        </div>
+
+        <div class="campo" id="criarSenhaNomeWrap" style="display:none">
+          <label>Nome completo *</label>
+          <input type="text" id="csNome" placeholder="Ex: João da Silva" autocomplete="name">
+        </div>
+        <div class="campo" id="criarSenhaCpfWrap" style="display:none">
+          <label>CPF / CNPJ *</label>
+          <input type="text" id="csCpf" placeholder="000.000.000-00">
+        </div>
+        <div class="campo" id="criarSenhaCepWrap" style="display:none">
+          <label>CEP *</label>
+          <input type="text" id="csCep" placeholder="00000-000">
+        </div>
+        <div class="campo" id="criarSenhaEnderecoWrap" style="display:none">
+          <label>Endereço *</label>
+          <input type="text" id="csEndereco" placeholder="Rua, Avenida...">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 10px;" id="criarSenhaNumBairroWrap" style="display:none">
+          <div class="campo" id="criarSenhaNumWrap" style="display:none">
+            <label>Número *</label>
+            <input type="text" id="csNumero" placeholder="Nº">
+          </div>
+          <div class="campo" id="criarSenhaBairroWrap" style="display:none">
+            <label>Bairro *</label>
+            <input type="text" id="csBairro" placeholder="Bairro">
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 10px;" id="criarSenhaCidadeUfWrap" style="display:none">
+          <div class="campo" id="criarSenhaCidadeWrap" style="display:none">
+            <label>Cidade *</label>
+            <input type="text" id="csCidade" placeholder="Ex: Formiga">
+          </div>
+          <div class="campo" id="criarSenhaUfWrap" style="display:none">
+            <label>UF *</label>
+            <input type="text" id="csUf" placeholder="MG" maxlength="2" style="text-transform:uppercase">
+          </div>
+        </div>
+
+        <div class="campo">
+          <label>Senha *</label>
+          <input type="password" id="csSenha" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+        </div>
+        <div class="campo">
+          <label>Confirmar senha *</label>
+          <input type="password" id="csSenha2" placeholder="Repita a senha" autocomplete="new-password">
+        </div>
+
+        <div class="busca-erro" id="criarSenhaErro" style="display:none"></div>
+
+        <button class="btn-fechar-sucesso" id="btnCriarSenha" style="background:linear-gradient(135deg,var(--roxo),var(--roxo-alt));color:#fff;border-color:var(--roxo);padding:16px;font-size:13px;">
+          <i class="fas fa-check"></i> Criar senha e continuar
+        </button>
+        <button class="carrinho-btn-limpar" id="btnVoltarAcessar" style="margin-top:10px">
+          <i class="fas fa-arrow-left"></i> Voltar
+        </button>
+      </div>
     </div>
   </div>
-</div>
+
+  <!-- MODAL BUSCAR PEDIDO POR CÓDIGO (fallback) -->
+  <div class="modal" id="modalBuscarPedido">
+    <div class="modal-box" style="max-width:480px">
+      <button class="modal-fechar" id="modalBuscarPedidoFechar" aria-label="Fechar">
+        <i class="fas fa-times"></i>
+      </button>
+      <div class="form-fechamento">
+        <div class="form-titulo">
+          <i class="fas fa-key"></i> Buscar por código
+        </div>
+        <div class="form-aviso">
+          <strong><i class="fas fa-info-circle"></i> Modo antigo</strong><br>
+          Digite a <strong>chave de 6 caracteres</strong> que você recebeu quando fez o pedido + o <strong>WhatsApp</strong> usado. Esse modo não permite adicionar itens novos — só visualizar e remover.
+        </div>
+
+        <div class="campo">
+          <label>Chave do Pedido *</label>
+          <input type="text" id="buscaChave" placeholder="Ex: S6QEZ9" maxlength="6" autocomplete="off" style="text-transform:uppercase;font-family:'Consolas',monospace;font-size:18px;font-weight:800;letter-spacing:3px;text-align:center">
+        </div>
+
+        <div class="campo">
+          <label>WhatsApp (usado no pedido) *</label>
+          <input type="tel" id="buscaWhatsapp" placeholder="(00) 00000-0000" autocomplete="tel">
+        </div>
+
+        <div class="busca-erro" id="buscaErro" style="display:none"></div>
+
+        <button class="btn-fechar-sucesso" id="btnBuscarPedido" style="background:linear-gradient(135deg,var(--roxo),var(--roxo-alt));color:#fff;border-color:var(--roxo);padding:16px;font-size:13px;">
+          <i class="fas fa-search"></i> Buscar Pedido
+        </button>
+      </div>
+    </div>
+  </div>
 
 <!-- MODAL MEU PEDIDO (visualização + edição) -->
 <div class="modal" id="modalMeuPedido">
