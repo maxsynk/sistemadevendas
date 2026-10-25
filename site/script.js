@@ -1614,14 +1614,29 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.target.id === "modalFecharPedido") fecharFormFechamento();
   });
 
-  // ESC fecha modais
+    // ESC fecha modais
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       fecharModalProduto();
       fecharModalCarrinho();
       fecharFormFechamento();
     }
-    // ============================================
+  });
+
+  // Recupera carrinho salvo (se tiver)
+  recuperarCarrinhoLocal();
+  atualizarCarrinho();
+
+  // Carrega a frase bíblica do dia
+  carregarMensagemDoDia();
+
+  // Carrega categorias primeiro, depois produtos
+  carregarCategorias();
+  carregarProdutos();
+  mostrarBoasVindas();
+});
+
+// ============================================
 // MENSAGEM BÍBLICA DO DIA
 // ============================================
 const MENSAGENS_BIBLICAS = [
@@ -1661,20 +1676,3 @@ function carregarMensagemDoDia() {
   const index = diaDoAno % MENSAGENS_BIBLICAS.length;
   el.innerHTML = `<i class="fas fa-book-open" style="margin-right:4px; opacity:0.6"></i> "${MENSAGENS_BIBLICAS[index]}"`;
 }
-  });
-
-    // Recupera carrinho salvo (se tiver)
-  recuperarCarrinhoLocal();
-  atualizarCarrinho();
-    // Recupera carrinho salvo (se tiver)
-  recuperarCarrinhoLocal();
-  atualizarCarrinho();
-  
-  // Carrega a frase bíblica do dia
-  carregarMensagemDoDia(); // <-- ADICIONE ESTA LINHA AQUI
-
-  // Carrega categorias primeiro, depois produtos
-  carregarCategorias();
-  carregarProdutos();
-  mostrarBoasVindas();
-});
