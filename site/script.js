@@ -566,17 +566,6 @@ let chavePedidoGerada = null;
 let dadosUltimoPedido = null;
 let descontoRevendedor = null; // { valido, desconto_tipo, desconto_valor, nome }
 let validandoChaveTimer = null;
-// ============================================
-// MEU PEDIDO — Estado global
-// ============================================
-let meuPedidoAtual = null;      // pedido carregado
-let meuPedidoChave = null;      // chave
-let meuPedidoWhatsapp = null;   // whatsapp usado pra validar
-let modoAdicaoAtivo = false;    // true quando tá adicionando ao pedido existente
-
-// Variáveis "congeladas" do modo adição (não são afetadas ao fechar modal)
-let modoAdicaoChave = null;
-let modoAdicaoWhatsapp = null;
 
 // ============================================
 // VALIDAÇÃO DE ESTOQUE EM TEMPO REAL
