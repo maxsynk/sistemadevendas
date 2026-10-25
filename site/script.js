@@ -641,16 +641,13 @@ async function abrirFormFechamento() {
   btnEnviar.disabled = true;
   btnEnviar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando estoque...';
 
-  // Valida o estoque antes de abrir o form
   const temErroEstoque = await validarEstoqueCarrinho();
 
   btnEnviar.disabled = false;
   btnEnviar.innerHTML = textoOriginal;
 
   if (temErroEstoque) {
-    // Atualiza visual do carrinho para mostrar os erros
-    abrirModalCarrinho(); 
-    
+    abrirModalCarrinho();
     let msgErro = "⚠️ ATENÇÃO!\n\nAlguns itens do seu carrinho não têm mais estoque suficiente:\n\n";
     carrinho.forEach(item => {
       if (item.estoque_atual !== undefined && item.estoque_atual < item.qtd) {
@@ -665,23 +662,39 @@ async function abrirFormFechamento() {
   chavePedidoGerada = null;
   dadosUltimoPedido = null;
   descontoRevendedor = null;
+
+  // Reset do formulário
   document.getElementById("formFechamento").style.display = "flex";
   document.getElementById("telaSucesso").style.display = "none";
-  document.getElementById("fpNome").value = "";
-  document.getElementById("fpTelefone").value = "";
-  document.getElementById("fpCidade").value = "";
-  document.getElementById("fpChaveRevendedor").value = "";
+  document.getElementById("fpIdentificacao").style.display = "block";
+  document.getElementById("fpDados").style.display = "none";
+  document.getElementById("fpErroIdent").style.display = "none";
+  document.getElementById("fpErroDados").style.display = "none";
+  document.getElementById("fpSenhaWrap").style.display = "none";
+  document.getElementById("fpSenhaNovaWrap").style.display = "none";
+  document.getElementById("fpSenhaNova2Wrap").style.display = "none";
   document.getElementById("descontoAviso").style.display = "none";
+  document.getElementById("fpTelefone").value = "";
+  document.getElementById("fpSenha").value = "";
+  document.getElementById("fpSenhaNova").value = "";
+  document.getElementById("fpSenhaNova2").value = "";
+  document.getElementById("fpChaveRevendedor").value = "";
 
+  // Pré-preenche WhatsApp se tiver sessão
+  const sessao = carregarSessaoCliente();
+  if (sessao && sessao.whatsapp) {
+    document.getElementById("fpTelefone").value = sessao.whatsapp;
+  }
+
+  // Resumo dos itens
   const totalPares = carrinho.reduce((s, c) => s + c.qtd, 0);
   const totalValor = carrinho.reduce((s, c) => s + (c.qtd * c.preco), 0);
 
   let html = "";
   const porProduto = {};
   for (const it of carrinho) {
-    const key = it.produto_id;
-    if (!porProduto[key]) porProduto[key] = { modelo: it.modelo, cor: it.cor, itens: [] };
-    porProduto[key].itens.push(it);
+    if (!porProduto[it.produto_id]) porProduto[it.produto_id] = { modelo: it.modelo, cor: it.cor, itens: [] };
+    porProduto[it.produto_id].itens.push(it);
   }
   for (const k in porProduto) {
     const p = porProduto[k];
@@ -692,14 +705,14 @@ async function abrirFormFechamento() {
     html += `</div>`;
   }
   html += `<div class="total">Total: ${totalPares} pares · R$ ${totalValor.toFixed(2).replace(".", ",")}</div>`;
-    document.getElementById("fpResumo").innerHTML = html;
+  document.getElementById("fpResumo").innerHTML = html;
 
   document.getElementById("modalFecharPedido").classList.add("active");
   document.body.style.overflow = "hidden";
 
-  setTimeout(() => document.getElementById("fpNome").focus(), 300);
+  setTimeout(() => document.getElementById("fpTelefone").focus(), 300);
 
-  // Listeners pra validação da chave de revendedor
+  // Listeners
   const inputChave = document.getElementById("fpChaveRevendedor");
   const inputTel = document.getElementById("fpTelefone");
 
@@ -712,72 +725,171 @@ async function abrirFormFechamento() {
   }
 
   if (inputTel && !inputTel.dataset.listenerAdded) {
-    inputTel.addEventListener("input", () => {
-      agendarValidacaoChave();
-    });
+    inputTel.addEventListener("input", () => agendarValidacaoChave());
     inputTel.dataset.listenerAdded = "1";
-  }
-    // NOVO: Buscar dados do cliente ao sair do campo WhatsApp
-  const inputTelCliente = document.getElementById("fpTelefone");
-  if (inputTelCliente && !inputTelCliente.dataset.buscaClienteAdded) {
-    inputTelCliente.addEventListener("blur", buscarDadosCliente);
-    inputTelCliente.dataset.buscaClienteAdded = "1";
   }
 }
 
-// Agenda validação da chave (debounce de 800ms)
-function agendarValidacaoChave() {
-  clearTimeout(validandoChaveTimer);
-  validandoChaveTimer = setTimeout(() => validarChaveRevendedor(), 800);
-}
 // ============================================
-// BUSCAR DADOS DO CLIENTE NO BANCO (AUTOCOMPLETAR)
+// ETAPA 1: IDENTIFICAR CLIENTE (WhatsApp + senha)
 // ============================================
-async function buscarDadosCliente() {
-  const telefone = document.getElementById("fpTelefone").value.trim();
-  const aviso = document.getElementById("avisoClienteCadastrado");
-  
-  // Só busca se tiver um número válido (mínimo 10 dígitos com DDD)
-  if (!telefone || telefone.replace(/\D/g, "").length < 10) {
-    if (aviso) aviso.style.display = "none";
+async function continuarIdentificacao() {
+  const whatsapp = (document.getElementById("fpTelefone").value || "").trim();
+  const senha = document.getElementById("fpSenha").value || "";
+  const erroEl = document.getElementById("fpErroIdent");
+  const btn = document.getElementById("btnContinuarIdent");
+
+  erroEl.style.display = "none";
+
+  if (!whatsapp || whatsapp.replace(/\D/g, "").length < 10) {
+    erroEl.style.display = "flex";
+    erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Digite um WhatsApp válido com DDD`;
     return;
   }
 
-  try {
-    const res = await fetch(API_BASE + "/publico/buscar-cliente", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Site-Token": "max-site-2026",
-      },
-      body: JSON.stringify({ whatsapp: telefone }),
-    });
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
 
+  try {
+    const body = { whatsapp };
+    if (senha) body.senha = senha;
+
+    const res = await fetch(API_BASE + "/publico/auth-cliente", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Site-Token": "max-site-2026" },
+      body: JSON.stringify(body),
+    });
     const data = await res.json();
 
-    if (data.success && data.encontrado && data.cliente) {
-      const c = data.cliente;
-      
-      // Preenche os campos (se vierem vazios do banco, não sobrescreve o que já tá digitado, mas limpa)
-      if (c.nome) document.getElementById("fpNome").value = c.nome;
-      if (c.cpf) document.getElementById("fpCpf").value = c.cpf;
-      if (c.cep) document.getElementById("fpCep").value = c.cep;
-      if (c.endereco) document.getElementById("fpEndereco").value = c.endereco;
-      if (c.numero) document.getElementById("fpNumero").value = c.numero;
-      if (c.bairro) document.getElementById("fpBairro").value = c.bairro;
-      if (c.cidade) document.getElementById("fpCidade").value = c.cidade;
-      if (c.uf) document.getElementById("fpUf").value = c.uf;
+    if (!data.success) {
+      erroEl.style.display = "flex";
+      erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${escapeHtml(data.error || "Erro")}`;
+      return;
+    }
 
-      // Mostra o aviso verde
-      if (aviso) aviso.style.display = "block";
+    // Cliente novo → pede senha + dados completos
+    if (data.encontrado === false) {
+      irParaEtapaDados({ novoCliente: true, senhaNova: true });
+      return;
+    }
 
-    } else {
-      // Cliente novo: esconde o aviso e não faz nada (deixa o cliente digitar)
-      if (aviso) aviso.style.display = "none";
+    // Tem cadastro mas sem senha → pede senha + (só os dados que faltam)
+    if (data.precisa_senha && !data.tem_senha) {
+      irParaEtapaDados({
+        novoCliente: false,
+        senhaNova: true,
+        cadastroIncompleto: data.cadastro_incompleto || [],
+      });
+      return;
+    }
+
+    // Tem senha, mas não digitou → pede senha
+    if (data.precisa_senha && data.tem_senha) {
+      document.getElementById("fpSenhaWrap").style.display = "block";
+      erroEl.style.display = "flex";
+      erroEl.innerHTML = `<i class="fas fa-lock"></i> Digite sua senha pra continuar`;
+      document.getElementById("fpSenha").focus();
+      return;
+    }
+
+    // Login OK
+    if (data.auth_ok) {
+      salvarSessaoCliente({
+        whatsapp: data.telefone || whatsapp,
+        nome: data.nome,
+        cliente_id: data.cliente_id,
+        is_revendedor: data.is_revendedor,
+      });
+
+      // Se tem pedido pendente → avisa e oferece adicionar
+      if (data.tem_pedido_pendente && data.pedido_pendente) {
+        const chave = data.pedido_pendente.chave;
+        const resp = confirm(
+          `Você já tem um pedido em aberto (chave ${chave}).\n\n` +
+          `Deseja ADICIONAR os itens do carrinho nele?\n\n` +
+          `OK = adicionar ao pedido existente\n` +
+          `Cancelar = criar um pedido novo (o antigo será mantido)`
+        );
+
+        if (resp) {
+          // Adicionar ao existente
+          meuPedidoChave = chave;
+          meuPedidoWhatsapp = data.telefone || whatsapp;
+          modoAdicaoChave = chave;
+          modoAdicaoWhatsapp = data.telefone || whatsapp;
+          modoAdicaoAtivo = true;
+          fecharFormFechamento();
+          await adicionarCarrinhoAoPedido();
+          return;
+        } else {
+          // Criar novo — mas a API vai bloquear. Avisa.
+          alert(`Pra criar um pedido novo, você precisa primeiro finalizar ou cancelar o pedido em aberto (chave ${chave}).\n\nFale com o vendedor pelo WhatsApp.`);
+          fecharFormFechamento();
+          return;
+        }
+      }
+
+      // Sem pedido pendente → segue pro pedido novo (só revisa dados)
+      irParaEtapaDados({
+        novoCliente: false,
+        senhaNova: false,
+        cadastroIncompleto: data.cadastro_incompleto || [],
+        cliente: data,
+      });
     }
   } catch (e) {
-    console.error("[buscarDadosCliente]", e);
+    erroEl.style.display = "flex";
+    erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Erro: ${escapeHtml(e.message)}`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-arrow-right"></i> Continuar';
   }
+}
+
+function irParaEtapaDados(opts) {
+  document.getElementById("fpIdentificacao").style.display = "none";
+  document.getElementById("fpDados").style.display = "block";
+
+  const novo = opts.novoCliente === true;
+  const senhaNova = opts.senhaNova === true;
+  const faltando = opts.cadastroIncompleto || [];
+  const cliente = opts.cliente || null;
+
+  // Preenche dados se cliente existente
+  if (cliente) {
+    document.getElementById("fpNome").value = cliente.nome || "";
+    document.getElementById("fpCpf").value = cliente.cpf || "";
+    document.getElementById("fpCep").value = cliente.cep || "";
+    document.getElementById("fpEndereco").value = cliente.endereco || "";
+    document.getElementById("fpNumero").value = cliente.numero || "";
+    document.getElementById("fpBairro").value = cliente.bairro || "";
+    document.getElementById("fpCidade").value = cliente.cidade || "";
+    document.getElementById("fpUf").value = cliente.uf || "";
+  }
+
+  // Senha nova (primeira vez ou cadastro incompleto sem senha)
+  document.getElementById("fpSenhaNovaWrap").style.display = senhaNova ? "block" : "none";
+  document.getElementById("fpSenhaNova2Wrap").style.display = senhaNova ? "block" : "none";
+
+  // Campos obrigatórios: se for novo, todos. Se não, só os que faltam ficam em destaque
+  const campos = ["fpNome", "fpCpf", "fpCep", "fpEndereco", "fpNumero", "fpBairro", "fpCidade", "fpUf"];
+  for (const id of campos) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    const key = id.replace("fp", "").toLowerCase();
+    if (novo || faltando.includes(key)) {
+      el.required = true;
+      el.style.borderColor = "var(--amarelo)";
+    } else {
+      el.required = false;
+      el.style.borderColor = "";
+    }
+  }
+
+  setTimeout(() => {
+    const primeiro = document.querySelector('#fpDados input:not([type="password"])');
+    if (primeiro) primeiro.focus();
+  }, 200);
 }
 
 // Valida a chave do revendedor via API
