@@ -1425,14 +1425,11 @@ body.tema-claro .hero {
 /* FAIXA DE FÉ                                  */
 /* ============================================ */
 .faixa-fe {
-  position: fixed;
-  top: 71px; /* Altura exata do header do PC */
-  left: 0;
-  right: 0;
+  /* Não é mais fixa, agora ela faz parte do topo */
+  position: relative;
+  width: 100%;
   background: linear-gradient(90deg, rgba(26, 23, 38, 0.95), rgba(10, 6, 18, 0.95));
   border-bottom: 1px solid rgba(168, 85, 247, 0.3);
-  z-index: 99; /* Abaixo do header (que é 100), acima do resto */
-  backdrop-filter: blur(10px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   transition: background 0.3s;
 }
@@ -1477,9 +1474,6 @@ body.tema-claro .faixa-fe {
 
 /* Ajuste no mobile */
 @media (max-width: 700px) {
-  .faixa-fe {
-    top: 62px; /* Ajusta pro header mobile */
-  }
   .faixa-fe-inner {
     flex-direction: column;
     padding: 8px 12px;
@@ -1492,7 +1486,13 @@ body.tema-claro .faixa-fe {
     font-size: 10px;
     line-height: 1.3;
   }
-  /* Empurra a cat-bar e o hero para baixo no mobile */
-  .cat-bar { top: 100px; }
+  /* Empurra o menu de categorias para baixo no celular */
+  .cat-bar { top: 115px !important; } 
+  .hero { padding-top: 220px; }
+}
+
+/* Ajuste no PC: Empurra o menu de categorias para baixo */
+@media (min-width: 701px) {
+  .cat-bar { top: 96px !important; } /* 70px do header + ~26px da faixa de fé */
   .hero { padding-top: 210px; }
 }
