@@ -1097,10 +1097,401 @@ function escapeHtml(s) {
     .replace(/'/g, "&#039;");
 }
 // ============================================
-// MEU PEDIDO — Funções principais
+// MEU PEDIDO — Sessão + Auth por WhatsApp/Senha
 // ============================================
+let meuPedidoAtual = null;
+let meuPedidoChave = null;
+let meuPedidoWhatsapp = null;
+let modoAdicaoAtivo = false;
+let modoAdicaoChave = null;
+let modoAdicaoWhatsapp = null;
 
-// Abrir modal de busca
+// Sessão do cliente (7 dias no localStorage)
+const SESSION_KEY = "max_site_sessao";
+const SESSION_TTL = 7 * 24 * 60 * 60 * 1000;
+
+function salvarSessaoCliente(dados) {
+  try {
+    const sessao = { ...dados, exp: Date.now() + SESSION_TTL };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(sessao));
+  } catch (e) {}
+}
+
+function carregarSessaoCliente() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    if (!s.exp || s.exp < Date.now()) {
+      localStorage.removeItem(SESSION_KEY);
+      return null;
+    }
+    return s;
+  } catch (e) { return null; }
+}
+
+function limparSessaoCliente() {
+  try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
+}
+
+// ============================================
+// VALIDAÇÃO DE ESTOQUE EM TEMPO REAL
+// ============================================
+async function validarEstoqueCarrinho() {
+  if (!carrinho || carrinho.length === 0) return false;
+
+  try {
+    const res = await fetch(API_BASE + "/publico/produtos");
+    const data = await res.json();
+    if (!data.success) return false;
+
+    const produtosAtualizados = data.produtos || [];
+    let temItemSemEstoque = false;
+
+    for (const itemCarrinho of carrinho) {
+      const prod = produtosAtualizados.find(p => p.id === itemCarrinho.produto_id);
+      if (prod) {
+        const variacao = (prod.grade || []).find(g => g.numeracao === itemCarrinho.numeracao);
+        if (variacao) {
+          itemCarrinho.estoque_atual = variacao.disponivel || 0;
+          if (itemCarrinho.estoque_atual < itemCarrinho.qtd) temItemSemEstoque = true;
+        } else {
+          itemCarrinho.estoque_atual = 0;
+          temItemSemEstoque = true;
+        }
+      } else {
+        itemCarrinho.estoque_atual = 0;
+        temItemSemEstoque = true;
+      }
+    }
+    return temItemSemEstoque;
+  } catch (e) {
+    console.error("Erro ao validar estoque:", e);
+    return false;
+  }
+}
+
+// ============================================
+// MODAL ACESSAR (login/cadastro unificado)
+// ============================================
+function abrirModalAcessar() {
+  const modal = document.getElementById("modalAcessar");
+  if (!modal) return;
+  document.getElementById("acessarForm").style.display = "flex";
+  document.getElementById("criarSenhaForm").style.display = "none";
+  document.getElementById("acessarErro").style.display = "none";
+  document.getElementById("criarSenhaErro").style.display = "none";
+
+  // Se tem sessão salva, pré-preenche WhatsApp
+  const sessao = carregarSessaoCliente();
+  if (sessao && sessao.whatsapp) {
+    document.getElementById("acessarWhatsapp").value = sessao.whatsapp;
+    document.getElementById("acessarSenha").focus();
+  } else {
+    document.getElementById("acessarWhatsapp").focus();
+  }
+
+  modal.classList.add("active");
+  document.body.style.overflow = "hidden";
+}
+
+function fecharModalAcessar() {
+  const modal = document.getElementById("modalAcessar");
+  if (modal) modal.classList.remove("active");
+  document.body.style.overflow = "";
+}
+
+// ============================================
+// LOGIN (WhatsApp + senha)
+// ============================================
+async function fazerLoginCliente() {
+  const whatsapp = (document.getElementById("acessarWhatsapp").value || "").trim();
+  const senha = document.getElementById("acessarSenha").value || "";
+  const erroEl = document.getElementById("acessarErro");
+  const btn = document.getElementById("btnAcessar");
+
+  erroEl.style.display = "none";
+
+  if (!whatsapp || whatsapp.replace(/\D/g, "").length < 10) {
+    erroEl.style.display = "flex";
+    erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Digite um WhatsApp válido`;
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
+
+  try {
+    const body = { whatsapp };
+    if (senha) body.senha = senha;
+
+    const res = await fetch(API_BASE + "/publico/auth-cliente", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Site-Token": "max-site-2026" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+
+    if (!data.success) {
+      erroEl.style.display = "flex";
+      erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${escapeHtml(data.error || "Erro ao verificar")}`;
+      return;
+    }
+
+    // Cliente não cadastrado
+    if (data.encontrado === false) {
+      abrirTelaCriarSenha(whatsapp, { novoCliente: true });
+      return;
+    }
+
+    // Cliente tem cadastro mas sem senha
+    if (data.precisa_senha && !data.tem_senha) {
+      abrirTelaCriarSenha(whatsapp, {
+        novoCliente: false,
+        cadastroIncompleto: data.cadastro_incompleto || [],
+      });
+      return;
+    }
+
+    // Cliente tem senha, mas não digitou
+    if (data.precisa_senha && data.tem_senha) {
+      document.getElementById("acessarSenhaWrap").style.display = "block";
+      document.getElementById("acessarSenhaAjuda").style.display = "none";
+      erroEl.style.display = "flex";
+      erroEl.innerHTML = `<i class="fas fa-lock"></i> Digite sua senha pra entrar`;
+      document.getElementById("acessarSenha").focus();
+      return;
+    }
+
+    // Login OK
+    if (data.auth_ok) {
+      salvarSessaoCliente({
+        whatsapp: data.telefone || whatsapp,
+        nome: data.nome,
+        cliente_id: data.cliente_id,
+        is_revendedor: data.is_revendedor,
+      });
+
+      // Se tem pedido pendente → abre ele
+      if (data.tem_pedido_pendente && data.pedido_pendente) {
+        meuPedidoChave = data.pedido_pendente.chave;
+        meuPedidoWhatsapp = data.telefone || whatsapp;
+        fecharModalAcessar();
+        await recarregarMeuPedido();
+        document.getElementById("modalMeuPedido").classList.add("active");
+        document.body.style.overflow = "hidden";
+      } else {
+        fecharModalAcessar();
+        mostrarToastAdd("✅ Login OK! Nenhum pedido em aberto.");
+      }
+    }
+  } catch (e) {
+    erroEl.style.display = "flex";
+    erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Erro: ${escapeHtml(e.message)}`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar';
+  }
+}
+
+// ============================================
+// TELA DE CRIAR SENHA
+// ============================================
+function abrirTelaCriarSenha(whatsapp, opts) {
+  document.getElementById("acessarForm").style.display = "none";
+  document.getElementById("criarSenhaForm").style.display = "flex";
+  document.getElementById("criarSenhaErro").style.display = "none";
+
+  const novo = opts.novoCliente === true;
+  const faltando = opts.cadastroIncompleto || [];
+
+  // Mostra campos conforme necessidade
+  const mostrar = (id, cond) => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = cond ? "block" : "none";
+  };
+
+  // Nome
+  mostrar("criarSenhaNomeWrap", novo || faltando.includes("nome"));
+  // CPF
+  mostrar("criarSenhaCpfWrap", novo || faltando.includes("cpf"));
+  // CEP
+  mostrar("criarSenhaCepWrap", novo || faltando.includes("cep"));
+  // Endereço
+  mostrar("criarSenhaEnderecoWrap", novo || faltando.includes("endereco"));
+  // Número + Bairro
+  const precisaNum = novo || faltando.includes("numero");
+  const precisaBairro = novo || faltando.includes("bairro");
+  mostrar("criarSenhaNumBairroWrap", precisaNum || precisaBairro);
+  mostrar("criarSenhaNumWrap", precisaNum);
+  mostrar("criarSenhaBairroWrap", precisaBairro);
+  // Cidade + UF
+  const precisaCidade = novo || faltando.includes("cidade");
+  const precisaUf = novo || faltando.includes("uf");
+  mostrar("criarSenhaCidadeUfWrap", precisaCidade || precisaUf);
+  mostrar("criarSenhaCidadeWrap", precisaCidade);
+  mostrar("criarSenhaUfWrap", precisaUf);
+
+  // Guarda o whatsapp pra usar no submit
+  document.getElementById("btnCriarSenha").dataset.whatsapp = whatsapp;
+  document.getElementById("btnCriarSenha").dataset.novoCliente = novo ? "1" : "0";
+
+  const aviso = document.getElementById("criarSenhaAviso");
+  if (novo) {
+    aviso.innerHTML = `<strong><i class="fas fa-user-plus"></i> Primeira vez por aqui!</strong><br>
+      Crie uma senha (mínimo 6 caracteres) e preencha seus dados. Depois é só entrar com WhatsApp + senha.`;
+  } else {
+    aviso.innerHTML = `<strong><i class="fas fa-lock"></i> Falta pouco!</strong><br>
+      Crie uma senha (mínimo 6 caracteres)${faltando.length > 0 ? " e complete os dados que faltam" : ""} pra continuar.`;
+  }
+
+  setTimeout(() => {
+    const primeiroVisivel = document.querySelector('#criarSenhaForm input:not([style*="display:none"])');
+    if (primeiroVisivel) primeiroVisivel.focus();
+  }, 200);
+}
+
+async function criarSenhaCliente() {
+  const btn = document.getElementById("btnCriarSenha");
+  const whatsapp = btn.dataset.whatsapp;
+  const novo = btn.dataset.novoCliente === "1";
+  const senha = document.getElementById("csSenha").value || "";
+  const senha2 = document.getElementById("csSenha2").value || "";
+  const erroEl = document.getElementById("criarSenhaErro");
+
+  erroEl.style.display = "none";
+
+  if (senha.length < 6) {
+    erroEl.style.display = "flex";
+    erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Senha deve ter pelo menos 6 caracteres`;
+    return;
+  }
+  if (senha !== senha2) {
+    erroEl.style.display = "flex";
+    erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> As senhas não batem`;
+    return;
+  }
+
+  const body = { whatsapp, senha };
+
+  if (novo) {
+    // Cliente novo: todos os campos obrigatórios
+    const nome = document.getElementById("csNome").value.trim();
+    const cpf = document.getElementById("csCpf").value.trim();
+    const cep = document.getElementById("csCep").value.trim();
+    const endereco = document.getElementById("csEndereco").value.trim();
+    const numero = document.getElementById("csNumero").value.trim();
+    const bairro = document.getElementById("csBairro").value.trim();
+    const cidade = document.getElementById("csCidade").value.trim();
+    const uf = document.getElementById("csUf").value.trim().toUpperCase();
+
+    if (!nome || !cpf || !cep || !endereco || !numero || !bairro || !cidade || !uf) {
+      erroEl.style.display = "flex";
+      erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Preencha todos os campos obrigatórios`;
+      return;
+    }
+    Object.assign(body, { nome, cpf, cep, endereco, numero, bairro, cidade, uf });
+  } else {
+    // Cliente existente: envia só o que está visível
+    const get = (id) => {
+      const el = document.getElementById(id);
+      if (!el || el.offsetParent === null) return null;
+      return el.value.trim();
+    };
+    const nome = get("csNome");
+    const cpf = get("csCpf");
+    const cep = get("csCep");
+    const endereco = get("csEndereco");
+    const numero = get("csNumero");
+    const bairro = get("csBairro");
+    const cidade = get("csCidade");
+    const uf = get("csUf");
+    if (nome) body.nome = nome;
+    if (cpf) body.cpf = cpf;
+    if (cep) body.cep = cep;
+    if (endereco) body.endereco = endereco;
+    if (numero) body.numero = numero;
+    if (bairro) body.bairro = bairro;
+    if (cidade) body.cidade = cidade;
+    if (uf) body.uf = uf.toUpperCase();
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+
+  try {
+    const res = await fetch(API_BASE + "/publico/cliente-criar-senha", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Site-Token": "max-site-2026" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!data.success) {
+      erroEl.style.display = "flex";
+      erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${escapeHtml(data.error)}`;
+      return;
+    }
+
+    salvarSessaoCliente({ whatsapp, cliente_id: data.cliente_id });
+
+    // Login automático após criar senha
+    const res2 = await fetch(API_BASE + "/publico/auth-cliente", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Site-Token": "max-site-2026" },
+      body: JSON.stringify({ whatsapp, senha }),
+    });
+    const data2 = await res2.json();
+
+    if (data2.success && data2.auth_ok) {
+      salvarSessaoCliente({
+        whatsapp: data2.telefone || whatsapp,
+        nome: data2.nome,
+        cliente_id: data2.cliente_id,
+        is_revendedor: data2.is_revendedor,
+      });
+
+      fecharModalAcessar();
+      mostrarToastAdd("✅ Senha criada! Você já está logado.");
+
+      if (data2.tem_pedido_pendente && data2.pedido_pendente) {
+        meuPedidoChave = data2.pedido_pendente.chave;
+        meuPedidoWhatsapp = data2.telefone || whatsapp;
+        await recarregarMeuPedido();
+        document.getElementById("modalMeuPedido").classList.add("active");
+        document.body.style.overflow = "hidden";
+      }
+    } else {
+      fecharModalAcessar();
+      mostrarToastAdd("✅ Senha criada!");
+    }
+  } catch (e) {
+    erroEl.style.display = "flex";
+    erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Erro: ${escapeHtml(e.message)}`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-check"></i> Criar senha e continuar';
+  }
+}
+
+// ============================================
+// ABRIR "MEU PEDIDO" (chamado pelo header)
+// ============================================
+function abrirMeuPedido() {
+  const sessao = carregarSessaoCliente();
+  if (sessao && sessao.whatsapp) {
+    // Já logado: abre direto
+    document.getElementById("acessarWhatsapp").value = sessao.whatsapp;
+    abrirModalAcessar();
+    // Auto-fill senha se tiver
+    setTimeout(() => document.getElementById("acessarSenha").focus(), 300);
+  } else {
+    abrirModalAcessar();
+  }
+}
+
+// ============================================
+// BUSCA POR CÓDIGO (fallback)
+// ============================================
 function abrirBuscaPedido() {
   document.getElementById("buscaChave").value = "";
   document.getElementById("buscaWhatsapp").value = "";
@@ -1118,9 +1509,6 @@ function fecharBuscaPedido() {
 function fecharMeuPedido() {
   document.getElementById("modalMeuPedido").classList.remove("active");
   document.body.style.overflow = "";
-
-  // NÃO limpa a chave/whatsapp se estamos em modo adição
-  // (precisa manter pra saber em qual pedido adicionar)
   if (!modoAdicaoAtivo) {
     meuPedidoAtual = null;
     meuPedidoChave = null;
@@ -1128,7 +1516,6 @@ function fecharMeuPedido() {
   }
 }
 
-// Buscar pedido no servidor
 async function buscarMeuPedido() {
   const chave = (document.getElementById("buscaChave").value || "").trim().toUpperCase();
   const whatsapp = (document.getElementById("buscaWhatsapp").value || "").trim();
@@ -1153,13 +1540,9 @@ async function buscarMeuPedido() {
   try {
     const res = await fetch(API_BASE + "/publico/meu-pedido", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Site-Token": "max-site-2026",
-      },
+      headers: { "Content-Type": "application/json", "X-Site-Token": "max-site-2026" },
       body: JSON.stringify({ chave, whatsapp }),
     });
-
     const data = await res.json();
 
     if (!data.success) {
@@ -1168,19 +1551,15 @@ async function buscarMeuPedido() {
       return;
     }
 
-    // Salva estado
     meuPedidoAtual = data.pedido;
     meuPedidoChave = chave;
     meuPedidoWhatsapp = whatsapp;
 
-    // Fecha busca, abre visualização
     fecharBuscaPedido();
     renderizarMeuPedido();
     document.getElementById("modalMeuPedido").classList.add("active");
     document.body.style.overflow = "hidden";
-
   } catch (e) {
-    console.error("[buscarMeuPedido]", e);
     erroEl.style.display = "flex";
     erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Erro: ${escapeHtml(e.message)}`;
   } finally {
@@ -1189,16 +1568,15 @@ async function buscarMeuPedido() {
   }
 }
 
-// Renderizar o modal do pedido
+// ============================================
+// RENDERIZAR MODAL "MEU PEDIDO"
+// ============================================
 function renderizarMeuPedido() {
   if (!meuPedidoAtual) return;
-
   const p = meuPedidoAtual;
 
-  // Chave no título
   document.getElementById("meuPedidoChave").textContent = p.chave;
 
-  // Status
   const statusEl = document.getElementById("meuPedidoStatus");
   statusEl.className = "meu-pedido-status " + (p.status || "pendente");
   const statusTexto = {
@@ -1208,7 +1586,6 @@ function renderizarMeuPedido() {
   };
   statusEl.textContent = statusTexto[p.status] || p.status;
 
-  // Itens
   const itensEl = document.getElementById("meuPedidoItens");
   const rodapeEl = document.getElementById("meuPedidoRodape");
   const vazioEl = document.getElementById("meuPedidoVazio");
@@ -1242,12 +1619,10 @@ function renderizarMeuPedido() {
   }
   itensEl.innerHTML = html;
 
-  // Bind dos botões de remover
   itensEl.querySelectorAll("[data-variacao-id]").forEach(btn => {
     btn.onclick = () => removerItemDoPedido(parseInt(btn.dataset.variacaoId), btn);
   });
 
-  // Totais
   document.getElementById("meuPedidoTotalPares").textContent = p.total_pares;
 
   if (p.desconto_aplicado && p.desconto_aplicado > 0) {
@@ -1262,7 +1637,6 @@ function renderizarMeuPedido() {
 
   document.getElementById("meuPedidoValorTotal").textContent = formatarMoeda(p.valor_estimado);
 
-    // Botão adicionar (esconde se rejeitado)
   if (p.status === "rejeitado") {
     btnAdicionar.style.display = "none";
   } else {
@@ -1270,21 +1644,15 @@ function renderizarMeuPedido() {
     btnAdicionar.onclick = entrarModoAdicao;
   }
 
-  // Botão "Enviar aviso pro vendedor" (WhatsApp)
   const btnConfirmar = document.getElementById("btnConfirmarMeuPedido");
   if (btnConfirmar) {
-    btnConfirmar.onclick = () => {
-      enviarAvisoWhatsAppPedido();
-    };
+    btnConfirmar.onclick = () => enviarAvisoWhatsAppPedido();
   }
 }
 
-// Envia aviso pelo WhatsApp sobre o pedido atualizado
 function enviarAvisoWhatsAppPedido() {
   if (!meuPedidoAtual) return;
-
   const p = meuPedidoAtual;
-  const whatsappNumero = WHATSAPP_NUMERO;
 
   let msg = `*MAX REPRESENTAÇÃO*\n\nOlá! Atualizei meu pedido.\n\n`;
   msg += `🔑 Chave: *${p.chave}*\n`;
@@ -1307,77 +1675,46 @@ function enviarAvisoWhatsAppPedido() {
   }
 
   msg += `\nQualquer dúvida, estamos à disposição! 😊`;
-
-  const texto = encodeURIComponent(msg);
-  const urlApp = `whatsapp://send?phone=${whatsappNumero}&text=${texto}`;
-  const urlWeb = `https://wa.me/${whatsappNumero}?text=${texto}`;
-
-  let foiParaApp = false;
-  const t = setTimeout(() => {
-    if (!foiParaApp && !document.hidden) {
-      window.open(urlWeb, "_blank");
-    }
-  }, 1500);
-
-  window.addEventListener("blur", () => { foiParaApp = true; clearTimeout(t); }, { once: true });
   abrirWhatsApp(msg);
 }
 
-// Remover item do pedido
 async function removerItemDoPedido(variacaoId, btn) {
   if (!confirm("Remover este item do pedido?")) return;
-
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
   try {
     const res = await fetch(API_BASE + "/publico/meu-pedido/remover-item", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Site-Token": "max-site-2026",
-      },
+      headers: { "Content-Type": "application/json", "X-Site-Token": "max-site-2026" },
       body: JSON.stringify({
         chave: meuPedidoChave,
         whatsapp: meuPedidoWhatsapp,
         variacao_id: variacaoId,
       }),
     });
-
     const data = await res.json();
-
     if (!data.success) {
       alert("Erro: " + (data.error || "Não foi possível remover"));
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-trash"></i>';
       return;
     }
-
-    // Recarrega o pedido
     await recarregarMeuPedido();
     mostrarToastAdd("Item removido do pedido");
-
   } catch (e) {
-    console.error("[removerItemDoPedido]", e);
     alert("Erro: " + e.message);
     btn.disabled = false;
     btn.innerHTML = '<i class="fas fa-trash"></i>';
   }
 }
 
-// Recarrega o pedido do servidor
 async function recarregarMeuPedido() {
   try {
     const res = await fetch(API_BASE + "/publico/meu-pedido", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Site-Token": "max-site-2026",
-      },
-      body: JSON.stringify({
-        chave: meuPedidoChave,
-        whatsapp: meuPedidoWhatsapp,
-      }),
+      headers: { "Content-Type": "application/json", "X-Site-Token": "max-site-2026" },
+      body: JSON.stringify({ chave: meuPedidoChave, whatsapp: meuPedidoWhatsapp }),
     });
     const data = await res.json();
     if (data.success) {
@@ -1389,21 +1726,16 @@ async function recarregarMeuPedido() {
   }
 }
 
-// Entrar em modo adição (volta pro catálogo com banner)
 function entrarModoAdicao() {
-  // Salva as variáveis "congeladas" ANTES de fechar
   modoAdicaoChave = meuPedidoChave;
   modoAdicaoWhatsapp = meuPedidoWhatsapp;
   modoAdicaoAtivo = true;
-
   fecharMeuPedido();
 
-  // Mostra o banner
   document.getElementById("bannerPedidoChave").textContent = modoAdicaoChave;
   document.getElementById("bannerVoltandoPedido").style.display = "block";
 
-  // Rola pra cima, mas deixa um espaço pro banner não cobrir o header
-  const yOffset = -150; // Compensa a altura do header + banner
+  const yOffset = -150;
   const catalogo = document.getElementById("produtos");
   if (catalogo) {
     const y = catalogo.getBoundingClientRect().top + window.pageYOffset + yOffset;
@@ -1411,9 +1743,8 @@ function entrarModoAdicao() {
   } else {
     window.scrollTo({ top: 150, behavior: "smooth" });
   }
-} // <-- ESSA CHAVE ESTAVA FALTANDO AQUI
+}
 
-// Cancelar modo adição
 function cancelarModoAdicao() {
   modoAdicaoAtivo = false;
   modoAdicaoChave = null;
@@ -1423,7 +1754,6 @@ function cancelarModoAdicao() {
   atualizarCarrinho();
 }
 
-// Adicionar carrinho atual ao pedido existente
 async function adicionarCarrinhoAoPedido() {
   if (!modoAdicaoAtivo || !modoAdicaoChave) {
     alert("Modo adição inativo. Busque seu pedido novamente.");
@@ -1448,26 +1778,16 @@ async function adicionarCarrinhoAoPedido() {
   try {
     const res = await fetch(API_BASE + "/publico/meu-pedido/adicionar-itens", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Site-Token": "max-site-2026",
-      },
-            body: JSON.stringify({
-        chave: modoAdicaoChave,
-        whatsapp: modoAdicaoWhatsapp,
-        itens,
-      }),
+      headers: { "Content-Type": "application/json", "X-Site-Token": "max-site-2026" },
+      body: JSON.stringify({ chave: modoAdicaoChave, whatsapp: modoAdicaoWhatsapp, itens }),
     });
-
     const data = await res.json();
 
     if (!data.success) {
       let msg = data.error || "Não foi possível adicionar";
       if (data.itens_com_erro && data.itens_com_erro.length > 0) {
         msg += "\n\nItens com problema:\n";
-        for (const err of data.itens_com_erro) {
-          msg += `• ${err.motivo}\n`;
-        }
+        for (const err of data.itens_com_erro) msg += `• ${err.motivo}\n`;
       }
       alert(msg);
       btn.disabled = false;
@@ -1475,34 +1795,25 @@ async function adicionarCarrinhoAoPedido() {
       return;
     }
 
-        // Sucesso
     carrinho = [];
     atualizarCarrinho();
     fecharModalCarrinho();
 
-    // Guarda a chave ANTES de cancelar (pra reabrir o modal certo)
     const chaveReabrir = modoAdicaoChave;
     const whatsReabrir = modoAdicaoWhatsapp;
-
     cancelarModoAdicao();
 
-    // Restaura o contexto do pedido pra reabrir
     meuPedidoChave = chaveReabrir;
     meuPedidoWhatsapp = whatsReabrir;
 
-    // Abre o modal do pedido atualizado
     await recarregarMeuPedido();
     document.getElementById("modalMeuPedido").classList.add("active");
     document.body.style.overflow = "hidden";
 
     let msg = `✅ ${data.itens_adicionados.length} item(ns) adicionado(s)!`;
-    if (data.itens_com_erro && data.itens_com_erro.length > 0) {
-      msg += ` (${data.itens_com_erro.length} com erro)`;
-    }
+    if (data.itens_com_erro && data.itens_com_erro.length > 0) msg += ` (${data.itens_com_erro.length} com erro)`;
     mostrarToastAdd(msg);
-
   } catch (e) {
-    console.error("[adicionarCarrinhoAoPedido]", e);
     alert("Erro: " + e.message);
     btn.disabled = false;
     btn.innerHTML = btnOriginal;
