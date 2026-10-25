@@ -2004,8 +2004,42 @@ document.addEventListener("DOMContentLoaded", () => {
   // MEU PEDIDO — Listeners
   // ============================================
   const btnMeuPedido = document.getElementById("headerMeuPedido");
-  if (btnMeuPedido) btnMeuPedido.addEventListener("click", abrirBuscaPedido);
+  if (btnMeuPedido) btnMeuPedido.addEventListener("click", abrirMeuPedido);
 
+  // Modal Acessar
+  const btnAcessarFechar = document.getElementById("modalAcessarFechar");
+  if (btnAcessarFechar) btnAcessarFechar.addEventListener("click", fecharModalAcessar);
+
+  const modalAcessar = document.getElementById("modalAcessar");
+  if (modalAcessar) modalAcessar.addEventListener("click", (e) => {
+    if (e.target.id === "modalAcessar") fecharModalAcessar();
+  });
+
+  const btnAcessar = document.getElementById("btnAcessar");
+  if (btnAcessar) btnAcessar.addEventListener("click", fazerLoginCliente);
+
+  const btnCriarSenha = document.getElementById("btnCriarSenha");
+  if (btnCriarSenha) btnCriarSenha.addEventListener("click", criarSenhaCliente);
+
+  const btnVoltarAcessar = document.getElementById("btnVoltarAcessar");
+  if (btnVoltarAcessar) btnVoltarAcessar.addEventListener("click", () => {
+    document.getElementById("acessarForm").style.display = "flex";
+    document.getElementById("criarSenhaForm").style.display = "none";
+  });
+
+  const btnAcessarComCodigo = document.getElementById("btnAcessarComCodigo");
+  if (btnAcessarComCodigo) btnAcessarComCodigo.addEventListener("click", () => {
+    fecharModalAcessar();
+    setTimeout(abrirBuscaPedido, 200);
+  });
+
+  // Enter nos campos de login
+  const acessarWhats = document.getElementById("acessarWhatsapp");
+  const acessarSenha = document.getElementById("acessarSenha");
+  if (acessarWhats) acessarWhats.addEventListener("keydown", (e) => { if (e.key === "Enter") fazerLoginCliente(); });
+  if (acessarSenha) acessarSenha.addEventListener("keydown", (e) => { if (e.key === "Enter") fazerLoginCliente(); });
+
+  // Modal de busca por código
   const btnBuscarFechar = document.getElementById("modalBuscarPedidoFechar");
   if (btnBuscarFechar) btnBuscarFechar.addEventListener("click", fecharBuscaPedido);
 
@@ -2017,7 +2051,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnBuscar = document.getElementById("btnBuscarPedido");
   if (btnBuscar) btnBuscar.addEventListener("click", buscarMeuPedido);
 
-  // Enter nos campos de busca
   const buscaChaveInput = document.getElementById("buscaChave");
   const buscaWhatsInput = document.getElementById("buscaWhatsapp");
   if (buscaChaveInput) {
@@ -2025,14 +2058,10 @@ document.addEventListener("DOMContentLoaded", () => {
       e.target.value = e.target.value.toUpperCase();
       if (e.target.value.length === 6 && buscaWhatsInput) buscaWhatsInput.focus();
     });
-    buscaChaveInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") buscarMeuPedido();
-    });
+    buscaChaveInput.addEventListener("keydown", (e) => { if (e.key === "Enter") buscarMeuPedido(); });
   }
   if (buscaWhatsInput) {
-    buscaWhatsInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") buscarMeuPedido();
-    });
+    buscaWhatsInput.addEventListener("keydown", (e) => { if (e.key === "Enter") buscarMeuPedido(); });
   }
 
   const btnFecharMeu = document.getElementById("modalMeuPedidoFechar");
@@ -2048,6 +2077,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const btnCancelarModo = document.getElementById("btnCancelarModoAdicao");
   if (btnCancelarModo) btnCancelarModo.addEventListener("click", cancelarModoAdicao);
+
+  // Novo botão Continuar (etapa 1 do fechamento)
+  const btnContinuarIdent = document.getElementById("btnContinuarIdent");
+  if (btnContinuarIdent) btnContinuarIdent.addEventListener("click", continuarIdentificacao);
+
+  // Enter nos campos de identificação
+  const fpTel = document.getElementById("fpTelefone");
+  const fpSenha = document.getElementById("fpSenha");
+  if (fpTel) fpTel.addEventListener("keydown", (e) => { if (e.key === "Enter") continuarIdentificacao(); });
+  if (fpSenha) fpSenha.addEventListener("keydown", (e) => { if (e.key === "Enter") continuarIdentificacao(); });  
 
   // Instalar PWA
   const btnInstalar = document.getElementById("btnInstalar");
