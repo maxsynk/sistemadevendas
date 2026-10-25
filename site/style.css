@@ -1012,8 +1012,10 @@ body.tema-claro .hero {
     grid-column: 3;
     font-size: 14px;
   }
-  .banner-voltando-pedido {
-    bottom: 90px;
+    .banner-voltando-pedido {
+    top: 62px !important; /* Força ficar no topo no celular */
+    bottom: auto !important; /* Impede de esticar para o fundo */
+    padding: 10px 14px;
   }
   .banner-voltando-pedido-inner {
     flex-direction: column;
