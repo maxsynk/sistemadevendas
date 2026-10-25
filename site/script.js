@@ -966,11 +966,9 @@ function fecharFormFechamento() {
 }
 
 async function confirmarFechamento() {
-   const nome = document.getElementById("fpNome").value.trim();
+  const nome = document.getElementById("fpNome").value.trim();
   const telefone = document.getElementById("fpTelefone").value.trim();
   const chaveRevendedor = (document.getElementById("fpChaveRevendedor").value || "").trim().toUpperCase();
-  
-  // NOVOS CAMPOS
   const cpf = document.getElementById("fpCpf").value.trim();
   const cep = document.getElementById("fpCep").value.trim();
   const endereco = document.getElementById("fpEndereco").value.trim();
@@ -978,11 +976,33 @@ async function confirmarFechamento() {
   const bairro = document.getElementById("fpBairro").value.trim();
   const cidade = document.getElementById("fpCidade").value.trim();
   const uf = document.getElementById("fpUf").value.trim().toUpperCase();
-  if (!nome) { alert("Preencha o nome"); document.getElementById("fpNome").focus(); return; }
-  if (!telefone || telefone.replace(/\D/g, "").length < 10) {
-    alert("Preencha um WhatsApp válido com DDD");
-    document.getElementById("fpTelefone").focus();
+
+  const senhaNovaVisivel = document.getElementById("fpSenhaNovaWrap").style.display !== "none";
+  const senhaNova = senhaNovaVisivel ? document.getElementById("fpSenhaNova").value : "";
+  const senhaNova2 = senhaNovaVisivel ? document.getElementById("fpSenhaNova2").value : "";
+
+  const erroEl = document.getElementById("fpErroDados");
+  erroEl.style.display = "none";
+
+  if (!nome) { erroEl.style.display = "flex"; erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Preencha o nome`; return; }
+  if (!cpf) { erroEl.style.display = "flex"; erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Preencha o CPF/CNPJ`; return; }
+  if (!cep || !endereco || !numero || !bairro || !cidade || !uf) {
+    erroEl.style.display = "flex";
+    erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Preencha todos os dados de endereço`;
     return;
+  }
+
+  if (senhaNovaVisivel) {
+    if (senhaNova.length < 6) {
+      erroEl.style.display = "flex";
+      erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Senha deve ter pelo menos 6 caracteres`;
+      return;
+    }
+    if (senhaNova !== senhaNova2) {
+      erroEl.style.display = "flex";
+      erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> As senhas não batem`;
+      return;
+    }
   }
 
   const btn = document.getElementById("btnConfirmarFechamento");
@@ -990,66 +1010,104 @@ async function confirmarFechamento() {
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
 
   try {
+    // 1) Se precisa criar senha → cria primeiro
+    if (senhaNovaVisivel) {
+      const bodySenha = { whatsapp: telefone, senha: senhaNova };
+      // Se cliente novo, manda os dados completos
+      if (document.getElementById("fpSenhaNovaWrap").dataset.novo === "1" || !carregarSessaoCliente()) {
+        Object.assign(bodySenha, { nome, cpf, cep, endereco, numero, bairro, cidade, uf });
+      } else {
+        // Cliente existente completando cadastro → atualiza dados
+        Object.assign(bodySenha, { nome, cpf, cep, endereco, numero, bairro, cidade, uf });
+      }
+
+      const resSenha = await fetch(API_BASE + "/publico/cliente-criar-senha", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Site-Token": "max-site-2026" },
+        body: JSON.stringify(bodySenha),
+      });
+      const dataSenha = await resSenha.json();
+      if (!dataSenha.success) throw new Error(dataSenha.error || "Erro ao criar senha");
+
+      salvarSessaoCliente({ whatsapp: telefone, cliente_id: dataSenha.cliente_id, nome });
+
+      // Atualiza dados se cliente já existia
+      if (!dataSenha.criado) {
+        try {
+          await fetch(API_BASE + "/publico/cliente-atualizar-dados", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Site-Token": "max-site-2026" },
+            body: JSON.stringify({ whatsapp: telefone, senha: senhaNova, nome, cpf, cep, endereco, numero, bairro, cidade, uf }),
+          });
+        } catch (e) {}
+      }
+    } else {
+      // Cliente já logado — atualiza dados se mudou algo (opcional)
+      const sessao = carregarSessaoCliente();
+      if (sessao) {
+        try {
+          const senhaAtual = document.getElementById("fpSenha").value;
+          if (senhaAtual) {
+            await fetch(API_BASE + "/publico/cliente-atualizar-dados", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "X-Site-Token": "max-site-2026" },
+              body: JSON.stringify({ whatsapp: telefone, senha: senhaAtual, nome, cpf, cep, endereco, numero, bairro, cidade, uf }),
+            });
+          }
+        } catch (e) {}
+      }
+    }
+
+    // 2) Cria o pedido
     const itens = carrinho.map(it => ({
       produto_id: it.produto_id,
       numeracao: it.numeracao,
       quantidade: it.qtd,
     }));
 
-        const res = await fetch(API_BASE + "/publico/pedido-criar", {
+    const res = await fetch(API_BASE + "/publico/pedido-criar", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Site-Token": "max-site-2026",
-      },
-        body: JSON.stringify({
-      nome: nome,
-      telefone: telefone,
-      cidade_estado: cidade ? `${cidade}/${uf}` : null, // Mantém compatibilidade
-      itens: itens,
-      chave_revendedor: chaveRevendedor || null,
-      // NOVOS CAMPOS
-      cpf: cpf || null,
-      cep: cep || null,
-      endereco: endereco || null,
-      numero: numero || null,
-      bairro: bairro || null,
-      cidade: cidade || null,
-      uf: uf || null,
-    }),  
+      headers: { "Content-Type": "application/json", "X-Site-Token": "max-site-2026" },
+      body: JSON.stringify({
+        nome, telefone,
+        cidade_estado: cidade ? `${cidade}/${uf}` : null,
+        itens,
+        chave_revendedor: chaveRevendedor || null,
+        cpf, cep, endereco, numero, bairro, cidade, uf,
+      }),
     });
-
     const data = await res.json();
-    if (!data.success) throw new Error(data.error || "Erro ao enviar pedido");
+
+    if (!data.success) {
+      if (data.tem_pedido_pendente) {
+        throw new Error(`Você já tem um pedido em aberto (chave ${data.pedido_pendente_chave}). Use "Alterar Pedido" pra adicionar itens nele.`);
+      }
+      throw new Error(data.error || "Erro ao enviar pedido");
+    }
 
     chavePedidoGerada = data.chave;
 
+    // Mensagem WhatsApp
     let msg = `*NOVO PEDIDO — Site MAX Representação*\n\n`;
     msg += `Chave: ${data.chave}\n`;
     msg += `Nome: ${nome}\n`;
     msg += `WhatsApp: ${telefone}\n`;
     msg += `Cidade: ${cidade || "—"}${uf ? "/" + uf : ""}\n`;
-if (endereco) {
-  msg += `Endereço: ${endereco}, ${numero || "S/N"} - ${bairro || ""}\n`;
-}
-msg += `\n`;
-    msg += `ITENS:\n`;
+    if (endereco) msg += `Endereço: ${endereco}, ${numero || "S/N"} - ${bairro || ""}\n`;
+    msg += `\nITENS:\n`;
 
     const porProduto = {};
     for (const it of carrinho) {
-      const key = it.produto_id;
-      if (!porProduto[key]) porProduto[key] = { modelo: it.modelo, cor: it.cor, itens: [] };
-      porProduto[key].itens.push(it);
+      if (!porProduto[it.produto_id]) porProduto[it.produto_id] = { modelo: it.modelo, cor: it.cor, itens: [] };
+      porProduto[it.produto_id].itens.push(it);
     }
     for (const k in porProduto) {
       const p = porProduto[k];
       msg += `• ${p.modelo} — ${p.cor}\n`;
-      for (const it of p.itens) {
-        msg += `  Nº ${it.numeracao}: ${it.qtd} ${it.qtd === 1 ? "par" : "pares"}\n`;
-      }
+      for (const it of p.itens) msg += `  Nº ${it.numeracao}: ${it.qtd} ${it.qtd === 1 ? "par" : "pares"}\n`;
     }
 
-      msg += `\nTotal: ${data.total_pares} pares\n`;
+    msg += `\nTotal: ${data.total_pares} pares\n`;
 
     if (data.desconto_aplicado && data.desconto_aplicado > 0) {
       msg += `\n💰 *REVENDEDOR APLICADO*\n`;
@@ -1061,13 +1119,11 @@ msg += `\n`;
     }
 
     msg += `Informe esta chave para o vendedor confirmar.\n\n`;
-    msg += `Qualquer dúvida, estamos à disposição para atendê-lo(a)! 😊`;  
+    msg += `Qualquer dúvida, estamos à disposição! 😊`;
 
-        dadosUltimoPedido = {
+    dadosUltimoPedido = {
       chave: data.chave,
-      nome: nome,
-      telefone: telefone,
-      cidade: cidade || "—",
+      nome, telefone, cidade: cidade || "—",
       totalPares: data.total_pares,
       valorEstimado: data.valor_estimado,
       valorOriginal: data.valor_original,
@@ -1076,16 +1132,15 @@ msg += `\n`;
       msg: msg,
     };
 
-        mostrarTelaSucesso();
-
+    mostrarTelaSucesso();
     carrinho = [];
     atualizarCarrinho();
-    limparCarrinhoLocal(); // limpa do localStorage após pedido criado com sucesso
+    limparCarrinhoLocal();
     fecharModalCarrinho();
 
   } catch (e) {
-    console.error("[fechar-pedido]", e);
-    alert("Erro ao enviar pedido: " + e.message);
+    erroEl.style.display = "flex";
+    erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${escapeHtml(e.message)}`;
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<i class="fas fa-check"></i> Confirmar Pedido';
