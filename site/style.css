@@ -1426,12 +1426,12 @@ body.tema-claro .hero {
 /* ============================================ */
 .faixa-fe {
   position: fixed;
-  top: 70px; /* Logo abaixo do header principal */
+  top: 71px; /* Altura exata do header do PC */
   left: 0;
   right: 0;
   background: linear-gradient(90deg, rgba(26, 23, 38, 0.95), rgba(10, 6, 18, 0.95));
   border-bottom: 1px solid rgba(168, 85, 247, 0.3);
-  z-index: 85;
+  z-index: 99; /* Abaixo do header (que é 100), acima do resto */
   backdrop-filter: blur(10px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   transition: background 0.3s;
