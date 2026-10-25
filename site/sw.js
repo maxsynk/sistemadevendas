@@ -1,6 +1,6 @@
 // MAX REPRESENTAÇÃO — SERVICE WORKER
 // Mude a versão sempre que publicar uma atualização.
-const CACHE_NOME = "max-representacao-v7.1";
+const CACHE_NOME = "max-representacao-v7.2";
 const ARQUIVOS_CACHE = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", (event) => {
