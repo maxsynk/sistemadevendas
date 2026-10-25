@@ -1,9 +1,7 @@
 // ============================================
-// MAX REPRESENTAÇÃO — SITE v4.3
+// MAX REPRESENTAÇÃO — SITE v4.5
 // script.js
-// v4.1: "Meu Pedido" (cliente edita o próprio pedido)
-// v4.2: Carrinho persistente em localStorage
-// v4.3: Validação de estoque em tempo real no carrinho
+// v4.5: Auth por WhatsApp+senha; pedido em aberto; sessão em localStorage
 // ============================================
 
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
