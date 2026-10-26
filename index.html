@@ -11891,7 +11891,53 @@ async function rejeitarPedidoSite(id) {
     toast("Erro ao excluir: " + e.message, "error");
   }
 }
+let _ultimoTotalPedidosSite = 0;
 
+async function verificarPedidosSite() {
+  // Sem login não chama a API (senão o 401 derruba a tela de login)
+  if (!usuarioLogado || !tokenAtual) return;
+  try {
+    const res = await api("/pedidos-site/pendentes");
+    const data = await res.json();
+    if (!data.success) return;
+
+    const total = parseInt(data.total) || 0;
+    const temPendente = total > 0;
+
+    const alerta = document.getElementById("pedidosSiteAlerta");
+    if (alerta) alerta.classList.toggle("alerta-ativo", temPendente);
+
+    const titulo = document.getElementById("pedidosSiteAlertaTitulo");
+    if (titulo) titulo.textContent = total === 1
+      ? "Você tem 1 pedido recebido do site"
+      : `Você tem ${total} pedidos recebidos do site`;
+
+    const badge = document.getElementById("badgePedidosSite");
+    if (badge) badge.textContent = total;
+
+    const tab = document.querySelector('.tab[data-aba="pedidos"]');
+    if (tab) tab.classList.toggle("tab-pedidos-pendente", temPendente);
+
+    const drawer = document.querySelector('.drawer-item[data-aba="pedidos"]');
+    if (drawer) drawer.classList.toggle("drawer-pedidos-pendente", temPendente);
+
+    // Chegou pedido novo: reativa e toca o som
+    const modalAberto = document.getElementById("modalPedidosSite").classList.contains("active");
+    if (total > _ultimoTotalPedidosSite) {
+      if (!modalAberto) {
+        somPedidoSiteAtivo = true;
+        tocarSomPedidoSite();
+      }
+      toast(`🛍️ ${total} pedido(s) do site aguardando aprovação`, "info");
+    }
+    if (!modalAberto) somPedidoSiteAtivo = true;
+
+    _ultimoTotalPedidosSite = total;
+  } catch (e) {
+    console.log("[pedidos-site]", e.message);
+  }
+}
+  
 // ============================================
 // INICIALIZAÇÃO — precisa rodar 1 vez quando loga
 // ============================================
