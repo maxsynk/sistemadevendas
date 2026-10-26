@@ -1,8 +1,9 @@
 // ============================================
-// MAX REPRESENTAÇÃO — SITE v4.6
+// MAX REPRESENTAÇÃO — SITE v4.7
 // script.js
 // v4.5: Auth por WhatsApp+senha; pedido em aberto; sessão em localStorage
 // v4.6: Removida duplicação de variáveis e da função validarEstoqueCarrinho
+// v4.7: Estrutura e chaves validadas (fecharFormFechamento no lugar certo)
 // ============================================
 
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
@@ -37,9 +38,7 @@ let deferredInstallPrompt = null;
 // ============================================
 const CARRINHO_STORAGE_KEY = "max_site_carrinho";
 
-// Salva o carrinho atual no localStorage
 function salvarCarrinhoLocal() {
-  // Não salva se estiver em modo adição (pra não misturar)
   if (typeof modoAdicaoAtivo !== "undefined" && modoAdicaoAtivo) return;
   try {
     if (carrinho.length === 0) {
@@ -52,7 +51,6 @@ function salvarCarrinhoLocal() {
   }
 }
 
-// Recupera o carrinho do localStorage
 function recuperarCarrinhoLocal() {
   try {
     const salvo = localStorage.getItem(CARRINHO_STORAGE_KEY);
@@ -60,7 +58,6 @@ function recuperarCarrinhoLocal() {
     const carrinhoSalvo = JSON.parse(salvo);
     if (!Array.isArray(carrinhoSalvo) || carrinhoSalvo.length === 0) return;
 
-    // Recupera (com validação básica de cada item)
     carrinho = carrinhoSalvo.filter(it =>
       it &&
       it.produto_id &&
@@ -81,7 +78,6 @@ function recuperarCarrinhoLocal() {
   }
 }
 
-// Limpa o carrinho do localStorage
 function limparCarrinhoLocal() {
   try {
     localStorage.removeItem(CARRINHO_STORAGE_KEY);
@@ -181,7 +177,6 @@ async function carregarCategorias() {
 
     barra.classList.remove("vazia");
 
-    // Limpa e recria os chips (mantém "Todos" sempre primeiro)
     inner.innerHTML = `<button class="cat-chip active" data-cat-slug=""><i class="fas fa-th"></i> Todos</button>`;
 
     for (const c of categoriasMenu) {
@@ -193,12 +188,10 @@ async function carregarCategorias() {
       inner.appendChild(btn);
     }
 
-    // Re-bind do "Todos"
     const btnTodos = inner.querySelector('[data-cat-slug=""]');
     btnTodos.addEventListener("click", () => selecionarCategoria("", "Todos os Produtos"));
   } catch (e) {
     console.error("[carregarCategorias]", e);
-    // Se falhar, esconde a barra
     barra.classList.add("vazia");
   }
 }
@@ -209,24 +202,20 @@ async function carregarCategorias() {
 function selecionarCategoria(slug, nome) {
   categoriaAtualSlug = slug;
 
-  // Atualiza chip ativo
   document.querySelectorAll(".cat-chip").forEach(chip => {
     chip.classList.toggle("active", chip.dataset.catSlug === slug);
   });
 
-  // Atualiza o título do catálogo
   const titulo = document.getElementById("catalogoTituloFiltro");
   if (titulo) titulo.textContent = nome || "Todos os Produtos";
 
-  // Rola até o catálogo
   const catalogo = document.getElementById("produtos");
   if (catalogo) {
-    const yOffset = -140; // compensa header + cat-bar
+    const yOffset = -140;
     const y = catalogo.getBoundingClientRect().top + window.pageYOffset + yOffset;
     window.scrollTo({ top: y, behavior: "smooth" });
   }
 
-  // Recarrega produtos filtrados
   carregarProdutos();
 }
 
@@ -263,7 +252,6 @@ async function carregarProdutos() {
 
     if (produtosCache.length === 0) {
       grid.innerHTML = "";
-      // Se tem categoria selecionada, mostra o vazio da categoria
       if (categoriaAtualSlug) {
         vazioCategoriaWrap.style.display = "block";
       } else {
@@ -291,7 +279,7 @@ function renderizarProdutos() {
   const grid = document.getElementById("gridProdutos");
   grid.innerHTML = "";
 
-    for (const p of produtosCache) {
+  for (const p of produtosCache) {
     const card = document.createElement("article");
     card.className = "card-produto";
 
@@ -305,7 +293,6 @@ function renderizarProdutos() {
       return `<span class="grade-num ${cls}">${g.numeracao}</span>`;
     }).join("");
 
-    // Badge NOVIDADE / REPOSIÇÃO
     let badgeHTML = "";
     if (p.badge === "novidade") {
       badgeHTML = `<div class="card-badge badge-novidade"><i class="fas fa-star"></i> NOVIDADE</div>`;
@@ -459,7 +446,6 @@ function atualizarCarrinho() {
     badge.textContent = totalItens;
     badge.style.display = totalItens > 0 ? "flex" : "none";
   }
-  // Salva no localStorage sempre que muda
   salvarCarrinhoLocal();
 }
 
@@ -485,7 +471,6 @@ function abrirModalCarrinho() {
 
   rodape.style.display = "block";
   
-  // Renderiza os itens, incluindo a verificação de estoque em tempo real se já tiver sido feita
   lista.innerHTML = carrinho.map((it, i) => {
     const semEstoque = it.estoque_atual !== undefined && it.estoque_atual < it.qtd;
     const textoEstoque = semEstoque 
@@ -522,17 +507,14 @@ function abrirModalCarrinho() {
   document.getElementById("carrinhoTotalPares").textContent = totalPares;
   document.getElementById("carrinhoTotalValor").textContent = formatarMoeda(totalValor);
 
-  // Se tá em modo adição, muda o texto e o comportamento do botão
   if (modoAdicaoAtivo && modoAdicaoChave) {
     aviso.classList.remove("show");
     btnEnviar.disabled = totalPares === 0;
     btnEnviar.innerHTML = `<i class="fas fa-plus-circle"></i> Adicionar ao pedido ${modoAdicaoChave}`;
     btnEnviar.onclick = adicionarCarrinhoAoPedido;
   } else {
-    // Modo normal
     btnEnviar.disabled = totalPares === 0;
     
-    // Aviso sobre o mínimo de envio (6 pares)
     if (totalPares > 0 && totalPares < MINIMO_ENVIO) {
       aviso.classList.add("show");
       aviso.innerHTML = `<i class="fas fa-exclamation-triangle"></i> <strong>Atenção:</strong> O pedido só será despachado a partir de ${MINIMO_ENVIO} pares. Faltam ${MINIMO_ENVIO - totalPares} pares.`;
@@ -565,7 +547,7 @@ function limparCarrinho() {
 // ============================================
 let chavePedidoGerada = null;
 let dadosUltimoPedido = null;
-let descontoRevendedor = null; // { valido, desconto_tipo, desconto_valor, nome }
+let descontoRevendedor = null;
 let validandoChaveTimer = null;
 
 // ============================================
@@ -578,7 +560,6 @@ let modoAdicaoAtivo = false;
 let modoAdicaoChave = null;
 let modoAdicaoWhatsapp = null;
 
-// Sessão do cliente (7 dias no localStorage)
 const SESSION_KEY = "max_site_sessao";
 const SESSION_TTL = 7 * 24 * 60 * 60 * 1000;
 
@@ -654,7 +635,6 @@ function abrirModalAcessar() {
   document.getElementById("acessarErro").style.display = "none";
   document.getElementById("criarSenhaErro").style.display = "none";
 
-  // Se tem sessão salva, pré-preenche WhatsApp
   const sessao = carregarSessaoCliente();
   if (sessao && sessao.whatsapp) {
     document.getElementById("acessarWhatsapp").value = sessao.whatsapp;
@@ -710,13 +690,11 @@ async function fazerLoginCliente() {
       return;
     }
 
-    // Cliente não cadastrado
     if (data.encontrado === false) {
       abrirTelaCriarSenha(whatsapp, { novoCliente: true });
       return;
     }
 
-    // Cliente tem cadastro mas sem senha
     if (data.precisa_senha && !data.tem_senha) {
       abrirTelaCriarSenha(whatsapp, {
         novoCliente: false,
@@ -725,7 +703,6 @@ async function fazerLoginCliente() {
       return;
     }
 
-    // Cliente tem senha, mas não digitou
     if (data.precisa_senha && data.tem_senha) {
       document.getElementById("acessarSenhaWrap").style.display = "block";
       document.getElementById("acessarSenhaAjuda").style.display = "none";
@@ -735,7 +712,6 @@ async function fazerLoginCliente() {
       return;
     }
 
-    // Login OK
     if (data.auth_ok) {
       salvarSessaoCliente({
         whatsapp: data.telefone || whatsapp,
@@ -744,7 +720,6 @@ async function fazerLoginCliente() {
         is_revendedor: data.is_revendedor,
       });
 
-      // Se tem pedido pendente → abre ele
       if (data.tem_pedido_pendente && data.pedido_pendente) {
         meuPedidoChave = data.pedido_pendente.chave;
         meuPedidoWhatsapp = data.telefone || whatsapp;
@@ -777,34 +752,28 @@ function abrirTelaCriarSenha(whatsapp, opts) {
   const novo = opts.novoCliente === true;
   const faltando = opts.cadastroIncompleto || [];
 
-  // Mostra campos conforme necessidade
   const mostrar = (id, cond) => {
     const el = document.getElementById(id);
     if (el) el.style.display = cond ? "block" : "none";
   };
 
-  // Nome
   mostrar("criarSenhaNomeWrap", novo || faltando.includes("nome"));
-  // CPF
   mostrar("criarSenhaCpfWrap", novo || faltando.includes("cpf"));
-  // CEP
   mostrar("criarSenhaCepWrap", novo || faltando.includes("cep"));
-  // Endereço
   mostrar("criarSenhaEnderecoWrap", novo || faltando.includes("endereco"));
-  // Número + Bairro
+  
   const precisaNum = novo || faltando.includes("numero");
   const precisaBairro = novo || faltando.includes("bairro");
   mostrar("criarSenhaNumBairroWrap", precisaNum || precisaBairro);
   mostrar("criarSenhaNumWrap", precisaNum);
   mostrar("criarSenhaBairroWrap", precisaBairro);
-  // Cidade + UF
+  
   const precisaCidade = novo || faltando.includes("cidade");
   const precisaUf = novo || faltando.includes("uf");
   mostrar("criarSenhaCidadeUfWrap", precisaCidade || precisaUf);
   mostrar("criarSenhaCidadeWrap", precisaCidade);
   mostrar("criarSenhaUfWrap", precisaUf);
 
-  // Guarda o whatsapp pra usar no submit
   document.getElementById("btnCriarSenha").dataset.whatsapp = whatsapp;
   document.getElementById("btnCriarSenha").dataset.novoCliente = novo ? "1" : "0";
 
@@ -847,7 +816,6 @@ async function criarSenhaCliente() {
   const body = { whatsapp, senha };
 
   if (novo) {
-    // Cliente novo: todos os campos obrigatórios
     const nome = document.getElementById("csNome").value.trim();
     const cpf = document.getElementById("csCpf").value.trim();
     const cep = document.getElementById("csCep").value.trim();
@@ -864,7 +832,6 @@ async function criarSenhaCliente() {
     }
     Object.assign(body, { nome, cpf, cep, endereco, numero, bairro, cidade, uf });
   } else {
-    // Cliente existente: envia só o que está visível
     const get = (id) => {
       const el = document.getElementById(id);
       if (!el || el.offsetParent === null) return null;
@@ -906,7 +873,6 @@ async function criarSenhaCliente() {
 
     salvarSessaoCliente({ whatsapp, cliente_id: data.cliente_id });
 
-    // Login automático após criar senha
     const res2 = await fetch(API_BASE + "/publico/auth-cliente", {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-Site-Token": "max-site-2026" },
@@ -951,10 +917,8 @@ async function criarSenhaCliente() {
 function abrirMeuPedido() {
   const sessao = carregarSessaoCliente();
   if (sessao && sessao.whatsapp) {
-    // Já logado: abre direto
     document.getElementById("acessarWhatsapp").value = sessao.whatsapp;
     abrirModalAcessar();
-    // Auto-fill senha se tiver
     setTimeout(() => document.getElementById("acessarSenha").focus(), 300);
   } else {
     abrirModalAcessar();
@@ -1292,6 +1256,101 @@ async function adicionarCarrinhoAoPedido() {
   }
 }
 
+async function abrirFormFechamento() {
+  if (!carrinho || carrinho.length === 0) {
+    return alert("Seu carrinho está vazio.");
+  }
+
+  const btnEnviar = document.getElementById("carrinhoEnviar");
+  const textoOriginal = btnEnviar.innerHTML;
+  btnEnviar.disabled = true;
+  btnEnviar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando estoque...';
+
+  const temErroEstoque = await validarEstoqueCarrinho();
+
+  btnEnviar.disabled = false;
+  btnEnviar.innerHTML = textoOriginal;
+
+  if (temErroEstoque) {
+    abrirModalCarrinho();
+    let msgErro = "⚠️ ATENÇÃO!\n\nAlguns itens do seu carrinho não têm mais estoque suficiente:\n\n";
+    carrinho.forEach(item => {
+      if (item.estoque_atual !== undefined && item.estoque_atual < item.qtd) {
+        msgErro += `❌ ${item.modelo} (Nº ${item.numeracao}) — Você pediu ${item.qtd}, mas restam apenas ${item.estoque_atual}.\n`;
+      }
+    });
+    msgErro += "\nPor favor, remova ou diminua a quantidade desses itens para continuar.";
+    alert(msgErro);
+    return;
+  }
+
+  chavePedidoGerada = null;
+  dadosUltimoPedido = null;
+  descontoRevendedor = null;
+
+  document.getElementById("formFechamento").style.display = "flex";
+  document.getElementById("telaSucesso").style.display = "none";
+  document.getElementById("fpIdentificacao").style.display = "block";
+  document.getElementById("fpDados").style.display = "none";
+  document.getElementById("fpErroIdent").style.display = "none";
+  document.getElementById("fpErroDados").style.display = "none";
+  document.getElementById("fpSenhaWrap").style.display = "none";
+  document.getElementById("fpSenhaNovaWrap").style.display = "none";
+  document.getElementById("fpSenhaNova2Wrap").style.display = "none";
+  document.getElementById("descontoAviso").style.display = "none";
+  document.getElementById("fpTelefone").value = "";
+  document.getElementById("fpSenha").value = "";
+  document.getElementById("fpSenhaNova").value = "";
+  document.getElementById("fpSenhaNova2").value = "";
+  document.getElementById("fpChaveRevendedor").value = "";
+
+  const sessao = carregarSessaoCliente();
+  if (sessao && sessao.whatsapp) {
+    document.getElementById("fpTelefone").value = sessao.whatsapp;
+  }
+
+  const totalPares = carrinho.reduce((s, c) => s + c.qtd, 0);
+  const totalValor = carrinho.reduce((s, c) => s + (c.qtd * c.preco), 0);
+
+  let html = "";
+  const porProduto = {};
+  for (const it of carrinho) {
+    if (!porProduto[it.produto_id]) porProduto[it.produto_id] = { modelo: it.modelo, cor: it.cor, itens: [] };
+    porProduto[it.produto_id].itens.push(it);
+  }
+  for (const k in porProduto) {
+    const p = porProduto[k];
+    html += `<div style="margin-bottom:8px"><strong>${p.modelo} — ${p.cor}</strong><br>`;
+    for (const it of p.itens) {
+      html += `<span style="color:var(--text-dim)">  • Nº ${it.numeracao}: ${it.qtd} ${it.qtd === 1 ? "par" : "pares"}</span><br>`;
+    }
+    html += `</div>`;
+  }
+  html += `<div class="total">Total: ${totalPares} pares · R$ ${totalValor.toFixed(2).replace(".", ",")}</div>`;
+  document.getElementById("fpResumo").innerHTML = html;
+
+  document.getElementById("modalFecharPedido").classList.add("active");
+  document.body.style.overflow = "hidden";
+
+  setTimeout(() => document.getElementById("fpTelefone").focus(), 300);
+
+  const inputChave = document.getElementById("fpChaveRevendedor");
+  const inputTel = document.getElementById("fpTelefone");
+
+  if (inputChave && !inputChave.dataset.listenerAdded) {
+    inputChave.addEventListener("input", (e) => {
+      e.target.value = e.target.value.toUpperCase();
+      agendarValidacaoChave();
+    });
+    inputChave.dataset.listenerAdded = "1";
+  }
+
+  if (inputTel && !inputTel.dataset.listenerAdded) {
+    inputTel.addEventListener("input", () => agendarValidacaoChave());
+    inputTel.dataset.listenerAdded = "1";
+  }
+}
+
 // ============================================
 // ETAPA 1: IDENTIFICAR CLIENTE (WhatsApp + senha)
 // ============================================
@@ -1329,13 +1388,11 @@ async function continuarIdentificacao() {
       return;
     }
 
-    // Cliente novo → pede senha + dados completos
     if (data.encontrado === false) {
       irParaEtapaDados({ novoCliente: true, senhaNova: true });
       return;
     }
 
-    // Tem cadastro mas sem senha → pede senha + (só os dados que faltam)
     if (data.precisa_senha && !data.tem_senha) {
       irParaEtapaDados({
         novoCliente: false,
@@ -1345,7 +1402,6 @@ async function continuarIdentificacao() {
       return;
     }
 
-    // Tem senha, mas não digitou → pede senha
     if (data.precisa_senha && data.tem_senha) {
       document.getElementById("fpSenhaWrap").style.display = "block";
       erroEl.style.display = "flex";
@@ -1354,7 +1410,6 @@ async function continuarIdentificacao() {
       return;
     }
 
-    // Login OK
     if (data.auth_ok) {
       salvarSessaoCliente({
         whatsapp: data.telefone || whatsapp,
@@ -1363,7 +1418,6 @@ async function continuarIdentificacao() {
         is_revendedor: data.is_revendedor,
       });
 
-      // Se tem pedido pendente → avisa e oferece adicionar
       if (data.tem_pedido_pendente && data.pedido_pendente) {
         const chave = data.pedido_pendente.chave;
         const resp = confirm(
@@ -1374,7 +1428,6 @@ async function continuarIdentificacao() {
         );
 
         if (resp) {
-          // Adicionar ao existente
           meuPedidoChave = chave;
           meuPedidoWhatsapp = data.telefone || whatsapp;
           modoAdicaoChave = chave;
@@ -1384,14 +1437,12 @@ async function continuarIdentificacao() {
           await adicionarCarrinhoAoPedido();
           return;
         } else {
-          // Criar novo — mas a API vai bloquear. Avisa.
           alert(`Pra criar um pedido novo, você precisa primeiro finalizar ou cancelar o pedido em aberto (chave ${chave}).\n\nFale com o vendedor pelo WhatsApp.`);
           fecharFormFechamento();
           return;
         }
       }
 
-      // Sem pedido pendente → segue pro pedido novo (só revisa dados)
       irParaEtapaDados({
         novoCliente: false,
         senhaNova: false,
@@ -1417,7 +1468,6 @@ function irParaEtapaDados(opts) {
   const faltando = opts.cadastroIncompleto || [];
   const cliente = opts.cliente || null;
 
-  // Preenche dados se cliente existente
   if (cliente) {
     document.getElementById("fpNome").value = cliente.nome || "";
     document.getElementById("fpCpf").value = cliente.cpf || "";
@@ -1429,11 +1479,9 @@ function irParaEtapaDados(opts) {
     document.getElementById("fpUf").value = cliente.uf || "";
   }
 
-  // Senha nova (primeira vez ou cadastro incompleto sem senha)
   document.getElementById("fpSenhaNovaWrap").style.display = senhaNova ? "block" : "none";
   document.getElementById("fpSenhaNova2Wrap").style.display = senhaNova ? "block" : "none";
 
-  // Campos obrigatórios: se for novo, todos. Se não, só os que faltam ficam em destaque
   const campos = ["fpNome", "fpCpf", "fpCep", "fpEndereco", "fpNumero", "fpBairro", "fpCidade", "fpUf"];
   for (const id of campos) {
     const el = document.getElementById(id);
@@ -1448,16 +1496,373 @@ function irParaEtapaDados(opts) {
     }
   }
 
- setTimeout(() => {
+  setTimeout(() => {
     const primeiro = document.querySelector('#fpDados input:not([type="password"])');
     if (primeiro) primeiro.focus();
   }, 200);
 }
 
+// Valida a chave do revendedor via API
+async function validarChaveRevendedor() {
+  const chave = (document.getElementById("fpChaveRevendedor").value || "").trim().toUpperCase();
+  const whatsapp = (document.getElementById("fpTelefone").value || "").trim();
+  const aviso = document.getElementById("descontoAviso");
+
+  if (!chave) {
+    descontoRevendedor = null;
+    aviso.style.display = "none";
+    return;
+  }
+
+  if (!whatsapp || whatsapp.replace(/\D/g, "").length < 10) {
+    descontoRevendedor = null;
+    aviso.style.display = "block";
+    aviso.style.background = "rgba(245,158,11,0.1)";
+    aviso.style.borderColor = "var(--amarelo)";
+    aviso.style.color = "var(--amarelo)";
+    aviso.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Preencha o WhatsApp antes de validar a chave.`;
+    return;
+  }
+
+  try {
+    const res = await fetch(API_BASE + "/publico/validar-chave", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Site-Token": "max-site-2026",
+      },
+      body: JSON.stringify({ chave, whatsapp }),
+    });
+    const data = await res.json();
+
+    if (!data.success) {
+      descontoRevendedor = null;
+      aviso.style.display = "block";
+      aviso.style.background = "rgba(239,68,68,0.1)";
+      aviso.style.borderColor = "var(--error)";
+      aviso.style.color = "var(--error)";
+      aviso.innerHTML = `<i class="fas fa-times-circle"></i> ${escapeHtml(data.error || "Chave inválida")}`;
+      return;
+    }
+
+    descontoRevendedor = {
+      valido: true,
+      desconto_tipo: data.desconto_tipo,
+      desconto_valor: parseFloat(data.desconto_valor) || 0,
+      nome: data.nome,
+    };
+
+    const descStr = data.desconto_tipo === "percentual"
+      ? `${data.desconto_valor}% de desconto`
+      : `R$ ${parseFloat(data.desconto_valor).toFixed(2).replace(".", ",")} por par`;
+
+    aviso.style.display = "block";
+    aviso.style.background = "linear-gradient(135deg, rgba(34,197,94,0.12), rgba(34,197,94,0.05))";
+    aviso.style.borderColor = "var(--verde)";
+    aviso.style.color = "var(--verde)";
+    aviso.innerHTML = `<i class="fas fa-check-circle"></i> <div><strong>${escapeHtml(data.nome)}</strong> — Revendedor registrado<br>${descStr}</div>`;
+
+  } catch (e) {
+    console.error("[validarChaveRevendedor]", e);
+    descontoRevendedor = null;
+    aviso.style.display = "none";
+  }
+}
+
 function fecharFormFechamento() {
   document.getElementById("modalFecharPedido").classList.remove("active");
   document.body.style.overflow = "";
-}   
+}
+
+async function confirmarFechamento() {
+  const nome = document.getElementById("fpNome").value.trim();
+  const telefone = document.getElementById("fpTelefone").value.trim();
+  const chaveRevendedor = (document.getElementById("fpChaveRevendedor").value || "").trim().toUpperCase();
+  const cpf = document.getElementById("fpCpf").value.trim();
+  const cep = document.getElementById("fpCep").value.trim();
+  const endereco = document.getElementById("fpEndereco").value.trim();
+  const numero = document.getElementById("fpNumero").value.trim();
+  const bairro = document.getElementById("fpBairro").value.trim();
+  const cidade = document.getElementById("fpCidade").value.trim();
+  const uf = document.getElementById("fpUf").value.trim().toUpperCase();
+
+  const senhaNovaVisivel = document.getElementById("fpSenhaNovaWrap").style.display !== "none";
+  const senhaNova = senhaNovaVisivel ? document.getElementById("fpSenhaNova").value : "";
+  const senhaNova2 = senhaNovaVisivel ? document.getElementById("fpSenhaNova2").value : "";
+
+  const erroEl = document.getElementById("fpErroDados");
+  erroEl.style.display = "none";
+
+  if (!nome) { erroEl.style.display = "flex"; erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Preencha o nome`; return; }
+  if (!cpf) { erroEl.style.display = "flex"; erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Preencha o CPF/CNPJ`; return; }
+  if (!cep || !endereco || !numero || !bairro || !cidade || !uf) {
+    erroEl.style.display = "flex";
+    erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Preencha todos os dados de endereço`;
+    return;
+  }
+
+  if (senhaNovaVisivel) {
+    if (senhaNova.length < 6) {
+      erroEl.style.display = "flex";
+      erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Senha deve ter pelo menos 6 caracteres`;
+      return;
+    }
+    if (senhaNova !== senhaNova2) {
+      erroEl.style.display = "flex";
+      erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> As senhas não batem`;
+      return;
+    }
+  }
+
+  const btn = document.getElementById("btnConfirmarFechamento");
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+
+  try {
+    if (senhaNovaVisivel) {
+      const bodySenha = { whatsapp: telefone, senha: senhaNova };
+      if (document.getElementById("fpSenhaNovaWrap").dataset.novo === "1" || !carregarSessaoCliente()) {
+        Object.assign(bodySenha, { nome, cpf, cep, endereco, numero, bairro, cidade, uf });
+      } else {
+        Object.assign(bodySenha, { nome, cpf, cep, endereco, numero, bairro, cidade, uf });
+      }
+
+      const resSenha = await fetch(API_BASE + "/publico/cliente-criar-senha", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Site-Token": "max-site-2026" },
+        body: JSON.stringify(bodySenha),
+      });
+      const dataSenha = await resSenha.json();
+      if (!dataSenha.success) throw new Error(dataSenha.error || "Erro ao criar senha");
+
+      salvarSessaoCliente({ whatsapp: telefone, cliente_id: dataSenha.cliente_id, nome });
+
+      if (!dataSenha.criado) {
+        try {
+          await fetch(API_BASE + "/publico/cliente-atualizar-dados", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Site-Token": "max-site-2026" },
+            body: JSON.stringify({ whatsapp: telefone, senha: senhaNova, nome, cpf, cep, endereco, numero, bairro, cidade, uf }),
+          });
+        } catch (e) {}
+      }
+    } else {
+      const sessao = carregarSessaoCliente();
+      if (sessao) {
+        try {
+          const senhaAtual = document.getElementById("fpSenha").value;
+          if (senhaAtual) {
+            await fetch(API_BASE + "/publico/cliente-atualizar-dados", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "X-Site-Token": "max-site-2026" },
+              body: JSON.stringify({ whatsapp: telefone, senha: senhaAtual, nome, cpf, cep, endereco, numero, bairro, cidade, uf }),
+            });
+          }
+        } catch (e) {}
+      }
+    }
+
+    const itens = carrinho.map(it => ({
+      produto_id: it.produto_id,
+      numeracao: it.numeracao,
+      quantidade: it.qtd,
+    }));
+
+    const res = await fetch(API_BASE + "/publico/pedido-criar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Site-Token": "max-site-2026" },
+      body: JSON.stringify({
+        nome, telefone,
+        cidade_estado: cidade ? `${cidade}/${uf}` : null,
+        itens,
+        chave_revendedor: chaveRevendedor || null,
+        cpf, cep, endereco, numero, bairro, cidade, uf,
+      }),
+    });
+    const data = await res.json();
+
+    if (!data.success) {
+      if (data.tem_pedido_pendente) {
+        throw new Error(`Você já tem um pedido em aberto (chave ${data.pedido_pendente_chave}). Use "Alterar Pedido" pra adicionar itens nele.`);
+      }
+      throw new Error(data.error || "Erro ao enviar pedido");
+    }
+
+    chavePedidoGerada = data.chave;
+
+    let msg = `*NOVO PEDIDO — Site MAX Representação*\n\n`;
+    msg += `Chave: ${data.chave}\n`;
+    msg += `Nome: ${nome}\n`;
+    msg += `WhatsApp: ${telefone}\n`;
+    msg += `Cidade: ${cidade || "—"}${uf ? "/" + uf : ""}\n`;
+    if (endereco) msg += `Endereço: ${endereco}, ${numero || "S/N"} - ${bairro || ""}\n`;
+    msg += `\nITENS:\n`;
+
+    const porProduto = {};
+    for (const it of carrinho) {
+      if (!porProduto[it.produto_id]) porProduto[it.produto_id] = { modelo: it.modelo, cor: it.cor, itens: [] };
+      porProduto[it.produto_id].itens.push(it);
+    }
+    for (const k in porProduto) {
+      const p = porProduto[k];
+      msg += `• ${p.modelo} — ${p.cor}\n`;
+      for (const it of p.itens) msg += `  Nº ${it.numeracao}: ${it.qtd} ${it.qtd === 1 ? "par" : "pares"}\n`;
+    }
+
+    msg += `\nTotal: ${data.total_pares} pares\n`;
+
+    if (data.desconto_aplicado && data.desconto_aplicado > 0) {
+      msg += `\n💰 *REVENDEDOR APLICADO*\n`;
+      msg += `Valor original: R$ ${(data.valor_original || 0).toFixed(2).replace(".", ",")}\n`;
+      msg += `Desconto: -R$ ${data.desconto_aplicado.toFixed(2).replace(".", ",")}\n`;
+      msg += `*Valor com desconto: R$ ${(data.valor_estimado || 0).toFixed(2).replace(".", ",")}*\n\n`;
+    } else {
+      msg += `Valor estimado: R$ ${(data.valor_estimado || 0).toFixed(2).replace(".", ",")}\n\n`;
+    }
+
+    msg += `Informe esta chave para o vendedor confirmar.\n\n`;
+    msg += `Qualquer dúvida, estamos à disposição! 😊`;
+
+    dadosUltimoPedido = {
+      chave: data.chave,
+      nome, telefone, cidade: cidade || "—",
+      totalPares: data.total_pares,
+      valorEstimado: data.valor_estimado,
+      valorOriginal: data.valor_original,
+      descontoAplicado: data.desconto_aplicado,
+      revendedor: data.revendedor,
+      msg: msg,
+    };
+
+    mostrarTelaSucesso();
+    carrinho = [];
+    atualizarCarrinho();
+    limparCarrinhoLocal();
+    fecharModalCarrinho();
+
+  } catch (e) {
+    erroEl.style.display = "flex";
+    erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${escapeHtml(e.message)}`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-check"></i> Confirmar Pedido';
+  }
+}
+
+function mostrarTelaSucesso() {
+  const d = dadosUltimoPedido;
+  if (!d) return;
+
+  document.getElementById("formFechamento").style.display = "none";
+  const tela = document.getElementById("telaSucesso");
+  tela.style.display = "block";
+  tela.innerHTML = `
+    <div class="sucesso-chave">
+      <div class="icon-ok"><i class="fas fa-check"></i></div>
+      <h3>Pedido enviado!</h3>
+      <p class="sub">Agora envie o código para o vendedor confirmar seu pedido.</p>
+
+      <div class="caixa-chave">
+        <div class="lbl">Sua chave</div>
+        <div class="chave">${d.chave}</div>
+      </div>
+
+      <div class="instrucao">
+        <i class="fas fa-exclamation-triangle"></i>
+        Informe esta chave para o vendedor
+      </div>
+
+      <button class="btn-enviar-zap" id="btnEnviarZapSucesso">
+        <i class="fab fa-whatsapp"></i> Enviar para o vendedor
+      </button>
+
+      <button class="btn-fechar-sucesso" id="btnFecharSucesso">
+        Fechar
+      </button>
+    </div>
+  `;
+
+  const btnZap = document.getElementById("btnEnviarZapSucesso");
+  if (btnZap) {
+    btnZap.onclick = () => abrirWhatsApp(d.msg);
+  }
+  const btnFechar = document.getElementById("btnFecharSucesso");
+  if (btnFechar) {
+    btnFechar.onclick = () => fecharFormFechamento();
+  }
+}
+
+// ============================================
+// WHATSAPP — Escolha de Atendente
+// ============================================
+let mensagemWhatsAppAtual = "";
+
+function abrirWhatsApp(mensagem) {
+  mensagemWhatsAppAtual = mensagem;
+
+  const modal = document.getElementById("modalEscolherAtendente");
+  const lista = document.getElementById("listaAtendentes");
+  
+  if (!modal || !lista) {
+    enviarParaAtendente(ATENDENTES[0].numero);
+    return;
+  }
+
+  lista.innerHTML = ATENDENTES.map((atendente, index) => `
+    <button class="btn-escolher-atendente" onclick="enviarParaAtendente('${atendente.numero}')">
+      <div class="avatar-atendente"><i class="fab fa-whatsapp"></i></div>
+      <div class="info-atendente">
+        <strong>${atendente.nome}</strong>
+        <span>Chamar no WhatsApp</span>
+      </div>
+      <i class="fas fa-chevron-right seta-atendente"></i>
+    </button>
+  `).join("");
+
+  modal.classList.add("active");
+  document.body.style.overflow = "hidden";
+}
+
+function fecharModalAtendente() {
+  const modal = document.getElementById("modalEscolherAtendente");
+  if (modal) modal.classList.remove("active");
+  document.body.style.overflow = "";
+}
+
+function enviarParaAtendente(numero) {
+  fecharModalAtendente();
+  if (!mensagemWhatsAppAtual) return;
+  
+  const texto = encodeURIComponent(mensagemWhatsAppAtual);
+  const urlApp = `whatsapp://send?phone=${numero}&text=${texto}`;
+  const urlWeb = `https://wa.me/${numero}?text=${texto}`;
+
+  let foiParaApp = false;
+  const t = setTimeout(() => {
+    if (!foiParaApp && !document.hidden) {
+      window.open(urlWeb, "_blank");
+    }
+  }, 1500);
+
+  window.addEventListener("blur", () => { foiParaApp = true; clearTimeout(t); }, { once: true });
+  window.location.href = urlApp;
+}
+
+// ============================================
+// HELPERS
+// ============================================
+function formatarMoeda(v) {
+  return "R$ " + (parseFloat(v) || 0).toFixed(2).replace(".", ",");
+}
+function escapeHtml(s) {
+  if (s === null || s === undefined) return "";
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
 // ============================================
 // INICIALIZAÇÃO
@@ -1655,13 +2060,11 @@ function carregarMensagemDoDia() {
   const el = document.getElementById("mensagemBiblica");
   if (!el) return;
 
-  // Pega o dia do ano (1 a 365) para variar a mensagem
   const hoje = new Date();
   const inicio = new Date(hoje.getFullYear(), 0, 0);
   const diff = hoje - inicio;
   const diaDoAno = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-  // Usa o dia do ano para escolher a mensagem de forma determinística
   const index = diaDoAno % MENSAGENS_BIBLICAS.length;
   el.innerHTML = `<i class="fas fa-book-open" style="margin-right:4px; opacity:0.6"></i> "${MENSAGENS_BIBLICAS[index]}"`;
 }
