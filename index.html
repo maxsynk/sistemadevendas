@@ -12003,15 +12003,31 @@ setTimeout(() => {
 });
 
 // ============================================
-// INICIAR CHECAGEM QUANDO O USUÁRIO LOGAR
+// INICIAR CHECAGEM AUTOMÁTICA E FORÇADA
 // ============================================
 let _intervaloVerificacaoSite = null;
-setInterval(() => {
-  if (usuarioLogado && tokenAtual && !_intervaloVerificacaoSite) {
-    verificarPedidosSite();
-    _intervaloVerificacaoSite = setInterval(verificarPedidosSite, 30000);
-  }
-}, 2000);
+
+function iniciarMonitoramentoPedidos() {
+  if (_intervaloVerificacaoSite) clearInterval(_intervaloVerificacaoSite);
+  
+  // Roda a primeira vez imediatamente
+  verificarPedidosSite();
+  
+  // E depois a cada 30 segundos (mais rápido pra pegar o pedido na hora)
+  _intervaloVerificacaoSite = setInterval(verificarPedidosSite, 30000);
+}
+
+// Força o start assim que a página abrir
+window.addEventListener("load", () => {
+  setTimeout(iniciarMonitoramentoPedidos, 1000);
+});
+
+// E também inicia junto com o login (garantia)
+const originalEntrarNoSistema = entrarNoSistema;
+entrarNoSistema = function() {
+  originalEntrarNoSistema();
+  iniciarMonitoramentoPedidos();
+};
 
 </script>
 </body>
