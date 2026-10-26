@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v7.2
+  MAX REPRESENTAÇÃO — HTML v7.3
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -5596,13 +5596,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v7.2
+// MAX REPRESENTAÇÃO — HTML v7.3
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "7.2";
+const APP_VERSION = "7.3";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -11642,13 +11642,13 @@ function renderizarDetalhePedidoSite(p) {
   let temFalta = false;
   let temAlgoOk = false;
 
-        for (const it of itens) {
+         for (const it of itens) {
     const estoqueAgora = it.estoque_atual_agora !== undefined ? it.estoque_atual_agora : 0;
     const temEstoque = estoqueAgora >= it.quantidade;
     if (!temEstoque) temFalta = true;
     if (estoqueAgora > 0) temAlgoOk = true;
 
-    // Força o destaque amarelo
+    // Força o destaque amarelo para itens adicionados depois
     const isNovo = it.adicionado_depois === true;
     const bgStyle = isNovo ? 'background: rgba(245, 158, 11, 0.15); border: 2px solid var(--warning);' : '';
     const badgeNovo = isNovo ? '<span style="background:var(--warning); color:#000; font-size:10px; font-weight:900; padding:2px 8px; border-radius:4px; margin-left:8px;">NOVO</span>' : '';
@@ -11672,7 +11672,7 @@ function renderizarDetalhePedidoSite(p) {
         ` : ''} 
       </div>
     `;
-  }
+  }   
   
   let avisoFaltaHTML = "";
   if (temFalta) {
