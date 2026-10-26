@@ -457,15 +457,8 @@ function abrirModalCarrinho() {
   const btnEnviar = document.getElementById("carrinhoEnviar");
 
   if (carrinho.length === 0) {
-    lista.innerHTML = `
-      <div class="carrinho-vazio">
-        <i class="fas fa-shopping-bag"></i>
-        <p>Seu carrinho está vazio</p>
-      </div>
-    `;
-    rodape.style.display = "none";
-    modal.classList.add("active");
-    document.body.style.overflow = "hidden";
+    // NOVO: Se o carrinho está vazio, já abre a tela de login direto!
+    abrirModalAcessar();
     return;
   }
 
@@ -1418,31 +1411,22 @@ async function continuarIdentificacao() {
         is_revendedor: data.is_revendedor,
       });
 
+      // NOVO: Se tem pedido aberto, adiciona o carrinho nele automaticamente!
       if (data.tem_pedido_pendente && data.pedido_pendente) {
         const chave = data.pedido_pendente.chave;
-        const resp = confirm(
-          `Você já tem um pedido em aberto (chave ${chave}).\n\n` +
-          `Deseja ADICIONAR os itens do carrinho nele?\n\n` +
-          `OK = adicionar ao pedido existente\n` +
-          `Cancelar = criar um pedido novo (o antigo será mantido)`
-        );
-
-        if (resp) {
-          meuPedidoChave = chave;
-          meuPedidoWhatsapp = data.telefone || whatsapp;
-          modoAdicaoChave = chave;
-          modoAdicaoWhatsapp = data.telefone || whatsapp;
-          modoAdicaoAtivo = true;
-          fecharFormFechamento();
-          await adicionarCarrinhoAoPedido();
-          return;
-        } else {
-          alert(`Pra criar um pedido novo, você precisa primeiro finalizar ou cancelar o pedido em aberto (chave ${chave}).\n\nFale com o vendedor pelo WhatsApp.`);
-          fecharFormFechamento();
-          return;
-        }
+        meuPedidoChave = chave;
+        meuPedidoWhatsapp = data.telefone || whatsapp;
+        modoAdicaoChave = chave;
+        modoAdicaoWhatsapp = data.telefone || whatsapp;
+        modoAdicaoAtivo = true;
+        fecharFormFechamento();
+        
+        // Envia o carrinho atual direto para o pedido que já existe
+        await adicionarCarrinhoAoPedido();
+        return;
       }
 
+      // Se não tem pedido pendente, segue o fluxo normal
       irParaEtapaDados({
         novoCliente: false,
         senhaNova: false,
@@ -1877,12 +1861,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Tema
   const temaToggle = document.getElementById("temaToggle");
   if (temaToggle) temaToggle.addEventListener("click", alternarTema);
-    // ============================================
-  // MEU PEDIDO — Listeners
-  // ============================================
-  const btnMeuPedido = document.getElementById("headerMeuPedido");
-  if (btnMeuPedido) btnMeuPedido.addEventListener("click", abrirMeuPedido);
-
+    
   // Modal Acessar
   const btnAcessarFechar = document.getElementById("modalAcessarFechar");
   if (btnAcessarFechar) btnAcessarFechar.addEventListener("click", fecharModalAcessar);
