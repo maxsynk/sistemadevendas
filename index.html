@@ -11696,15 +11696,16 @@ function renderizarDetalhePedidoSite(p) {
   let temFalta = false;
   let temAlgoOk = false;
 
-    for (const it of itens) {
+        for (const it of itens) {
     const estoqueAgora = it.estoque_atual_agora !== undefined ? it.estoque_atual_agora : 0;
     const temEstoque = estoqueAgora >= it.quantidade;
     if (!temEstoque) temFalta = true;
     if (estoqueAgora > 0) temAlgoOk = true;
 
-    // AQUI: Pinta o fundo se o item tiver a marcação
-    const bgStyle = it.adicionado_depois ? 'background: rgba(245, 158, 11, 0.15); border: 1px solid var(--warning); border-radius: 8px; padding: 8px;' : '';
-    const badgeNovo = it.adicionado_depois ? '<span style="background:var(--warning); color:#000; font-size:9px; font-weight:800; padding:2px 6px; border-radius:4px; margin-left:6px;">NOVO</span>' : '';
+    // Força o destaque amarelo
+    const isNovo = it.adicionado_depois === true;
+    const bgStyle = isNovo ? 'background: rgba(245, 158, 11, 0.15); border: 2px solid var(--warning);' : '';
+    const badgeNovo = isNovo ? '<span style="background:var(--warning); color:#000; font-size:10px; font-weight:900; padding:2px 8px; border-radius:4px; margin-left:8px;">NOVO</span>' : '';
 
     itensHTML += `
       <div class="detalhe-site-item" style="${temEstoque ? '' : 'border-left:4px solid var(--warning);'} ${bgStyle}">
