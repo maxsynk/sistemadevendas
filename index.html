@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v7.0
+  MAX REPRESENTAÇÃO — HTML v7.1
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -5596,13 +5596,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v7.0
+// MAX REPRESENTAÇÃO — HTML v7.1
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "7.0";
+const APP_VERSION = "7.1";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -11518,68 +11518,32 @@ function tocarSomPedidoSite() {
   }
 }
   
-async function verificarPedidosSite() {
-  if (!usuarioLogado || !tokenAtual) return;
+// ============================================
+// INICIAR CHECAGEM AUTOMÁTICA (FORÇADA)
+// ============================================
+let _intervaloVerificacaoSite = null;
+
+function iniciarMonitoramentoPedidos() {
+  if (_intervaloVerificacaoSite) clearInterval(_intervaloVerificacaoSite);
   
-  try {
-    const res = await api("/pedidos-site/pendentes");
-    const data = await res.json();
-    
-    if (!data.success) { 
-      console.warn("[pedidos-site]", data.error); 
-      return; 
-    }
-
-    // A variável total agora está bem definida
-    const total = data.total || 0;
-    const alerta = document.getElementById("pedidosSiteAlerta");
-    const badge = document.getElementById("badgePedidosSite");
-    const titulo = document.getElementById("pedidosSiteAlertaTitulo");
-    const abaPedidos = document.querySelector('.tab[data-aba="pedidos"]');
-    const drawerPedidos = document.querySelector('.drawer-item[data-aba="pedidos"]');
-    const ultimoTotal = parseInt(sessionStorage.getItem("max_ultimo_total_site") || "0");
-
-    if (total > 0) {
-      if (alerta) {
-        alerta.classList.add("alerta-ativo");
-        alerta.style.display = "flex";
-        badge.textContent = total;
-        titulo.textContent = total === 1
-          ? "Você tem 1 pedido recebido do site"
-          : `Você tem ${total} pedidos recebidos do site`;
-      }
-      if (abaPedidos) abaPedidos.classList.add("tab-pedidos-pendente");
-      if (drawerPedidos) drawerPedidos.classList.add("drawer-pedidos-pendente");
-
-      if (total > ultimoTotal) {
-        try { tocarSomPedidoSite(); } catch (e) {}
-        if ("Notification" in window) {
-          if (Notification.permission === "default") Notification.requestPermission();
-          else if (Notification.permission === "granted") {
-            new Notification("🛒 Novo pedido no site!", {
-              body: `${total} pedido(s) aguardando aprovação`,
-              icon: "icon-192.png",
-              tag: "pedido-site",
-            });
-          }
-        }
-      }
-      sessionStorage.setItem("max_ultimo_total_site", String(total));
-    } else {
-      if (alerta) { alerta.classList.remove("alerta-ativo"); alerta.style.display = "none"; }
-      if (abaPedidos) abaPedidos.classList.remove("tab-pedidos-pendente");
-      if (drawerPedidos) drawerPedidos.classList.remove("drawer-pedidos-pendente");
-      sessionStorage.setItem("max_ultimo_total_site", "0");
-    }
-  }   
-
-    const modalAberto = document.getElementById("modalPedidosSite").classList.contains("active");
-    if (modalAberto) carregarListaPedidosSite();
-    
-  } catch (e) {
-    console.warn("[pedidos-site] Erro:", e.message);
-  }
+  // Roda a primeira vez imediatamente
+  verificarPedidosSite();
+  
+  // E depois a cada 5 segundos
+  _intervaloVerificacaoSite = setInterval(verificarPedidosSite, 5000);
 }
+
+// Inicia assim que a página carrega (garante que o DOM está pronto)
+window.addEventListener("load", () => {
+  setTimeout(iniciarMonitoramentoPedidos, 1000);
+});
+
+// E também inicia junto com o login
+const originalEntrarNoSistema = entrarNoSistema;
+entrarNoSistema = function() {
+  originalEntrarNoSistema();
+  iniciarMonitoramentoPedidos();
+};
 // Loop de alerta sonoro a cada 30s
 setInterval(async () => {
   if (!usuarioLogado || !tokenAtual) return;
