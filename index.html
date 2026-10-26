@@ -11696,17 +11696,21 @@ function renderizarDetalhePedidoSite(p) {
   let temFalta = false;
   let temAlgoOk = false;
 
-  for (const it of itens) {
+    for (const it of itens) {
     const estoqueAgora = it.estoque_atual_agora !== undefined ? it.estoque_atual_agora : 0;
     const temEstoque = estoqueAgora >= it.quantidade;
     if (!temEstoque) temFalta = true;
     if (estoqueAgora > 0) temAlgoOk = true;
 
-        itensHTML += `
-      <div class="detalhe-site-item" style="${temEstoque ? '' : 'border-left:4px solid var(--warning);'}">
+    // AQUI: Pinta o fundo se o item tiver a marcação
+    const bgStyle = it.adicionado_depois ? 'background: rgba(245, 158, 11, 0.15); border: 1px solid var(--warning); border-radius: 8px; padding: 8px;' : '';
+    const badgeNovo = it.adicionado_depois ? '<span style="background:var(--warning); color:#000; font-size:9px; font-weight:800; padding:2px 6px; border-radius:4px; margin-left:6px;">NOVO</span>' : '';
+
+    itensHTML += `
+      <div class="detalhe-site-item" style="${temEstoque ? '' : 'border-left:4px solid var(--warning);'} ${bgStyle}">
         ${it.foto_url ? `<img src="${it.foto_url}">` : `<div class="vazio"><i class="fas fa-image"></i></div>`}
         <div class="info">
-          <div class="nome">${escapeHtml(it.modelo)} — ${escapeHtml(it.cor)}</div>
+          <div class="nome">${escapeHtml(it.modelo)} — ${escapeHtml(it.cor)} ${badgeNovo}</div>
           <div class="num">Nº <strong>${it.numeracao}</strong></div>
           <div class="num" style="font-size:11px">
             Pedido: <strong>${it.quantidade}</strong> pares ·
