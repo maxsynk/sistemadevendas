@@ -11571,6 +11571,7 @@ async function verificarPedidosSite() {
       if (drawerPedidos) drawerPedidos.classList.remove("drawer-pedidos-pendente");
       sessionStorage.setItem("max_ultimo_total_site", "0");
     }
+  }   
 
     const modalAberto = document.getElementById("modalPedidosSite").classList.contains("active");
     if (modalAberto) carregarListaPedidosSite();
