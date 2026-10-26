@@ -11642,19 +11642,24 @@ function renderizarDetalhePedidoSite(p) {
   let temFalta = false;
   let temAlgoOk = false;
 
-         for (const it of itens) {
+      for (const it of itens) {
     const estoqueAgora = it.estoque_atual_agora !== undefined ? it.estoque_atual_agora : 0;
     const temEstoque = estoqueAgora >= it.quantidade;
     if (!temEstoque) temFalta = true;
     if (estoqueAgora > 0) temAlgoOk = true;
 
-    // Força o destaque amarelo para itens adicionados depois
     const isNovo = it.adicionado_depois === true;
-    const bgStyle = isNovo ? 'background: rgba(245, 158, 11, 0.15); border: 2px solid var(--warning);' : '';
-    const badgeNovo = isNovo ? '<span style="background:var(--warning); color:#000; font-size:10px; font-weight:900; padding:2px 8px; border-radius:4px; margin-left:8px;">NOVO</span>' : '';
+    
+    // Se for novo, aplica o fundo e uma borda laranja. Se não, mantém o padrão.
+    let itemStyle = temEstoque ? '' : 'border-left:4px solid var(--warning);';
+    if (isNovo) {
+      itemStyle += ' background: rgba(245, 158, 11, 0.2); border: 2px solid var(--warning); border-radius: 10px; padding: 12px; margin-bottom: 8px;';
+    }
+
+    const badgeNovo = isNovo ? '<span style="background:var(--warning); color:#000; font-size:10px; font-weight:900; padding:2px 8px; border-radius:4px; margin-left:8px; text-transform:uppercase;">Novo</span>' : '';
 
     itensHTML += `
-      <div class="detalhe-site-item" style="${temEstoque ? '' : 'border-left:4px solid var(--warning);'} ${bgStyle}">
+      <div class="detalhe-site-item" style="${itemStyle}">
         ${it.foto_url ? `<img src="${it.foto_url}">` : `<div class="vazio"><i class="fas fa-image"></i></div>`}
         <div class="info">
           <div class="nome">${escapeHtml(it.modelo)} — ${escapeHtml(it.cor)} ${badgeNovo}</div>
@@ -11672,7 +11677,7 @@ function renderizarDetalhePedidoSite(p) {
         ` : ''} 
       </div>
     `;
-  }   
+  }          
   
   let avisoFaltaHTML = "";
   if (temFalta) {
