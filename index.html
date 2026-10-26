@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v6.8
+  MAX REPRESENTAÇÃO — HTML v6.9
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -5596,13 +5596,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v6.8
+// MAX REPRESENTAÇÃO — HTML v6.9
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "6.8";
+const APP_VERSION = "6.9";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -11520,11 +11520,17 @@ function tocarSomPedidoSite() {
   
 async function verificarPedidosSite() {
   if (!usuarioLogado || !tokenAtual) return;
+  
   try {
     const res = await api("/pedidos-site/pendentes");
     const data = await res.json();
-    if (!data.success) { console.warn("[pedidos-site]", data.error); return; }
+    
+    if (!data.success) { 
+      console.warn("[pedidos-site]", data.error); 
+      return; 
+    }
 
+    // A variável total agora está bem definida
     const total = data.total || 0;
     const alerta = document.getElementById("pedidosSiteAlerta");
     const badge = document.getElementById("badgePedidosSite");
@@ -11568,6 +11574,7 @@ async function verificarPedidosSite() {
 
     const modalAberto = document.getElementById("modalPedidosSite").classList.contains("active");
     if (modalAberto) carregarListaPedidosSite();
+    
   } catch (e) {
     console.warn("[pedidos-site] Erro:", e.message);
   }
