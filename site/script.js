@@ -1446,16 +1446,18 @@ function irParaEtapaDados(opts) {
       el.required = false;
       el.style.borderColor = "";
     }
-    function fecharFormFechamento() {
-  document.getElementById("modalFecharPedido").classList.remove("active");
-  document.body.style.overflow = "";
-    }
   }
 
-  setTimeout(() => {
+    setTimeout(() => {
     const primeiro = document.querySelector('#fpDados input:not([type="password"])');
     if (primeiro) primeiro.focus();
   }, 200);
+}
+
+function fecharFormFechamento() {
+  document.getElementById("modalFecharPedido").classList.remove("active");
+  document.body.style.overflow = "";
+  }
 }
 
 // ============================================
