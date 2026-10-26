@@ -1446,6 +1446,10 @@ function irParaEtapaDados(opts) {
       el.required = false;
       el.style.borderColor = "";
     }
+    function fecharFormFechamento() {
+  document.getElementById("modalFecharPedido").classList.remove("active");
+  document.body.style.overflow = "";
+    }
   }
 
   setTimeout(() => {
