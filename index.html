@@ -9035,8 +9035,10 @@ for (const it of itens) {
       <div class="detalhe-row"><span class="label">CEP</span><span class="valor">${pedido.cliente_cep || "—"}</span></div>
       ${pedido.cliente_ponto_referencia ? `<div class="detalhe-row"><span class="label">⭐ Ponto de Referência</span><span class="valor" style="color:var(--warning)">${pedido.cliente_ponto_referencia}</span></div>` : ''}
     </div>
-    <div class="detalhe-secao"><h5><i class="fas fa-shoe-prints"></i> Itens (${itens.length})</h5>
-${totalNovos > 0 ? `<div class="detalhe-site-status falta"><i class="fas fa-plus-circle"></i><span><strong>${totalNovos} par(es) NOVO(S)</strong> adicionado(s) pelo cliente neste pedido. Separe os itens destacados.</span></div>` : ""}
+        <div class="detalhe-secao"><h5><i class="fas fa-shoe-prints"></i> Itens (${itens.length})</h5>
+      ${totalNovos > 0 ? `<div class="detalhe-site-status falta"><i class="fas fa-plus-circle"></i><span><strong>${totalNovos} par(es) NOVO(S)</strong> adicionado(s) pelo cliente neste pedido. Separe os itens destacados.</span></div>` : ""}
+      ${itensHTML || '<div class="empty" style="padding:20px"><p>Nenhum item</p></div>'}
+    </div>
     <div class="detalhe-secao"><h5><i class="fas fa-dollar-sign"></i> Financeiro</h5>${financeiroHTML}</div>
     <div class="detalhe-secao"><h5><i class="fas fa-info-circle"></i> Observações</h5><p style="font-size:13px;color:var(--text-secondary)">${pedido.observacoes || "Sem observações"}</p><div class="detalhe-row" style="margin-top:12px"><span class="label">Criado em</span><span class="valor">${formatarDataHora(pedido.criado_em)}</span></div><div class="detalhe-row"><span class="label">Operador</span><span class="valor">${pedido.operador || "—"}</span></div></div>
   `;
@@ -9144,7 +9146,7 @@ async function voltarStatusPedido() {
   if (!pedidoAtual) return;
   const id = pedidoAtual.pedido.id;
   const statusAtual = pedidoAtual.pedido.status;
-  
+
   let msg = "";
   if (statusAtual === "despachado") {
     msg = `Voltar pedido #${id} para CONFERIDO?`;
@@ -9160,8 +9162,17 @@ async function voltarStatusPedido() {
     const res = await api(`/pedidos/${id}/voltar-status`, { method: "POST" });
     const d = await res.json();
     if (!d.success) throw new Error(d.error);
-    
+
     toast(d.mensagem || "Status voltado com sucesso!");
+
+    await abrirDetalhePedido(id);
+    await carregarPedidos();
+    await carregarProdutos();
+    await carregarDashboard();
+  } catch (e) {
+    toast("Erro: " + e.message, "error");
+  }
+}
 
 async function limparItensNovos() {
   if (!pedidoAtual) return;
