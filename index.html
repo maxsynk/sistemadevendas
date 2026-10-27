@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v7.4
+  MAX REPRESENTAÇÃO — HTML v7.5
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -5596,13 +5596,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v7.4
+// MAX REPRESENTAÇÃO — HTML v7.5
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "7.4";
+const APP_VERSION = "7.5";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -12047,7 +12047,106 @@ entrarNoSistema = function() {
   originalEntrarNoSistema();
   iniciarMonitoramentoPedidos();
 };
+// ============================================
+// BOTÃO VOLTAR DO CELULAR — v7.5
+// ============================================
+const MODAIS_SISTEMA = [
+  "modalPedido",
+  "modalEscolhaNum",
+  "modalEditar",
+  "modalEditarCliente",
+  "modalMarcarPago",
+  "modalFrete",
+  "modalCategoria",
+  "modalReajustePreco",
+  "modalUsuario",
+  "modalExcluirCategoria",
+  "modalRestaurar",
+  "modalEtiqueta",
+  "modalCamera",
+  "modalPedidosSite",
+  "modalDetalhePedidoSite",
+];
 
+function empurrarEstadoModalSys(idModal) {
+  try {
+    history.pushState({ modal: idModal, t: Date.now() }, "", location.href);
+  } catch (e) {}
+}
+
+window.addEventListener("popstate", () => {
+  // Também considera o drawer da sidebar aberto
+  const drawerAberto = document.getElementById("sidebarDrawer")?.classList.contains("open");
+
+  const abertos = MODAIS_SISTEMA.filter(id => {
+    const el = document.getElementById(id);
+    return el && el.classList.contains("active");
+  });
+
+  if (abertos.length === 0 && !drawerAberto) {
+    return; // deixa o navegador voltar
+  }
+
+  // Se o drawer tá aberto, fecha ele primeiro
+  if (drawerAberto) {
+    fecharSidebar();
+    // Se também tem modal aberto, empilha de novo pra próximo voltar
+    if (abertos.length > 0) {
+      empurrarEstadoModalSys(abertos[abertos.length - 1]);
+    } else {
+      // Empilha pra "voltar" não fechar o app imediatamente
+      empurrarEstadoModalSys("__drawer__");
+    }
+    return;
+  }
+
+  abertos.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove("active");
+  });
+  document.body.style.overflow = "";
+
+  const restantes = MODAIS_SISTEMA.filter(id => {
+    const el = document.getElementById(id);
+    return el && el.classList.contains("active");
+  });
+  if (restantes.length > 0) {
+    empurrarEstadoModalSys(restantes[restantes.length - 1]);
+  }
+});
+
+// MutationObserver nos modais do sistema
+const observerModaisSys = new MutationObserver((muts) => {
+  for (const m of muts) {
+    if (m.attributeName !== "class") continue;
+    const el = m.target;
+    if (!MODAIS_SISTEMA.includes(el.id)) continue;
+
+    const estavaAtivo = (m.oldValue || "").split(" ").includes("active");
+    const estaAtivo = el.classList.contains("active");
+
+    if (!estavaAtivo && estaAtivo) {
+      empurrarEstadoModalSys(el.id);
+    }
+  }
+});
+
+// Observa também a sidebar (drawer)
+function observarModaisSistema() {
+  MODAIS_SISTEMA.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      observerModaisSys.observe(el, { attributes: true, attributeFilter: ["class"], attributeOldValue: true });
+    }
+  });
+  // Sidebar
+  const drawer = document.getElementById("sidebarDrawer");
+  if (drawer) {
+    observerModaisSys.observe(drawer, { attributes: true, attributeFilter: ["class"], attributeOldValue: true });
+  }
+}
+document.addEventListener("DOMContentLoaded", observarModaisSistema);
+  
 </script>
 </body>
 </html>  
