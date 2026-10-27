@@ -1,5 +1,5 @@
 // ============================================
-// MAX REPRESENTAÇÃO — SITE v4.8
+// MAX REPRESENTAÇÃO — SITE v4.9
 // script.js
 // v4.5: Auth por WhatsApp+senha; pedido em aberto; sessão em localStorage
 // v4.6: Removida duplicação de variáveis e da função validarEstoqueCarrinho
@@ -2095,3 +2095,88 @@ function carregarMensagemDoDia() {
   const index = diaDoAno % MENSAGENS_BIBLICAS.length;
   el.innerHTML = `<i class="fas fa-book-open" style="margin-right:4px; opacity:0.6"></i> "${MENSAGENS_BIBLICAS[index]}"`;
 }
+// ============================================
+// BOTÃO VOLTAR DO CELULAR — v4.9
+// Impede que o app feche. Fecha o modal aberto, senão deixa sair.
+// ============================================
+const MODAIS_SITE = [
+  "modalProduto",
+  "modalCarrinho",
+  "modalFecharPedido",
+  "modalAcessar",
+  "modalBuscarPedido",
+  "modalMeuPedido",
+  "modalEscolherAtendente",
+];
+
+// Empilha um estado sempre que abre um modal
+function empurrarEstadoModal(idModal) {
+  try {
+    history.pushState({ modal: idModal, t: Date.now() }, "", location.href);
+  } catch (e) {}
+}
+
+// Remove o estado atual quando o modal é fechado por dentro (X, botão, etc.)
+function removerEstadoModal() {
+  // Só dá pra "voltar" no histórico sem sair da página se o estado for o nosso
+  if (history.state && history.state.modal) {
+    try { history.back(); } catch (e) {}
+  }
+}
+
+// Intercepta o Voltar
+window.addEventListener("popstate", () => {
+  // Se sobrou algum modal aberto, fecha o mais "recente" e re-empilha
+  const abertos = MODAIS_SITE.filter(id => {
+    const el = document.getElementById(id);
+    return el && el.classList.contains("active");
+  });
+
+  if (abertos.length === 0) {
+    // Nenhum modal aberto → deixa o navegador voltar normalmente
+    return;
+  }
+
+  // Fecha todos os modais abertos (o padrão do app não tem modais empilhados)
+  abertos.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove("active");
+  });
+  document.body.style.overflow = "";
+
+  // Se ainda tem estado de modal empilhado (caso raro), empilha de novo pra
+  // não fechar o app no próximo toque
+  const restantes = MODAIS_SITE.filter(id => {
+    const el = document.getElementById(id);
+    return el && el.classList.contains("active");
+  });
+  if (restantes.length > 0) {
+    empurrarEstadoModal(restantes[restantes.length - 1]);
+  }
+});
+
+// Monitora classes dos modais pra empurrar estado quando abrem
+// (MutationObserver detecta classList.add("active") de qualquer modal)
+const observerModais = new MutationObserver((muts) => {
+  for (const m of muts) {
+    if (m.attributeName !== "class") continue;
+    const el = m.target;
+    if (!MODAIS_SITE.includes(el.id)) continue;
+
+    const estavaAtivo = (m.oldValue || "").split(" ").includes("active");
+    const estaAtivo = el.classList.contains("active");
+
+    if (!estavaAtivo && estaAtivo) {
+      empurrarEstadoModal(el.id);
+    }
+  }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  MODAIS_SITE.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      observerModais.observe(el, { attributes: true, attributeFilter: ["class"], attributeOldValue: true });
+    }
+  });
+});
