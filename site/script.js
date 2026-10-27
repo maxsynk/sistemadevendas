@@ -1,5 +1,5 @@
 // ============================================
-// MAX REPRESENTAÇÃO — SITE v4.7
+// MAX REPRESENTAÇÃO — SITE v4.8
 // script.js
 // v4.5: Auth por WhatsApp+senha; pedido em aberto; sessão em localStorage
 // v4.6: Removida duplicação de variáveis e da função validarEstoqueCarrinho
@@ -336,11 +336,25 @@ function renderizarProdutos() {
 }
 
 // ============================================
-// MODAL PRODUTO
+// MODAL PRODUTO — v4.8 (estoque sempre atualizado)
 // ============================================
-function abrirModalProduto(id) {
+async function abrirModalProduto(id) {
+  // Revalida o cache ANTES de abrir pra nunca mostrar número velho
+  try {
+    const res = await fetch(API_BASE + "/publico/produtos");
+    const data = await res.json();
+    if (data.success && Array.isArray(data.produtos)) {
+      produtosCache = data.produtos;
+    }
+  } catch (e) {
+    console.warn("[abrirModalProduto] Falha ao revalidar, usando cache:", e.message);
+  }
+
   const p = produtosCache.find(x => x.id === id);
-  if (!p) return;
+  if (!p) {
+    alert("Este produto não está mais disponível.");
+    return;
+  }
 
   const modal = document.getElementById("modalProduto");
   const conteudo = document.getElementById("modalConteudo");
@@ -356,7 +370,7 @@ function abrirModalProduto(id) {
       <input type="number" class="qtd-input" data-num="${g.numeracao}" data-disp="${g.disponivel}" min="0" max="${g.disponivel}" placeholder="0">
       <span class="disp">${g.disponivel} disp</span>
     </div>
-  `).join("") || `<p style="color:var(--text-dim);font-size:13px">Nenhuma numeração disponível</p>`;
+  `).join("") || `<p style="color:var(--text-dim);font-size:13px">Nenhuma numeração disponível no momento</p>`;
 
   conteudo.innerHTML = `
     <div class="modal-foto">${fotoHTML}</div>
@@ -411,15 +425,25 @@ function abrirModalProduto(id) {
     inputs.forEach(inp => {
       const q = parseInt(inp.value) || 0;
       if (q > 0) {
-        carrinho.push({
-          produto_id: p.id,
-          modelo: p.modelo,
-          cor: p.cor,
-          foto_url: p.foto_url,
-          preco: parseFloat(p.preco_venda_atacado) || 0,
-          numeracao: parseInt(inp.dataset.num),
-          qtd: q,
-        });
+        // Se já existe (mesmo produto + numeração), soma na qtd
+        const existente = carrinho.find(c =>
+          c.produto_id === p.id && c.numeracao === parseInt(inp.dataset.num)
+        );
+        if (existente) {
+          existente.qtd += q;
+          existente.estoque_atual = parseInt(inp.dataset.disp);
+        } else {
+          carrinho.push({
+            produto_id: p.id,
+            modelo: p.modelo,
+            cor: p.cor,
+            foto_url: p.foto_url,
+            preco: parseFloat(p.preco_venda_atacado) || 0,
+            numeracao: parseInt(inp.dataset.num),
+            qtd: q,
+            estoque_atual: parseInt(inp.dataset.disp),
+          });
+        }
         totalAdicionados += q;
       }
     });
@@ -449,7 +473,10 @@ function atualizarCarrinho() {
   salvarCarrinhoLocal();
 }
 
-function abrirModalCarrinho() {
+// ============================================
+// CARRINHO — v4.8 (revalida estoque SEMPRE ao abrir)
+// ============================================
+async function abrirModalCarrinho() {
   const modal = document.getElementById("modalCarrinho");
   const lista = document.getElementById("carrinhoLista");
   const rodape = document.getElementById("carrinhoRodape");
@@ -457,18 +484,41 @@ function abrirModalCarrinho() {
   const btnEnviar = document.getElementById("carrinhoEnviar");
 
   if (carrinho.length === 0) {
-    // NOVO: Se o carrinho está vazio, já abre a tela de login direto!
     abrirModalAcessar();
     return;
   }
 
+  // Revalida SEMPRE que abre o carrinho (evita "1 disp" virar "0")
+  try {
+    const res = await fetch(API_BASE + "/publico/produtos");
+    const data = await res.json();
+    if (data.success && Array.isArray(data.produtos)) {
+      const produtosAtualizados = data.produtos;
+      for (const item of carrinho) {
+        const prod = produtosAtualizados.find(p => p.id === item.produto_id);
+        if (prod) {
+          const v = (prod.grade || []).find(g => g.numeracao === item.numeracao);
+          item.estoque_atual = v ? (v.disponivel || 0) : 0;
+        } else {
+          item.estoque_atual = 0;
+        }
+      }
+      // Atualiza também o cache global pra próximas telas
+      produtosCache = produtosAtualizados;
+    }
+  } catch (e) {
+    console.warn("[abrirModalCarrinho] Revalidação falhou, usando último valor:", e.message);
+  }
+
   rodape.style.display = "block";
-  
+
   lista.innerHTML = carrinho.map((it, i) => {
     const semEstoque = it.estoque_atual !== undefined && it.estoque_atual < it.qtd;
-    const textoEstoque = semEstoque 
-      ? `<div class="det" style="color:var(--error); font-weight:bold;"><i class="fas fa-exclamation-triangle"></i> Indisponível (Restam ${it.estoque_atual || 0})</div>` 
-      : (it.estoque_atual !== undefined ? `<div class="det" style="color:var(--success)"><i class="fas fa-check"></i> Em estoque</div>` : "");
+    const textoEstoque = semEstoque
+      ? `<div class="det" style="color:var(--error); font-weight:bold;"><i class="fas fa-exclamation-triangle"></i> Indisponível (restam ${it.estoque_atual || 0})</div>`
+      : (it.estoque_atual !== undefined
+          ? `<div class="det" style="color:var(--success)"><i class="fas fa-check"></i> Em estoque (${it.estoque_atual} disp)</div>`
+          : "");
 
     return `
     <div class="carrinho-item" style="${semEstoque ? 'border: 1px solid var(--error); background: rgba(239,68,68,0.05);' : ''}">
@@ -507,22 +557,19 @@ function abrirModalCarrinho() {
     btnEnviar.onclick = adicionarCarrinhoAoPedido;
   } else {
     btnEnviar.disabled = totalPares === 0;
-    
     if (totalPares > 0 && totalPares < MINIMO_ENVIO) {
       aviso.classList.add("show");
       aviso.innerHTML = `<i class="fas fa-exclamation-triangle"></i> <strong>Atenção:</strong> O pedido só será despachado a partir de ${MINIMO_ENVIO} pares. Faltam ${MINIMO_ENVIO - totalPares} pares.`;
     } else {
       aviso.classList.remove("show");
     }
-    
     btnEnviar.innerHTML = '<i class="fas fa-check-circle"></i> Finalizar Pedido';
     btnEnviar.onclick = abrirFormFechamento;
-  }   
+  }
 
   modal.classList.add("active");
   document.body.style.overflow = "hidden";
 }
-
 function fecharModalCarrinho() {
   document.getElementById("modalCarrinho").classList.remove("active");
   document.body.style.overflow = "";
@@ -610,6 +657,7 @@ async function validarEstoqueCarrinho() {
         temItemSemEstoque = true;
       }
     }
+    produtosCache = produtosAtualizados; 
     return temItemSemEstoque;
   } catch (e) {
     console.error("Erro ao validar estoque:", e);
