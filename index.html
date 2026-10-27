@@ -9188,15 +9188,6 @@ async function limparItensNovos() {
   } catch (e) { toast("Erro: " + e.message, "error"); }
 }
     
-    // Recarrega o detalhe do pedido e as listas
-    await abrirDetalhePedido(id);
-    await carregarPedidos();
-    await carregarProdutos();
-    await carregarDashboard();
-  } catch (e) {
-    toast("Erro: " + e.message, "error");
-  }
-}
 async function mudarStatusPedido(acao, sucessoMsg) {
   if (!pedidoAtual) return;
   const id = pedidoAtual.pedido.id;
