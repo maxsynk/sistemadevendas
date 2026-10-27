@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v7.3
+  MAX REPRESENTAÇÃO — HTML v7.4
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -5596,13 +5596,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v7.3
+// MAX REPRESENTAÇÃO — HTML v7.4
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "7.3";
+const APP_VERSION = "7.4";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -8914,6 +8914,7 @@ async function renderizarListaPedidos() {
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
           <span class="status-ped status-${p.status}">${p.status.toUpperCase()}</span>
           ${badgePago}
+        ${p.itens_novos > 0 ? `<span class="badge-pagamento" style="background:rgba(245,158,11,0.15);color:var(--warning);border:1px solid var(--warning)"><i class="fas fa-plus-circle"></i> ${p.itens_novos} NOVO(S)</span>` : ""}  
         </div>
       </div>
       <div class="acoes">
@@ -9009,10 +9010,17 @@ function renderizarDetalhePedido() {
     avisoPago = `<div class="aviso-pagamento pendente"><i class="fas fa-exclamation-triangle"></i><div class="txt"><div class="titulo">PENDENTE PAGAMENTO</div><div class="detalhes">Anexe o comprovante antes de despachar</div></div></div>`;
   }
   let itensHTML = "";
-  for (const it of itens) {
-    const subtotal = it.quantidade * it.preco_unitario;
-    itensHTML += `<div class="detalhe-item">${it.foto_url ? `<img src="${it.foto_url}">` : `<div class="vazio"><i class="fas fa-image"></i></div>`}<div class="info"><div class="nome">${it.modelo} — ${it.cor}</div><div class="detalhes">Nº ${it.numeracao} · ${it.codigo_barras || ""} · ${formatarMoeda(it.preco_unitario)} cada</div></div><div class="qtd">${it.quantidade}x</div><div class="subtotal">${formatarMoeda(subtotal)}</div></div>`;
-  }
+  let totalNovos = 0;
+for (const it of itens) {
+  const subtotal = it.quantidade * it.preco_unitario;
+  const qtdNova = parseInt(it.qtd_nova) || 0;
+  totalNovos += qtdNova;
+  const estiloNovo = qtdNova > 0 ? 'background:rgba(245,158,11,0.15);border:2px solid var(--warning);' : '';
+  const badgeNovo = qtdNova > 0
+    ? `<span style="background:var(--warning);color:#000;font-size:10px;font-weight:900;padding:2px 8px;border-radius:4px;margin-left:8px">NOVO${qtdNova < it.quantidade ? " +" + qtdNova : ""}</span>`
+    : "";
+  itensHTML += `<div class="detalhe-item" style="${estiloNovo}">${it.foto_url ? `<img src="${it.foto_url}">` : `<div class="vazio"><i class="fas fa-image"></i></div>`}<div class="info"><div class="nome">${it.modelo} — ${it.cor} ${badgeNovo}</div><div class="detalhes">Nº ${it.numeracao} · ${it.codigo_barras || ""} · ${formatarMoeda(it.preco_unitario)} cada</div></div><div class="qtd">${it.quantidade}x</div><div class="subtotal">${formatarMoeda(subtotal)}</div></div>`;
+}
   const frete = parseFloat(pedido.valor_frete) || 0;
   const totalFinal = parseFloat(pedido.total) + frete;
   const financeiroHTML = `<div class="detalhe-row"><span class="label">Subtotal (produtos)</span><span class="valor">${formatarMoeda(pedido.total)}</span></div><div class="detalhe-row"><span class="label">Frete ${pedido.transportadora ? `(${pedido.transportadora})` : ""}</span><span class="valor">${formatarMoeda(frete)}</span></div><div class="detalhe-row" style="border-top:2px solid var(--neon);padding-top:12px;font-size:16px"><span class="label" style="color:var(--neon);font-weight:700">TOTAL</span><span class="valor" style="color:var(--neon);font-size:18px;font-weight:800">${formatarMoeda(totalFinal)}</span></div>`;
@@ -9027,7 +9035,8 @@ function renderizarDetalhePedido() {
       <div class="detalhe-row"><span class="label">CEP</span><span class="valor">${pedido.cliente_cep || "—"}</span></div>
       ${pedido.cliente_ponto_referencia ? `<div class="detalhe-row"><span class="label">⭐ Ponto de Referência</span><span class="valor" style="color:var(--warning)">${pedido.cliente_ponto_referencia}</span></div>` : ''}
     </div>
-    <div class="detalhe-secao"><h5><i class="fas fa-shoe-prints"></i> Itens (${itens.length})</h5>${itensHTML || '<div class="empty" style="padding:20px"><p>Nenhum item</p></div>'}</div>
+    <div class="detalhe-secao"><h5><i class="fas fa-shoe-prints"></i> Itens (${itens.length})</h5>
+${totalNovos > 0 ? `<div class="detalhe-site-status falta"><i class="fas fa-plus-circle"></i><span><strong>${totalNovos} par(es) NOVO(S)</strong> adicionado(s) pelo cliente neste pedido. Separe os itens destacados.</span></div>` : ""}
     <div class="detalhe-secao"><h5><i class="fas fa-dollar-sign"></i> Financeiro</h5>${financeiroHTML}</div>
     <div class="detalhe-secao"><h5><i class="fas fa-info-circle"></i> Observações</h5><p style="font-size:13px;color:var(--text-secondary)">${pedido.observacoes || "Sem observações"}</p><div class="detalhe-row" style="margin-top:12px"><span class="label">Criado em</span><span class="valor">${formatarDataHora(pedido.criado_em)}</span></div><div class="detalhe-row"><span class="label">Operador</span><span class="valor">${pedido.operador || "—"}</span></div></div>
   `;
@@ -9035,6 +9044,9 @@ function renderizarDetalhePedido() {
   const acoesDiv = document.getElementById("modalPedidoAcoes");
   acoesDiv.innerHTML = "";
   const status = pedido.status;
+  if (totalNovos > 0 && !["despachado", "cancelado"].includes(status) && temPermissao("despacho")) {
+  acoesDiv.innerHTML += `<button class="btn btn-warning" id="btnLimparNovos" style="width:100%;margin-bottom:8px"><i class="fas fa-check"></i> Marcar ${totalNovos} par(es) novo(s) como separado(s)</button>`;
+}
 
   // Botão de Voltar Status
   const podeVoltar = ["separado", "conferido", "despachado"].includes(status);
@@ -9106,6 +9118,7 @@ function renderizarDetalhePedido() {
   if (document.getElementById("btnEnviarWhatsPago")) document.getElementById("btnEnviarWhatsPago").onclick = () => enviarNotificacaoWhatsApp("pago");
   if (document.getElementById("btnEnviarWhatsDespachado")) document.getElementById("btnEnviarWhatsDespachado").onclick = () => enviarNotificacaoWhatsApp("despachado");
   if (document.getElementById("btnEnviarWhatsCancelado")) document.getElementById("btnEnviarWhatsCancelado").onclick = () => enviarNotificacaoWhatsApp("cancelado");
+  if (document.getElementById("btnLimparNovos")) document.getElementById("btnLimparNovos").onclick = limparItensNovos;
 }
 async function editarPedidoAtual() {
   if (!pedidoAtual) return;
@@ -9149,6 +9162,20 @@ async function voltarStatusPedido() {
     if (!d.success) throw new Error(d.error);
     
     toast(d.mensagem || "Status voltado com sucesso!");
+
+async function limparItensNovos() {
+  if (!pedidoAtual) return;
+  const id = pedidoAtual.pedido.id;
+  if (!confirm("Os itens novos já foram separados?")) return;
+  try {
+    const res = await api(`/pedidos/${id}/limpar-novos`, { method: "POST" });
+    const d = await res.json();
+    if (!d.success) throw new Error(d.error);
+    toast("Itens novos marcados como separados");
+    await abrirDetalhePedido(id);
+    await carregarPedidos();
+  } catch (e) { toast("Erro: " + e.message, "error"); }
+}
     
     // Recarrega o detalhe do pedido e as listas
     await abrirDetalhePedido(id);
