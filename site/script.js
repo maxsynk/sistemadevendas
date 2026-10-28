@@ -1825,23 +1825,31 @@ function mostrarTelaSucesso() {
 }
 
 // ============================================
-// WHATSAPP — Escolha de Atendente
+// WHATSAPP — Escolha de Atendente (v5.0)
+// Usa <a href> programático para NÃO ser bloqueado
 // ============================================
 let mensagemWhatsAppAtual = "";
 
 function abrirWhatsApp(mensagem) {
   mensagemWhatsAppAtual = mensagem;
 
+  // Se só tem 1 atendente configurado, manda direto
+  if (!ATENDENTES || ATENDENTES.length === 0) {
+    alert("Nenhum atendente configurado.");
+    return;
+  }
+
   const modal = document.getElementById("modalEscolherAtendente");
   const lista = document.getElementById("listaAtendentes");
-  
+
+  // Fallback: se por algum motivo o modal não existir no DOM, manda pro primeiro
   if (!modal || !lista) {
     enviarParaAtendente(ATENDENTES[0].numero);
     return;
   }
 
-  lista.innerHTML = ATENDENTES.map((atendente, index) => `
-    <button class="btn-escolher-atendente" onclick="enviarParaAtendente('${atendente.numero}')">
+  lista.innerHTML = ATENDENTES.map(atendente => `
+    <button class="btn-escolher-atendente" onclick="enviarParaAtendente('${atendente.numero}')" type="button">
       <div class="avatar-atendente"><i class="fab fa-whatsapp"></i></div>
       <div class="info-atendente">
         <strong>${atendente.nome}</strong>
@@ -1858,26 +1866,53 @@ function abrirWhatsApp(mensagem) {
 function fecharModalAtendente() {
   const modal = document.getElementById("modalEscolherAtendente");
   if (modal) modal.classList.remove("active");
-  document.body.style.overflow = "";
+  // Só limpa o overflow se nenhum outro modal estiver aberto
+  const algumAberto = document.querySelector(".modal.active");
+  if (!algumAberto) document.body.style.overflow = "";
 }
 
 function enviarParaAtendente(numero) {
+  if (!mensagemWhatsAppAtual) {
+    console.warn("[WhatsApp] mensagemWhatsAppAtual vazia");
+    return;
+  }
+
   fecharModalAtendente();
-  if (!mensagemWhatsAppAtual) return;
-  
+
   const texto = encodeURIComponent(mensagemWhatsAppAtual);
   const urlApp = `whatsapp://send?phone=${numero}&text=${texto}`;
   const urlWeb = `https://wa.me/${numero}?text=${texto}`;
 
-  let foiParaApp = false;
-  const t = setTimeout(() => {
-    if (!foiParaApp && !document.hidden) {
-      window.open(urlWeb, "_blank");
-    }
-  }, 1500);
+  // Detecta se é iOS (Safari/iOS bloqueia whatsapp:// mais agressivamente)
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-  window.addEventListener("blur", () => { foiParaApp = true; clearTimeout(t); }, { once: true });
-  window.location.href = urlApp;
+  // Cria um <a> programático — é o jeito mais confiável de abrir o WhatsApp
+  // sem ser bloqueado pelo navegador
+  const a = document.createElement("a");
+  a.href = isIOS ? urlWeb : urlApp;   // iOS prefere http direto; Android aceita app://
+  a.style.display = "none";
+  a.target = "_blank";
+  a.rel = "noopener noreferrer";
+  document.body.appendChild(a);
+  a.click();
+
+  // Fallback pra desktop e navegadores que não suportam whatsapp://
+  // Só dispara se a página NÃO perder o foco em 1.2s (o que indica que o app não abriu)
+  let saiu = false;
+  const onBlur = () => { saiu = true; };
+  window.addEventListener("blur", onBlur, { once: true });
+
+  setTimeout(() => {
+    window.removeEventListener("blur", onBlur);
+    if (!saiu && !document.hidden && !isIOS) {
+      // Não abriu o app → abre o wa.me
+      window.location.href = urlWeb;
+    }
+    // Limpa o <a> criado
+    setTimeout(() => {
+      try { document.body.removeChild(a); } catch (e) {}
+    }, 500);
+  }, 1200);
 }
 
 // ============================================
