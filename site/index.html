@@ -312,25 +312,6 @@
         </button>
       </div>
     </div>  
-
-    <!-- MODAL ESCOLHER ATENDENTE -->
-<div class="modal-overlay" id="modalEscolherAtendente">
-  <div class="modal-box" style="max-width: 400px; padding: 24px;">
-    <h3 style="text-align: center; margin-bottom: 8px; font-size: 20px;">Escolha um atendente</h3>
-    <p style="text-align: center; color: #888; font-size: 14px; margin-bottom: 24px;">
-      Selecione para quem deseja enviar o pedido no WhatsApp.
-    </p>
-    
-    <div id="listaAtendentes" style="display: flex; flex-direction: column; gap: 12px;">
-      <!-- Os botões serão inseridos aqui via JavaScript -->
-    </div>
-
-    <button class="btn-cancelar-atendente" onclick="fecharModalAtendente()">
-      Cancelar
-    </button>
-  </div>
-</div>
-
     <!-- Tela de sucesso (escondida inicialmente) -->
     <div id="telaSucesso" style="display:none"></div>
   </div>
@@ -547,6 +528,25 @@
     </button>
   </div>
 </div>
+  
+<!-- MODAL ESCOLHER ATENDENTE (fora do modalFecharPedido pra funcionar na tela de sucesso) -->
+<div class="modal" id="modalEscolherAtendente">
+  <div class="modal-box" style="max-width: 420px; padding: 24px;">
+    <h3 style="text-align: center; margin-bottom: 8px; font-size: 20px; color: var(--text);">Escolha um atendente</h3>
+    <p style="text-align: center; color: var(--text-2); font-size: 13px; margin-bottom: 22px; line-height: 1.5;">
+      Selecione para quem deseja enviar o pedido no WhatsApp.
+    </p>
+
+    <div id="listaAtendentes" style="display: flex; flex-direction: column; gap: 12px;">
+      <!-- Os botões serão inseridos aqui via JavaScript -->
+    </div>
+
+    <button class="btn-cancelar-atendente" onclick="fecharModalAtendente()" type="button">
+      Cancelar
+    </button>
+  </div>
+</div>
+  
 <script src="script.js"></script>
 </body>
 </html>
