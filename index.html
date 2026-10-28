@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v7.6
+  MAX REPRESENTAÇÃO — HTML v7.7
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -5596,13 +5596,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v7.6
+// MAX REPRESENTAÇÃO — HTML v7.7
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "7.6";
+const APP_VERSION = "7.7";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -6118,25 +6118,60 @@ function comprimirFoto(file) {
   });
 }
 
-// WHATSAPP
+// WHATSAPP — v7.7 (abre com <a href> programático, sem bloqueio de popup)
 function abrirWhatsApp(tel, mensagem) {
   const telLimpoNum = telLimpo(tel);
   if (!telLimpoNum) return toast("Telefone inválido", "error");
+
   const modo = localStorage.getItem("max_whatsapp_app") || "desktop";
   const texto = encodeURIComponent(mensagem);
-  if (modo === "desktop") {
-    const url = `whatsapp://send?phone=55${telLimpoNum}&text=${texto}`;
-    window.open(url, "_self");
-    setTimeout(() => {
-      if (window.location.href.indexOf("whatsapp://") === -1) {
-        window.open(`https://wa.me/55${telLimpoNum}?text=${texto}`, "_blank");
-      }
-    }, 1500);
-  } else {
-    window.open(`https://wa.me/55${telLimpoNum}?text=${texto}`, "_blank");
-  }
-}
+  const numeroCompleto = "55" + telLimpoNum;
+  const urlApp = `whatsapp://send?phone=${numeroCompleto}&text=${texto}`;
+  const urlWeb = `https://wa.me/${numeroCompleto}?text=${texto}`;
 
+  // iOS: whatsapp:// costuma falhar → vai direto no wa.me
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  // Se está configurado pra "web", ou é iOS → abre direto o wa.me
+  if (modo === "web" || isIOS) {
+    const a = document.createElement("a");
+    a.href = urlWeb;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { try { document.body.removeChild(a); } catch (e) {} }, 300);
+    return;
+  }
+
+  // Desktop/Android: tenta abrir o app via <a href>
+  const aApp = document.createElement("a");
+  aApp.href = urlApp;
+  aApp.style.display = "none";
+  document.body.appendChild(aApp);
+  aApp.click();
+
+  // Fallback: se em 1.2s a página NÃO perdeu o foco → app não abriu → vai pra web
+  let saiu = false;
+  const onBlur = () => { saiu = true; };
+  window.addEventListener("blur", onBlur, { once: true });
+
+  setTimeout(() => {
+    window.removeEventListener("blur", onBlur);
+    if (!saiu && !document.hidden) {
+      const aWeb = document.createElement("a");
+      aWeb.href = urlWeb;
+      aWeb.target = "_blank";
+      aWeb.rel = "noopener noreferrer";
+      aWeb.style.display = "none";
+      document.body.appendChild(aWeb);
+      aWeb.click();
+      setTimeout(() => { try { document.body.removeChild(aWeb); } catch (e) {} }, 300);
+    }
+    setTimeout(() => { try { document.body.removeChild(aApp); } catch (e) {} }, 500);
+  }, 1200);
+}
 // LOGIN
 const loginScreen = document.getElementById("loginScreen");
 const loginUsuario = document.getElementById("loginUsuario");
