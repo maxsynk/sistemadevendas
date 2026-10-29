@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v8.0
+  MAX REPRESENTAÇÃO — HTML v8.1
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -5596,13 +5596,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v8.0
+// MAX REPRESENTAÇÃO — HTML v8.1
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "8.0";
+const APP_VERSION = "8.1";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -9738,22 +9738,84 @@ document.getElementById("btnImprimirEtiqueta").onclick = () => {
 </body>
 </html>`;
 
-  const iframe = document.getElementById("iframeImpressaoEtiqueta");
-  const docIframe = iframe.contentWindow.document;
-  docIframe.open();
-  docIframe.write(html);
-  docIframe.close();
+  // ============================================
+  // IMPRESSÃO ROBUSTA — recria o iframe a cada print
+  // ============================================
+  const btnPrint = document.getElementById("btnImprimirEtiqueta");
+  const textoOriginal = btnPrint.innerHTML;
+  btnPrint.disabled = true;
+  btnPrint.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparando...';
 
-  // Aguarda 1 segundo (1000ms) para o navegador processar antes de abrir a janela de impressão
-  // e não perde o foco se o usuário estiver digitando no campo de NF/Volume
-  setTimeout(() => {
+  // Remove iframe antigo (se existir) e cria um NOVO
+  const iframeAntigo = document.getElementById("iframeImpressaoEtiqueta");
+  if (iframeAntigo && iframeAntigo.parentNode) {
+    iframeAntigo.parentNode.removeChild(iframeAntigo);
+  }
+
+  const iframe = document.createElement("iframe");
+  iframe.id = "iframeImpressaoEtiqueta";
+  iframe.style.cssText = "position:fixed;width:0;height:0;border:0;left:-9999px;top:-9999px;";
+  iframe.title = "Impressão de Etiqueta";
+  iframe.setAttribute("aria-hidden", "true");
+  document.body.appendChild(iframe);
+
+  const restaurarBotao = () => {
+    btnPrint.disabled = false;
+    btnPrint.innerHTML = textoOriginal;
+  };
+
+  // Escreve o conteúdo quando o iframe estiver pronto
+  const escreverEImprimir = () => {
     try {
-      iframe.contentWindow.focus();
-      iframe.contentWindow.print();
+      const doc = iframe.contentWindow.document;
+      doc.open();
+      doc.write(html);
+      doc.close();
+
+      // Espera o documento processar antes de chamar print
+      // (usei rAF duplo + timeout de segurança)
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            try {
+              iframe.contentWindow.focus();
+              iframe.contentWindow.print();
+
+              // Depois do print, o navegador volta o foco pra janela principal.
+              // Detectamos via evento "focus" da window principal + timeout de fallback.
+              const finalizar = () => {
+                window.removeEventListener("focus", finalizar);
+                // Dá um tempo extra antes de liberar o botão (evita clique duplo)
+                setTimeout(restaurarBotao, 400);
+              };
+              window.addEventListener("focus", finalizar, { once: true });
+              // Fallback: se o evento focus não disparar (Safari mobile), libera após 3s
+              setTimeout(() => {
+                window.removeEventListener("focus", finalizar);
+                if (btnPrint.disabled) restaurarBotao();
+              }, 3000);
+            } catch (e) {
+              console.error("[imprimirEtiqueta] Erro no print:", e);
+              toast("Erro ao abrir impressão: " + e.message, "error");
+              restaurarBotao();
+            }
+          }, 300);
+        });
+      });
     } catch (e) {
-      toast("Erro ao abrir impressão: " + e.message, "error");
+      console.error("[imprimirEtiqueta] Erro ao escrever no iframe:", e);
+      toast("Erro ao preparar etiqueta: " + e.message, "error");
+      restaurarBotao();
     }
-  }, 500); // Aumentei de 0 para 500ms para garantir que o navegador não ignore o clique
+  };
+
+  // Se o iframe já tem window (raro), escreve direto. Senão espera onload.
+  if (iframe.contentWindow && iframe.contentWindow.document) {
+    // Timeout curto pra garantir que o novo iframe está no DOM
+    setTimeout(escreverEImprimir, 50);
+  } else {
+    iframe.onload = escreverEImprimir;
+  }
 };
 
 // RELATÓRIOS
