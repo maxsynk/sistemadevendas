@@ -1,5 +1,5 @@
 // ============================================
-// MAX REPRESENTAÇÃO — SITE v4.9
+// MAX REPRESENTAÇÃO — SITE v5.1
 // script.js
 // v4.5: Auth por WhatsApp+senha; pedido em aberto; sessão em localStorage
 // v4.6: Removida duplicação de variáveis e da função validarEstoqueCarrinho
@@ -1231,6 +1231,10 @@ function cancelarModoAdicao() {
   atualizarCarrinho();
 }
 
+// ============================================
+// ADICIONAR CARRINHO AO PEDIDO — v5.1
+// Revalida estoque antes de enviar (evita "0 pares" com 1 disponível)
+// ============================================
 async function adicionarCarrinhoAoPedido() {
   if (!modoAdicaoAtivo || !modoAdicaoChave) {
     alert("Modo adição inativo. Busque seu pedido novamente.");
@@ -1241,16 +1245,60 @@ async function adicionarCarrinhoAoPedido() {
     return;
   }
 
+  const btn = document.querySelector("#modalCarrinho #carrinhoEnviar");
+  const btnOriginal = btn ? btn.innerHTML : "";
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando estoque...';
+  }
+
+  // 1) Revalida produtos ANTES de enviar (descarta cache velho)
+  try {
+    const resVal = await fetch(API_BASE + "/publico/produtos");
+    const dataVal = await resVal.json();
+    if (dataVal.success && Array.isArray(dataVal.produtos)) {
+      produtosCache = dataVal.produtos;
+      for (const item of carrinho) {
+        const prod = produtosCache.find(p => p.id === item.produto_id);
+        if (prod) {
+          const v = (prod.grade || []).find(g => g.numeracao === item.numeracao);
+          item.estoque_atual = v ? (v.disponivel || 0) : 0;
+        } else {
+          item.estoque_atual = 0;
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("[adicionarCarrinhoAoPedido] Revalidação falhou, usando cache:", e.message);
+  }
+
+  // 2) Filtra itens sem estoque mínimo (avisa o cliente sem nem chamar a API)
+  const itensComProblema = carrinho.filter(it =>
+    it.estoque_atual !== undefined && it.estoque_atual < it.qtd
+  );
+
+  if (itensComProblema.length > 0) {
+    let msg = "⚠️ Alguns itens não têm estoque suficiente:\n\n";
+    for (const it of itensComProblema) {
+      msg += `❌ ${it.modelo} (Nº ${it.numeracao}) — Você quer ${it.qtd}, mas restam ${it.estoque_atual}.\n`;
+    }
+    msg += "\nPor favor, remova ou diminua esses itens antes de continuar.";
+    alert(msg);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = btnOriginal;
+    }
+    return;
+  }
+
+  // 3) Monta payload e envia
   const itens = carrinho.map(it => ({
     produto_id: it.produto_id,
     numeracao: it.numeracao,
     quantidade: it.qtd,
   }));
 
-  const btn = document.querySelector("#modalCarrinho #carrinhoEnviar");
-  const btnOriginal = btn.innerHTML;
-  btn.disabled = true;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adicionando...';
+  if (btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adicionando...';
 
   try {
     const res = await fetch(API_BASE + "/publico/meu-pedido/adicionar-itens", {
@@ -1267,8 +1315,10 @@ async function adicionarCarrinhoAoPedido() {
         for (const err of data.itens_com_erro) msg += `• ${err.motivo}\n`;
       }
       alert(msg);
-      btn.disabled = false;
-      btn.innerHTML = btnOriginal;
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = btnOriginal;
+      }
       return;
     }
 
@@ -1288,12 +1338,16 @@ async function adicionarCarrinhoAoPedido() {
     document.body.style.overflow = "hidden";
 
     let msg = `✅ ${data.itens_adicionados.length} item(ns) adicionado(s)!`;
-    if (data.itens_com_erro && data.itens_com_erro.length > 0) msg += ` (${data.itens_com_erro.length} com erro)`;
+    if (data.itens_com_erro && data.itens_com_erro.length > 0) {
+      msg += ` (${data.itens_com_erro.length} com erro)`;
+    }
     mostrarToastAdd(msg);
   } catch (e) {
     alert("Erro: " + e.message);
-    btn.disabled = false;
-    btn.innerHTML = btnOriginal;
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = btnOriginal;
+    }
   }
 }
 
