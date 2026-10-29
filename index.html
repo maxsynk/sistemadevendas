@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v7.7
+  MAX REPRESENTAÇÃO — HTML v7.8
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -5596,13 +5596,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v7.7
+// MAX REPRESENTAÇÃO — HTML v7.8
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "7.7";
+const APP_VERSION = "7.8";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -9095,9 +9095,8 @@ for (const it of itens) {
     }, 0);
   }
 
-  if (status === "reservado") {
+    if (status === "reservado") {
     acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarWhatsReservado"><i class="fab fa-whatsapp"></i> Enviar WhatsApp</button>`;
-    if (!pedido.orcamento_enviado) acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarOrcamento"><i class="fab fa-whatsapp"></i> Enviar Orçamento</button>`;
     if (temPermissao("editar_pedido")) acoesDiv.innerHTML += `<button class="btn btn-secondary" id="btnEditarPedido"><i class="fas fa-edit"></i> Editar Pedido</button>`;
     if (temPermissao("editar_pedido")) acoesDiv.innerHTML += `<button class="btn btn-secondary" id="btnLancarFrete"><i class="fas fa-truck"></i> Lançar Frete</button>`;
     if (pedido.valor_frete) acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarConfirmacao"><i class="fab fa-whatsapp"></i> Enviar Confirmação</button>`;
@@ -9114,8 +9113,9 @@ for (const it of itens) {
     if (temPermissao("cancelar_pedido")) acoesDiv.innerHTML += `<button class="btn btn-danger" id="btnCancelarPedido"><i class="fas fa-times"></i> Cancelar</button>`;
       } else if (status === "conferido") {
     acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarWhatsConferido"><i class="fab fa-whatsapp"></i> Enviar WhatsApp</button>`;
+    if (!pedido.orcamento_enviado) acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarOrcamento"><i class="fab fa-whatsapp"></i> Enviar Orçamento</button>`;
     if (temPermissao("editar_pedido")) acoesDiv.innerHTML += `<button class="btn btn-secondary" id="btnLancarFrete"><i class="fas fa-truck"></i> Lançar Frete</button>`;
-    acoesDiv.innerHTML += `<button class="btn btn-primary" id="btnMarcarPago"><i class="fas fa-money-bill-wave"></i> Registrar Pagamento</button>`;
+    acoesDiv.innerHTML += `<button class="btn btn-primary" id="btnMarcarPago"><i class="fas fa-money-bill-wave"></i> Registrar Pagamento</button>`; 
     if (temPermissao("despacho")) acoesDiv.innerHTML += `<button class="btn btn-success" id="btnDespachar"><i class="fas fa-truck"></i> Despachar</button>`;
     if (temPermissao("cancelar_pedido")) acoesDiv.innerHTML += `<button class="btn btn-danger" id="btnCancelarPedido"><i class="fas fa-times"></i> Cancelar</button>`;
   } else if (status === "despachado") {
