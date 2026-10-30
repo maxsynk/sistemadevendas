@@ -1638,72 +1638,74 @@ function renderizarResumoFechamento() {
 }
 // ─── FIM: renderizarResumoFechamento ───
 
-// ─── INÍCIO: renderizarResumoFechamento (v5.2) ───
-// Recalcula o resumo do #fpResumo aplicando desconto do revendedor (se válido)
-function renderizarResumoFechamento() {
-  const resumoEl = document.getElementById("fpResumo");
-  if (!resumoEl) return;
-
-  const totalPares = carrinho.reduce((s, c) => s + c.qtd, 0);
-  const totalValorOriginal = carrinho.reduce((s, c) => s + (c.qtd * c.preco), 0);
-
-  // Calcula desconto se revendedor válido
-  let valorDesconto = 0;
-  if (descontoRevendedor && descontoRevendedor.valido) {
-    if (descontoRevendedor.desconto_tipo === "percentual") {
-      valorDesconto = totalValorOriginal * (descontoRevendedor.desconto_valor / 100);
-    } else {
-      // fixo por par
-      valorDesconto = totalPares * descontoRevendedor.desconto_valor;
-    }
-    if (valorDesconto > totalValorOriginal) valorDesconto = totalValorOriginal;
-  }
-  const valorFinal = totalValorOriginal - valorDesconto;
-
-  // Monta o HTML dos itens agrupados por produto
-  let html = "";
-  const porProduto = {};
-  for (const it of carrinho) {
-    if (!porProduto[it.produto_id]) porProduto[it.produto_id] = { modelo: it.modelo, cor: it.cor, itens: [] };
-    porProduto[it.produto_id].itens.push(it);
-  }
-  for (const k in porProduto) {
-    const p = porProduto[k];
-    html += `<div style="margin-bottom:8px"><strong>${p.modelo} — ${p.cor}</strong><br>`;
-    for (const it of p.itens) {
-      html += `<span style="color:var(--text-dim)">  • Nº ${it.numeracao}: ${it.qtd} ${it.qtd === 1 ? "par" : "pares"}</span><br>`;
-    }
-    html += `</div>`;
-  }
-
-  html += `<div class="total">Total de pares: ${totalPares}</div>`;
-  html += `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:13px;line-height:1.7">`;
-
-  if (valorDesconto > 0) {
-    html += `<div style="display:flex;justify-content:space-between;color:var(--text-dim)">
-      <span>Valor original</span>
-      <span style="text-decoration:line-through">${formatarMoeda(totalValorOriginal)}</span>
-    </div>`;
-    html += `<div style="display:flex;justify-content:space-between;color:var(--verde);font-weight:700">
-      <span>💼 Desconto revendedor</span>
-      <span>- ${formatarMoeda(valorDesconto)}</span>
-    </div>`;
-    html += `<div style="display:flex;justify-content:space-between;font-weight:900;font-size:16px;color:var(--roxo);margin-top:6px;padding-top:6px;border-top:1px dashed var(--border)">
-      <span>Total com desconto</span>
-      <span>${formatarMoeda(valorFinal)}</span>
-    </div>`;
-  } else {
-    html += `<div style="display:flex;justify-content:space-between;font-weight:900;font-size:16px;color:var(--roxo)">
-      <span>Valor estimado</span>
-      <span>${formatarMoeda(totalValorOriginal)}</span>
-    </div>`;
-  }
-
-  html += `</div>`;
-
-  resumoEl.innerHTML = html;
+// ─── INÍCIO: validação da chave de revendedor (v5.2) ───
+function agendarValidacaoChave() {
+  clearTimeout(validandoChaveTimer);
+  validandoChaveTimer = setTimeout(validarChaveRevendedor, 500);
 }
-// ─── FIM: renderizarResumoFechamento ───
+
+async function validarChaveRevendedor() {
+  const chave = (document.getElementById("fpChaveRevendedor").value || "").trim().toUpperCase();
+  const whatsapp = (document.getElementById("fpTelefone").value || "").trim();
+  const aviso = document.getElementById("descontoAviso");
+
+  const mostrarAviso = (cor, fundo, html) => {
+    aviso.style.display = "block";
+    aviso.style.background = fundo;
+    aviso.style.borderColor = cor;
+    aviso.style.color = cor;
+    aviso.innerHTML = html;
+  };
+
+  if (!chave) {
+    descontoRevendedor = null;
+    aviso.style.display = "none";
+    renderizarResumoFechamento();
+    return;
+  }
+  if (!whatsapp || whatsapp.replace(/\D/g, "").length < 10) {
+    descontoRevendedor = null;
+    mostrarAviso("var(--amarelo)", "rgba(245,158,11,0.1)", `<i class="fas fa-exclamation-triangle"></i> Preencha o WhatsApp antes de validar a chave.`);
+    renderizarResumoFechamento();
+    return;
+  }
+
+  try {
+    const res = await fetch(API_BASE + "/publico/validar-chave", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Site-Token": "max-site-2026" },
+      body: JSON.stringify({ chave, whatsapp }),
+    });
+    const data = await res.json();
+
+    if (!data.success) {
+      descontoRevendedor = null;
+      mostrarAviso("var(--error)", "rgba(239,68,68,0.1)", `<i class="fas fa-times-circle"></i> ${escapeHtml(data.error || "Chave inválida")}`);
+      renderizarResumoFechamento();
+      return;
+    }
+
+    descontoRevendedor = {
+      valido: true,
+      desconto_tipo: data.desconto_tipo,
+      desconto_valor: parseFloat(data.desconto_valor) || 0,
+      nome: data.nome,
+    };
+
+    const descStr = data.desconto_tipo === "percentual"
+      ? `${data.desconto_valor}% de desconto`
+      : `R$ ${parseFloat(data.desconto_valor).toFixed(2).replace(".", ",")} por par`;
+
+    mostrarAviso("var(--verde)", "rgba(34,197,94,0.12)", `<i class="fas fa-check-circle"></i> <div><strong>${escapeHtml(data.nome)}</strong> — Revendedor registrado<br>${descStr}</div>`);
+    renderizarResumoFechamento();
+  } catch (e) {
+    console.error("[validarChaveRevendedor]", e);
+    descontoRevendedor = null;
+    aviso.style.display = "none";
+    renderizarResumoFechamento();
+  }
+}
+// ─── FIM: validação da chave de revendedor ───
 function fecharFormFechamento() {
   document.getElementById("modalFecharPedido").classList.remove("active");
   document.body.style.overflow = "";
