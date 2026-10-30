@@ -8193,7 +8193,9 @@ document.getElementById("btnGerarChaveRevendedor").addEventListener("click", asy
     btn.innerHTML = '<i class="fas fa-key"></i> Gerar';
   }
 });  
-// CLIENTES
+// ============================================
+// SALVAR CLIENTE (CORRIGIDO - body stream)
+// ============================================
 document.getElementById("btnSalvarCliente").onclick = async () => {
   const nome = document.getElementById("cliNome").value.trim();
   if (!nome) return toast("Nome obrigatório", "error");
@@ -8237,15 +8239,32 @@ document.getElementById("btnSalvarCliente").onclick = async () => {
     chave_revendedor: chaveRevendedor,
     senha_admin: senhaAdmin,
   };
+
+  // Desabilita botão para evitar duplo clique
+  const btn = document.getElementById("btnSalvarCliente");
+  const textoOriginal = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+
   try {
     const res = await api("/clientes", {
       method: "POST",
       body: JSON.stringify(dados),
     });
+
+    // Lê o JSON UMA VEZ SÓ e guarda em 'd'
     const d = await res.json();
-    if (!d.success) throw new Error(d.error);
-       toast(isRevendedor ? "💼 Revendedor cadastrado!" : "Cliente cadastrado!");
+
+    // Se a resposta não for OK, lança o erro com a mensagem que veio do Worker
+    if (!res.ok || !d.success) {
+      throw new Error(d.error || "Erro desconhecido ao salvar cliente");
+    }
+
+    toast(isRevendedor ? "💼 Revendedor cadastrado!" : "Cliente cadastrado!");
+
+    // Limpa o formulário
     ["cliNome","cliCpf","cliTelefone","cliCep","cliEndereco","cliNumero","cliBairro","cliCidade","cliUf","cliPontoReferencia","cliObs"].forEach(id => document.getElementById(id).value = "");
+    
     // Limpa os campos de revendedor
     document.querySelector('input[name="cliTipoCliente"][value="comum"]').checked = true;
     document.getElementById("cliRevendedorWrap").style.display = "none";
@@ -8253,8 +8272,16 @@ document.getElementById("btnSalvarCliente").onclick = async () => {
     document.getElementById("cliDescontoValor").value = "";
     document.getElementById("cliChaveRevendedor").value = "";
     document.getElementById("cliSenhaAdmin").value = "";
+    
     await carregarClientes(); 
-  } catch (e) { toast("Erro: " + e.message, "error"); }
+  } catch (e) {
+    // Agora o erro vai mostrar a mensagem real (ex: "Senha do admin incorreta")
+    toast("Erro: " + e.message, "error");
+  } finally {
+    // Restaura o botão
+    btn.disabled = false;
+    btn.innerHTML = textoOriginal;
+  }
 };
   // ============================================
 // BUSCA DE CLIENTES CADASTRADOS
