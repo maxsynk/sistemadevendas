@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v8.4
+  MAX REPRESENTAÇÃO — HTML v8.5
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -5596,13 +5596,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v8.4
+// MAX REPRESENTAÇÃO — HTML v8.5
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "8.4";
+const APP_VERSION = "8.5";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -6019,19 +6019,47 @@ function tocarSomOk() {
   } catch (e) {}
 }
 
-// API WRAPPER
+// ============================================
+// API WRAPPER — v8.5 (corrige body stream already read)
+// Retorna { ok, status, data } e NUNCA mais precisa de .json()
+// ============================================
 async function api(path, opcoes = {}) {
   const headers = { "Content-Type": "application/json", ...(opcoes.headers || {}) };
   if (tokenAtual) headers["Authorization"] = "Bearer " + tokenAtual;
-  const res = await fetch(API_BASE + path, { ...opcoes, headers });
-  if (res.status === 401) {
-    const data = await res.json().catch(() => ({}));
-    if (data.precisa_login) {
-      fazerLogout("Sessão expirada. Faça login novamente.");
-      throw new Error("Sessão expirada");
-    }
+
+  let res;
+  try {
+    res = await fetch(API_BASE + path, { ...opcoes, headers });
+  } catch (e) {
+    throw new Error("Falha de conexão com o servidor: " + e.message);
   }
-  return res;
+
+  // Lê o corpo UMA ÚNICA VEZ
+  let data = null;
+  const contentType = res.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    try { data = await res.json(); } catch (e) { data = null; }
+  } else {
+    // Se não for JSON (ex: erro 502 do Cloudflare), pega texto
+    try { data = { error: await res.text() }; } catch (e) { data = null; }
+  }
+
+  // Sessão expirada
+  if (res.status === 401 && data && data.precisa_login) {
+    fazerLogout("Sessão expirada. Faça login novamente.");
+    throw new Error("Sessão expirada");
+  }
+
+  // Se a resposta não for OK, joga o erro pra cima com a mensagem do Worker
+  if (!res.ok) {
+    const msg = (data && data.error) ? data.error : `HTTP ${res.status}`;
+    const err = new Error(msg);
+    err.status = res.status;
+    err.data = data;
+    throw err;
+  }
+
+  return data;
 }
 
 // HELPERS
@@ -8194,20 +8222,16 @@ document.getElementById("btnGerarChaveRevendedor").addEventListener("click", asy
   }
 });  
 // ============================================
-// SALVAR CLIENTE (CORRIGIDO - body stream)
+// SALVAR CLIENTE (v8.5 — compatível com nova api())
 // ============================================
 document.getElementById("btnSalvarCliente").onclick = async () => {
   const nome = document.getElementById("cliNome").value.trim();
   if (!nome) return toast("Nome obrigatório", "error");
 
-  // Verifica se é revendedor
   const tipoRadio = document.querySelector('input[name="cliTipoCliente"]:checked');
   const isRevendedor = tipoRadio && tipoRadio.value === "revendedor";
 
-  let descontoTipo = null;
-  let descontoValor = 0;
-  let chaveRevendedor = null;
-  let senhaAdmin = null;
+  let descontoTipo = null, descontoValor = 0, chaveRevendedor = null, senhaAdmin = null;
 
   if (isRevendedor) {
     descontoTipo = document.getElementById("cliDescontoTipo").value;
@@ -8240,45 +8264,31 @@ document.getElementById("btnSalvarCliente").onclick = async () => {
     senha_admin: senhaAdmin,
   };
 
-  // Desabilita botão para evitar duplo clique
   const btn = document.getElementById("btnSalvarCliente");
   const textoOriginal = btn.innerHTML;
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
 
   try {
-    const res = await api("/clientes", {
+    const d = await api("/clientes", {
       method: "POST",
       body: JSON.stringify(dados),
     });
 
-    // Lê o JSON UMA VEZ SÓ e guarda em 'd'
-    const d = await res.json();
-
-    // Se a resposta não for OK, lança o erro com a mensagem que veio do Worker
-    if (!res.ok || !d.success) {
-      throw new Error(d.error || "Erro desconhecido ao salvar cliente");
-    }
-
     toast(isRevendedor ? "💼 Revendedor cadastrado!" : "Cliente cadastrado!");
 
-    // Limpa o formulário
     ["cliNome","cliCpf","cliTelefone","cliCep","cliEndereco","cliNumero","cliBairro","cliCidade","cliUf","cliPontoReferencia","cliObs"].forEach(id => document.getElementById(id).value = "");
-    
-    // Limpa os campos de revendedor
     document.querySelector('input[name="cliTipoCliente"][value="comum"]').checked = true;
     document.getElementById("cliRevendedorWrap").style.display = "none";
     document.getElementById("cliDescontoTipo").value = "fixo";
     document.getElementById("cliDescontoValor").value = "";
     document.getElementById("cliChaveRevendedor").value = "";
     document.getElementById("cliSenhaAdmin").value = "";
-    
-    await carregarClientes(); 
+
+    await carregarClientes();
   } catch (e) {
-    // Agora o erro vai mostrar a mensagem real (ex: "Senha do admin incorreta")
     toast("Erro: " + e.message, "error");
   } finally {
-    // Restaura o botão
     btn.disabled = false;
     btn.innerHTML = textoOriginal;
   }
