@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v8.2
+  MAX REPRESENTAÇÃO — HTML v8.3
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -5596,13 +5596,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v8.2
+// MAX REPRESENTAÇÃO — HTML v8.3
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "8.2";
+const APP_VERSION = "8.3";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -8714,7 +8714,7 @@ async function renderizarGradePedido(produtoId) {
     const fotoUrl = produto?.foto_url || data.variacoes[0]?.foto_url || null;
     wrap.innerHTML = "";
     for (const v of vars) {
-      const disponivel = (v.estoque_atual || 0) - (v.estoque_reservado || 0);
+      const disponivel = (v.estoque_atual || 0);
       const item = document.createElement("div");
       item.className = "grade-entrada-item";
       item.dataset.vid = v.id;
@@ -9210,7 +9210,7 @@ async function editarPedidoAtual() {
     variacao_id: it.variacao_id, numeracao: it.numeracao, quantidade: it.quantidade,
     preco_unitario: it.preco_unitario, produto_id: null,
     modelo: it.modelo, cor: it.cor, foto_url: it.foto_url || null,
-    estoque_disponivel: (it.estoque_atual || 0) - (it.estoque_reservado || 0) + it.quantidade,
+    estoque_disponivel: (it.estoque_atual || 0) + it.quantidade,
   }));
   editandoPedido = pedido;
   clienteSelecionadoId = pedido.cliente_id;
