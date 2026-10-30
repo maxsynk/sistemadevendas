@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v8.1
+  MAX REPRESENTAÇÃO — HTML v8.2
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -5596,13 +5596,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v8.1
+// MAX REPRESENTAÇÃO — HTML v8.2
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "8.1";
+const APP_VERSION = "8.2";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -9056,9 +9056,49 @@ for (const it of itens) {
     : "";
   itensHTML += `<div class="detalhe-item" style="${estiloNovo}">${it.foto_url ? `<img src="${it.foto_url}">` : `<div class="vazio"><i class="fas fa-image"></i></div>`}<div class="info"><div class="nome">${it.modelo} — ${it.cor} ${badgeNovo}</div><div class="detalhes">Nº ${it.numeracao} · ${it.codigo_barras || ""} · ${formatarMoeda(it.preco_unitario)} cada</div></div><div class="qtd">${it.quantidade}x</div><div class="subtotal">${formatarMoeda(subtotal)}</div></div>`;
 }
+    // ─── v8.2: Financeiro detalhado por preço ───
   const frete = parseFloat(pedido.valor_frete) || 0;
   const totalFinal = parseFloat(pedido.total) + frete;
-  const financeiroHTML = `<div class="detalhe-row"><span class="label">Subtotal (produtos)</span><span class="valor">${formatarMoeda(pedido.total)}</span></div><div class="detalhe-row"><span class="label">Frete ${pedido.transportadora ? `(${pedido.transportadora})` : ""}</span><span class="valor">${formatarMoeda(frete)}</span></div><div class="detalhe-row" style="border-top:2px solid var(--neon);padding-top:12px;font-size:16px"><span class="label" style="color:var(--neon);font-weight:700">TOTAL</span><span class="valor" style="color:var(--neon);font-size:18px;font-weight:800">${formatarMoeda(totalFinal)}</span></div>`;
+
+  // Agrupa itens por preço unitário (ex: 5 x R$40,00, 8 x R$45,00)
+  const gruposPreco = {};
+  for (const it of itens) {
+    const preco = parseFloat(it.preco_unitario) || 0;
+    const chave = preco.toFixed(2);
+    if (!gruposPreco[chave]) gruposPreco[chave] = { preco, qtd: 0, subtotal: 0 };
+    gruposPreco[chave].qtd += parseInt(it.quantidade) || 0;
+    gruposPreco[chave].subtotal += (parseInt(it.quantidade) || 0) * preco;
+  }
+  const gruposOrdenados = Object.values(gruposPreco).sort((a, b) => a.preco - b.preco);
+
+  let linhasPrecoHTML = "";
+  for (const g of gruposOrdenados) {
+    linhasPrecoHTML += `<div class="detalhe-row" style="padding:6px 0">
+      <span class="label" style="color:var(--text-secondary)">
+        <strong style="color:var(--neon)">${g.qtd}x</strong> R$ ${g.preco.toFixed(2).replace(".", ",")}
+      </span>
+      <span class="valor" style="color:var(--text-primary)">${formatarMoeda(g.subtotal)}</span>
+    </div>`;
+  }
+
+  // Verifica se é revendedor e tem desconto
+  const temDescontoFin = pedido.desconto_aplicado && parseFloat(pedido.desconto_aplicado) > 0;
+  const valorOriginalFin = parseFloat(pedido.valor_original) || parseFloat(pedido.total) || 0;
+  const descontoFin = parseFloat(pedido.desconto_aplicado) || 0;
+  const subtotalFin = temDescontoFin ? valorOriginalFin : parseFloat(pedido.total) || 0;
+
+  let financeiroHTML = `<div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px">Detalhamento por preço</div>`;
+  financeiroHTML += linhasPrecoHTML || `<div style="color:var(--text-dim);font-size:12px;padding:8px 0">Sem itens</div>`;
+  financeiroHTML += `<div class="detalhe-row" style="border-top:1px solid var(--border);margin-top:8px;padding-top:10px"><span class="label">Subtotal (produtos)</span><span class="valor">${formatarMoeda(subtotalFin)}</span></div>`;
+
+  if (temDescontoFin) {
+    financeiroHTML += `<div class="detalhe-row"><span class="label" style="color:var(--success)">💼 Desconto revendedor</span><span class="valor" style="color:var(--success);font-weight:700">- ${formatarMoeda(descontoFin)}</span></div>`;
+    financeiroHTML += `<div class="detalhe-row"><span class="label" style="color:var(--text-secondary);font-style:italic">Subtotal com desconto</span><span class="valor" style="color:var(--verde);font-weight:700">${formatarMoeda(subtotalFin - descontoFin)}</span></div>`;
+  }
+
+  financeiroHTML += `<div class="detalhe-row"><span class="label">Frete ${pedido.transportadora ? `(${pedido.transportadora})` : ""}</span><span class="valor">${formatarMoeda(frete)}</span></div>`;
+  financeiroHTML += `<div class="detalhe-row" style="border-top:2px solid var(--neon);padding-top:12px;font-size:16px"><span class="label" style="color:var(--neon);font-weight:700">TOTAL</span><span class="valor" style="color:var(--neon);font-size:18px;font-weight:800">${formatarMoeda(totalFinal)}</span></div>`;
+  // ─── FIM: Financeiro detalhado ───
   document.getElementById("modalPedidoConteudo").innerHTML = `
     ${timelineHTML}
     ${avisoPago}
@@ -9070,12 +9110,19 @@ for (const it of itens) {
       <div class="detalhe-row"><span class="label">CEP</span><span class="valor">${pedido.cliente_cep || "—"}</span></div>
       ${pedido.cliente_ponto_referencia ? `<div class="detalhe-row"><span class="label">⭐ Ponto de Referência</span><span class="valor" style="color:var(--warning)">${pedido.cliente_ponto_referencia}</span></div>` : ''}
     </div>
-        <div class="detalhe-secao"><h5><i class="fas fa-shoe-prints"></i> Itens (${itens.length})</h5>
+                <div class="detalhe-secao"><h5><i class="fas fa-shoe-prints"></i> Itens (${itens.length}) — ${itens.reduce((s, it) => s + (parseInt(it.quantidade) || 0), 0)} pares</h5>
       ${totalNovos > 0 ? `<div class="detalhe-site-status falta"><i class="fas fa-plus-circle"></i><span><strong>${totalNovos} par(es) NOVO(S)</strong> adicionado(s) pelo cliente neste pedido. Separe os itens destacados.</span></div>` : ""}
       ${itensHTML || '<div class="empty" style="padding:20px"><p>Nenhum item</p></div>'}
     </div>
     <div class="detalhe-secao"><h5><i class="fas fa-dollar-sign"></i> Financeiro</h5>${financeiroHTML}</div>
-    <div class="detalhe-secao"><h5><i class="fas fa-info-circle"></i> Observações</h5><p style="font-size:13px;color:var(--text-secondary)">${pedido.observacoes || "Sem observações"}</p><div class="detalhe-row" style="margin-top:12px"><span class="label">Criado em</span><span class="valor">${formatarDataHora(pedido.criado_em)}</span></div><div class="detalhe-row"><span class="label">Operador</span><span class="valor">${pedido.operador || "—"}</span></div></div>
+        <div class="detalhe-secao">
+      <h5><i class="fas fa-info-circle"></i> Observações</h5>
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">${pedido.observacoes || "Sem observações"}</p>
+      <div class="detalhe-row"><span class="label">Total de pares (confirmado)</span><span class="valor" style="color:var(--neon);font-weight:800">${itens.reduce((s, it) => s + (parseInt(it.quantidade) || 0), 0)}</span></div>
+      <div class="detalhe-row"><span class="label">Itens distintos</span><span class="valor">${itens.length}</span></div>
+      <div class="detalhe-row"><span class="label">Criado em</span><span class="valor">${formatarDataHora(pedido.criado_em)}</span></div>
+      <div class="detalhe-row"><span class="label">Operador</span><span class="valor">${pedido.operador || "—"}</span></div>
+    </div>
   `;
 
   const acoesDiv = document.getElementById("modalPedidoAcoes");
