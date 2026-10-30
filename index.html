@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v8.5
+  MAX REPRESENTAÇÃO — HTML v8.6
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -5596,13 +5596,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v8.5
+// MAX REPRESENTAÇÃO — HTML v8.6
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "8.5";
+const APP_VERSION = "8.6";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -6023,25 +6023,51 @@ function tocarSomOk() {
 // API WRAPPER — v8.5 (corrige body stream already read)
 // Retorna { ok, status, data } e NUNCA mais precisa de .json()
 // ============================================
+// ============================================
+// API WRAPPER — v8.6 (HÍBRIDO E RETROCOMPATÍVEL)
+// Lê o corpo da resposta uma única vez.
+// Compatível com:
+//   const res = await api(...); const d = await res.json();
+//   const d = await api(...);   // acesso direto: d.success, d.chave etc.
+// ============================================
 async function api(path, opcoes = {}) {
-  const headers = { "Content-Type": "application/json", ...(opcoes.headers || {}) };
-  if (tokenAtual) headers["Authorization"] = "Bearer " + tokenAtual;
+  const headers = {
+    "Content-Type": "application/json",
+    ...(opcoes.headers || {})
+  };
+
+  if (tokenAtual) {
+    headers["Authorization"] = "Bearer " + tokenAtual;
+  }
 
   let res;
+
   try {
-    res = await fetch(API_BASE + path, { ...opcoes, headers });
+    res = await fetch(API_BASE + path, {
+      ...opcoes,
+      headers
+    });
   } catch (e) {
     throw new Error("Falha de conexão com o servidor: " + e.message);
   }
 
-  // Lê o corpo UMA ÚNICA VEZ
+  // O corpo é consumido UMA ÚNICA VEZ como texto.
+  // Depois disso, o JSON é interpretado localmente, sem reler o stream.
+  let bodyText = "";
+  try {
+    bodyText = await res.text();
+  } catch (e) {
+    bodyText = "";
+  }
+
   let data = null;
-  const contentType = res.headers.get("content-type") || "";
-  if (contentType.includes("application/json")) {
-    try { data = await res.json(); } catch (e) { data = null; }
-  } else {
-    // Se não for JSON (ex: erro 502 do Cloudflare), pega texto
-    try { data = { error: await res.text() }; } catch (e) { data = null; }
+
+  if (bodyText) {
+    try {
+      data = JSON.parse(bodyText);
+    } catch (e) {
+      data = { error: bodyText };
+    }
   }
 
   // Sessão expirada
@@ -6050,16 +6076,32 @@ async function api(path, opcoes = {}) {
     throw new Error("Sessão expirada");
   }
 
-  // Se a resposta não for OK, joga o erro pra cima com a mensagem do Worker
+  // Resposta híbrida: mantém compatibilidade com chamadas antigas
+  // que esperam Response.json(), e com chamadas novas que acessam d.chave.
+  const respostaHibrida = {
+    ...(data && typeof data === "object" ? data : {}),
+    ok: res.ok,
+    status: res.status,
+    statusText: res.statusText,
+    headers: res.headers,
+    json: async () => data,
+    text: async () => bodyText
+  };
+
+  // Erros HTTP preservam a mensagem enviada pelo Worker.
   if (!res.ok) {
-    const msg = (data && data.error) ? data.error : `HTTP ${res.status}`;
+    const msg =
+      data && typeof data === "object" && data.error
+        ? data.error
+        : `HTTP ${res.status}`;
+
     const err = new Error(msg);
     err.status = res.status;
     err.data = data;
     throw err;
   }
 
-  return data;
+  return respostaHibrida;
 }
 
 // HELPERS
