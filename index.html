@@ -9064,7 +9064,43 @@ async function abrirDetalhePedido(id) {
     if (!data.success) throw new Error(data.error);
     
     pedidoAtual = data;
-    renderizarDetalhePedido(); // Preenche os detalhes com os itens e fotos
+
+    // ─── v8.7: Fallback se houver inconsistência ───
+    // Se o pedido oficial tem poucos itens, mas há um pedido do site
+    // vinculado com mais itens no itens_json, avisa na tela.
+    try {
+      const resSite = await api(`/pedidos-site`);
+      const dataSite = await resSite.json();
+      if (dataSite.success) {
+        const psLinkado = (dataSite.pedidos || []).find(p => p.pedido_id === id);
+        if (psLinkado && psLinkado.status === "aprovado") {
+          // Busca detalhe completo do pedido do site
+          const resDet = await api(`/pedidos-site/buscar?chave=${encodeURIComponent(psLinkado.chave)}`);
+          const dataDet = await resDet.json();
+          if (dataDet.success && dataDet.pedido) {
+            const itensSite = (dataDet.pedido.itens || []).filter(i => i.adicionado_depois === true);
+            if (itensSite.length > 0) {
+              // Tem itens marcados como adicionado_depois → verifica se estão no pedido oficial
+              const itensOficiais = data.itens || [];
+              const faltando = itensSite.filter(si => {
+                return !itensOficiais.some(oi =>
+                  oi.variacao_id === si.variacao_id && oi.qtd_nova > 0
+                );
+              });
+              if (faltando.length > 0) {
+                console.warn(`[abrirDetalhePedido] Inconsistência detectada no pedido #${id}. Itens no site que não estão marcados no oficial:`, faltando);
+                data._itens_site_pendentes = faltando;
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("[abrirDetalhePedido] Fallback de site falhou:", e.message);
+    }
+    // ─── FIM do fallback ───
+
+    renderizarDetalhePedido();
   } catch (e) { 
     document.getElementById("modalPedidoConteudo").innerHTML = `<div class="empty"><h2>Erro</h2><p>${e.message}</p></div>`;
     toast("Erro ao carregar pedido", "error"); 
@@ -9111,6 +9147,15 @@ function renderizarDetalhePedido() {
       if (i < idxAtual) cls += " concluido";
       else if (i === idxAtual) cls += " ativo";
     }
+      // Aviso de inconsistência detectada
+  let avisoInconsistencia = "";
+  if (pedidoAtual._itens_site_pendentes && pedidoAtual._itens_site_pendentes.length > 0) {
+    avisoInconsistencia = `<div style="background:rgba(239,68,68,0.12);border:2px solid var(--error);border-radius:10px;padding:12px;margin-bottom:16px;font-size:12px;color:var(--error);">
+      <strong><i class="fas fa-exclamation-triangle"></i> ATENÇÃO — Inconsistência detectada</strong><br>
+      O cliente adicionou ${pedidoAtual._itens_site_pendentes.length} item(ns) no site, mas o pedido oficial não registrou. 
+      Verifique o pedido do site pela chave ou peça ao cliente reenviar.
+    </div>`;
+  }
     timelineHTML += `<div class="${cls}"><i class="fas ${icones[p]} icon"></i>${labels[p]}</div>`;
   });
   timelineHTML += '</div>';
@@ -9178,7 +9223,8 @@ for (const it of itens) {
   financeiroHTML += `<div class="detalhe-row"><span class="label">Frete ${pedido.transportadora ? `(${pedido.transportadora})` : ""}</span><span class="valor">${formatarMoeda(frete)}</span></div>`;
   financeiroHTML += `<div class="detalhe-row" style="border-top:2px solid var(--neon);padding-top:12px;font-size:16px"><span class="label" style="color:var(--neon);font-weight:700">TOTAL</span><span class="valor" style="color:var(--neon);font-size:18px;font-weight:800">${formatarMoeda(totalFinal)}</span></div>`;
   // ─── FIM: Financeiro detalhado ───
-  document.getElementById("modalPedidoConteudo").innerHTML = `
+   document.getElementById("modalPedidoConteudo").innerHTML = `
+    ${avisoInconsistencia}
     ${timelineHTML}
     ${avisoPago}
     <div class="detalhe-secao"><h5><i class="fas fa-user"></i> Cliente</h5>
