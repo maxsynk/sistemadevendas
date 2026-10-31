@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v8.7
+  MAX REPRESENTAÇÃO — HTML v8.8
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -5596,13 +5596,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v8.7
+// MAX REPRESENTAÇÃO — HTML v8.8
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "8.7";
+const APP_VERSION = "8.8";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -11844,13 +11844,23 @@ async function carregarListaPedidosSite() {
   try {
     let url = "/pedidos-site";
     if (filtroStatusPedidosSite) url += "?status=" + filtroStatusPedidosSite;
+    
     const res = await api(url);
     const data = await res.json();
     if (!data.success) throw new Error(data.error);
 
-    pedidosSiteCache = data.pedidos || [];
+    let pedidos = data.pedidos || [];
 
-    let lista = pedidosSiteCache;
+    // Se o filtro for "pendente", mostramos também os aprovados com edição não vista
+    if (filtroStatusPedidosSite === "pendente") {
+      pedidos = pedidos.filter(p => 
+        p.status === "pendente" || (p.status === "aprovado" && p.edicao_nao_vista === 1)
+      );
+    }
+
+    pedidosSiteCache = pedidos;
+
+    let lista = pedidos;
     if (filtroChavePedidosSite) {
       const f = filtroChavePedidosSite.toLowerCase();
       lista = lista.filter(p =>
@@ -11866,8 +11876,20 @@ async function carregarListaPedidosSite() {
 
     wrap.innerHTML = "";
     for (const p of lista) {
-      const classeStatus = p.status === "aprovado" ? "aprovado"
-                         : p.status === "rejeitado" ? "rejeitado" : "";
+      // Define a classe visual
+      let classeStatus = "";
+      if (p.status === "aprovado") classeStatus = "aprovado";
+      else if (p.status === "rejeitado") classeStatus = "rejeitado";
+
+      // Se for aprovado mas tiver edição pendente, adiciona um destaque
+      const temEdicao = p.edicao_nao_vista === 1;
+      const badgeEdicao = temEdicao ? `<span style="background:var(--warning); color:#000; font-size:10px; font-weight:900; padding:2px 8px; border-radius:4px; margin-left:8px; text-transform:uppercase;">Itens Novos</span>` : "";
+      
+      // Se for aprovado + edição, força a borda amarela (classe "pendente") para chamar atenção
+      if (temEdicao && p.status === "aprovado") {
+        classeStatus = "pendente";
+      }
+
       const div = document.createElement("div");
       div.className = "pre-pedido-item " + classeStatus;
       div.innerHTML = `
@@ -11876,7 +11898,7 @@ async function carregarListaPedidosSite() {
           <div class="val">${p.chave}</div>
         </div>
         <div class="info">
-          <h4>${escapeHtml(p.nome_cliente)}</h4>
+          <h4>${escapeHtml(p.nome_cliente)} ${badgeEdicao}</h4>
           <div class="det"><i class="fas fa-phone"></i> ${escapeHtml(p.telefone_cliente)}</div>
           ${p.cidade_estado ? `<div class="det"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(p.cidade_estado)}</div>` : ""}
           <div class="det" style="margin-top:6px">
@@ -11899,10 +11921,10 @@ async function carregarListaPedidosSite() {
     wrap.querySelectorAll("[data-ver]").forEach(btn => {
       btn.onclick = () => abrirDetalhePedidoSite(parseInt(btn.dataset.ver));
     });
-  } catch (e) { // <--- O CATCH TEM QUE VIR LOGO DEPOIS DO FOR EACH
+  } catch (e) { 
     wrap.innerHTML = `<div class="empty"><h2>Erro</h2><p>${e.message}</p></div>`;
   }
-}    
+}
 
 async function abrirDetalhePedidoSite(id) {
   const modal = document.getElementById("modalDetalhePedidoSite");
