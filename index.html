@@ -11919,6 +11919,10 @@ async function abrirDetalhePedidoSite(id) {
     if (!data.success) throw new Error(data.error);
     pedidoSiteDetalheAtual = data.pedido;
     renderizarDetalhePedidoSite(data.pedido);
+        // Avisa o Worker que o admin já viu essa edição
+    if (data.pedido.edicao_nao_vista === 1) {
+      api(`/pedidos-site/${data.pedido.id}/marcar-edicao-vista`, { method: "POST" }).catch(() => {});
+    }
   } catch (e) {
     conteudo.innerHTML = `<div class="empty"><h2>Erro</h2><p>${e.message}</p></div>`;
   }
@@ -12206,38 +12210,51 @@ async function verificarPedidosSite() {
     const data = await res.json();
     if (!data.success) return;
 
-    const total = parseInt(data.total) || 0;
-    const temPendente = total > 0;
+    const totalNovos = parseInt(data.total) || 0;
+    const totalEdicoes = parseInt(data.total_edicoes) || 0;
+    const totalGlobal = totalNovos + totalEdicoes;
+
+    const temAlerta = totalGlobal > 0;
 
     const alerta = document.getElementById("pedidosSiteAlerta");
-    if (alerta) alerta.classList.toggle("alerta-ativo", temPendente);
+    if (alerta) alerta.classList.toggle("alerta-ativo", temAlerta);
 
     const titulo = document.getElementById("pedidosSiteAlertaTitulo");
-    if (titulo) titulo.textContent = total === 1
-      ? "Você tem 1 pedido recebido do site"
-      : `Você tem ${total} pedidos recebidos do site`;
+    if (titulo) {
+      if (totalNovos > 0 && totalEdicoes > 0) {
+        titulo.textContent = `Você tem ${totalNovos} pedido(s) novo(s) e ${totalEdicoes} edição(ões) pendente(s)`;
+      } else if (totalNovos > 0) {
+        titulo.textContent = totalNovos === 1
+          ? "Você tem 1 pedido novo aguardando aprovação"
+          : `Você tem ${totalNovos} pedidos novos aguardando aprovação`;
+      } else if (totalEdicoes > 0) {
+        titulo.textContent = totalEdicoes === 1
+          ? "Você tem 1 pedido com itens novos adicionados"
+          : `Você tem ${totalEdicoes} pedidos com itens novos adicionados`;
+      }
+    }
 
     const badge = document.getElementById("badgePedidosSite");
-    if (badge) badge.textContent = total;
+    if (badge) badge.textContent = totalGlobal;
 
     const tab = document.querySelector('.tab[data-aba="pedidos"]');
-    if (tab) tab.classList.toggle("tab-pedidos-pendente", temPendente);
+    if (tab) tab.classList.toggle("tab-pedidos-pendente", temAlerta);
 
     const drawer = document.querySelector('.drawer-item[data-aba="pedidos"]');
-    if (drawer) drawer.classList.toggle("drawer-pedidos-pendente", temPendente);
+    if (drawer) drawer.classList.toggle("drawer-pedidos-pendente", temAlerta);
 
-    // Chegou pedido novo: reativa e toca o som
+    // Chegou pedido novo ou edição: reativa e toca o som
     const modalAberto = document.getElementById("modalPedidosSite").classList.contains("active");
-    if (total > _ultimoTotalPedidosSite) {
+    if (totalGlobal > _ultimoTotalPedidosSite) {
       if (!modalAberto) {
         somPedidoSiteAtivo = true;
         tocarSomPedidoSite();
       }
-      toast(`🛍️ ${total} pedido(s) do site aguardando aprovação`, "info");
+      toast(`🛍️ Notificação: ${totalGlobal} pedido(s)/edição(ões) no site`, "info");
     }
     if (!modalAberto) somPedidoSiteAtivo = true;
 
-    _ultimoTotalPedidosSite = total;
+    _ultimoTotalPedidosSite = totalGlobal;
   } catch (e) {
     console.log("[pedidos-site]", e.message);
   }
