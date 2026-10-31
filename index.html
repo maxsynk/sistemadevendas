@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v8.8
+  MAX REPRESENTAÇÃO — HTML v8.9
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -5596,13 +5596,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v8.8
+// MAX REPRESENTAÇÃO — HTML v8.9
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "8.8";
+const APP_VERSION = "8.9";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -9065,40 +9065,8 @@ async function abrirDetalhePedido(id) {
     
     pedidoAtual = data;
 
-    // ─── v8.7: Fallback se houver inconsistência ───
-    // Se o pedido oficial tem poucos itens, mas há um pedido do site
-    // vinculado com mais itens no itens_json, avisa na tela.
-    try {
-      const resSite = await api(`/pedidos-site`);
-      const dataSite = await resSite.json();
-      if (dataSite.success) {
-        const psLinkado = (dataSite.pedidos || []).find(p => p.pedido_id === id);
-        if (psLinkado && psLinkado.status === "aprovado") {
-          // Busca detalhe completo do pedido do site
-          const resDet = await api(`/pedidos-site/buscar?chave=${encodeURIComponent(psLinkado.chave)}`);
-          const dataDet = await resDet.json();
-          if (dataDet.success && dataDet.pedido) {
-            const itensSite = (dataDet.pedido.itens || []).filter(i => i.adicionado_depois === true);
-            if (itensSite.length > 0) {
-              // Tem itens marcados como adicionado_depois → verifica se estão no pedido oficial
-              const itensOficiais = data.itens || [];
-              const faltando = itensSite.filter(si => {
-                return !itensOficiais.some(oi =>
-                  oi.variacao_id === si.variacao_id && oi.qtd_nova > 0
-                );
-              });
-              if (faltando.length > 0) {
-                console.warn(`[abrirDetalhePedido] Inconsistência detectada no pedido #${id}. Itens no site que não estão marcados no oficial:`, faltando);
-                data._itens_site_pendentes = faltando;
-              }
-            }
-          }
-        }
-      }
-    } catch (e) {
-      console.warn("[abrirDetalhePedido] Fallback de site falhou:", e.message);
-    }
-    // ─── FIM do fallback ───
+    // REMOVIDO: O bloco de verificação que gerava o "falso positivo" foi retirado.
+    // Agora o painel confia 100% nos itens que o banco de dados oficial retornar.
 
     renderizarDetalhePedido();
   } catch (e) { 
