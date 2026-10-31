@@ -11842,20 +11842,22 @@ async function carregarListaPedidosSite() {
   wrap.innerHTML = '<div class="loader"></div>';
 
   try {
-    let url = "/pedidos-site";
-    if (filtroStatusPedidosSite) url += "?status=" + filtroStatusPedidosSite;
-    
-    const res = await api(url);
+    // Puxa todos os pedidos do site
+    const res = await api("/pedidos-site");
     const data = await res.json();
     if (!data.success) throw new Error(data.error);
 
     let pedidos = data.pedidos || [];
 
-    // Se o filtro for "pendente", mostramos também os aprovados com edição não vista
+    // Se o filtro for "pendente", mostra os novos E os aprovados com itens novos
     if (filtroStatusPedidosSite === "pendente") {
       pedidos = pedidos.filter(p => 
         p.status === "pendente" || (p.status === "aprovado" && p.edicao_nao_vista === 1)
       );
+    } else if (filtroStatusPedidosSite === "aprovado") {
+      pedidos = pedidos.filter(p => p.status === "aprovado" && p.edicao_nao_vista === 0);
+    } else if (filtroStatusPedidosSite === "rejeitado") {
+      pedidos = pedidos.filter(p => p.status === "rejeitado");
     }
 
     pedidosSiteCache = pedidos;
@@ -11876,19 +11878,12 @@ async function carregarListaPedidosSite() {
 
     wrap.innerHTML = "";
     for (const p of lista) {
-      // Define a classe visual
-      let classeStatus = "";
-      if (p.status === "aprovado") classeStatus = "aprovado";
-      else if (p.status === "rejeitado") classeStatus = "rejeitado";
-
-      // Se for aprovado mas tiver edição pendente, adiciona um destaque
       const temEdicao = p.edicao_nao_vista === 1;
-      const badgeEdicao = temEdicao ? `<span style="background:var(--warning); color:#000; font-size:10px; font-weight:900; padding:2px 8px; border-radius:4px; margin-left:8px; text-transform:uppercase;">Itens Novos</span>` : "";
       
-      // Se for aprovado + edição, força a borda amarela (classe "pendente") para chamar atenção
-      if (temEdicao && p.status === "aprovado") {
-        classeStatus = "pendente";
-      }
+      // Força o destaque amarelo se for edição de pedido aprovado
+      const classeStatus = (p.status === "aprovado" && temEdicao) ? "pendente" : p.status;
+      
+      const badgeEdicao = temEdicao ? `<span style="background:var(--warning); color:#000; font-size:10px; font-weight:900; padding:2px 8px; border-radius:4px; margin-left:8px; text-transform:uppercase;">Itens Novos</span>` : "";
 
       const div = document.createElement("div");
       div.className = "pre-pedido-item " + classeStatus;
