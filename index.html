@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!--
   ============================================
-  MAX REPRESENTAÇÃO — HTML v8.6
+  MAX REPRESENTAÇÃO — HTML v8.7
   Sistema de Estoque com Backup
   Última atualização: 08/10/2026
   ============================================
@@ -5596,13 +5596,13 @@
 
 <script>
 // ============================================
-// MAX REPRESENTAÇÃO — HTML v8.6
+// MAX REPRESENTAÇÃO — HTML v8.7
 // Login + Usuários + Auditoria + Backup + Ponto de Referência + Etiqueta A6 + Colapsáveis + WhatsApp + PWA
 // ============================================
 // ============================================
 // VERSÃO DO SISTEMA — MUDE APENAS AQUI
 // ============================================
-const APP_VERSION = "8.6";
+const APP_VERSION = "8.7";
 const APP_DATA = "11/10/2026";
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const PREFIXO_CODIGO = "SHOES";
@@ -9135,6 +9135,18 @@ async function excluirPedidoCompleto(id) {
 function renderizarDetalhePedido() {
   const { pedido, itens } = pedidoAtual;
   document.getElementById("modalPedidoNum").textContent = "#" + pedido.id;
+  
+  // ─── INÍCIO DA CORREÇÃO (Variável declarada no topo) ───
+  let avisoInconsistencia = "";
+  if (pedidoAtual._itens_site_pendentes && pedidoAtual._itens_site_pendentes.length > 0) {
+    avisoInconsistencia = `<div style="background:rgba(239,68,68,0.12);border:2px solid var(--error);border-radius:10px;padding:12px;margin-bottom:16px;font-size:12px;color:var(--error);">
+      <strong><i class="fas fa-exclamation-triangle"></i> ATENÇÃO — Inconsistência detectada</strong><br>
+      O cliente adicionou ${pedidoAtual._itens_site_pendentes.length} item(ns) no site, mas o pedido oficial não registrou. 
+      Verifique o pedido do site pela chave ou peça ao cliente reenviar.
+    </div>`;
+  }
+  // ─── FIM DA CORREÇÃO ───
+
   const statusAtual = pedido.status;
   const passos = ["reservado", "separado", "conferido", "despachado"];
   const idxAtual = passos.indexOf(statusAtual);
@@ -9147,18 +9159,10 @@ function renderizarDetalhePedido() {
       if (i < idxAtual) cls += " concluido";
       else if (i === idxAtual) cls += " ativo";
     }
-      // Aviso de inconsistência detectada
-  let avisoInconsistencia = "";
-  if (pedidoAtual._itens_site_pendentes && pedidoAtual._itens_site_pendentes.length > 0) {
-    avisoInconsistencia = `<div style="background:rgba(239,68,68,0.12);border:2px solid var(--error);border-radius:10px;padding:12px;margin-bottom:16px;font-size:12px;color:var(--error);">
-      <strong><i class="fas fa-exclamation-triangle"></i> ATENÇÃO — Inconsistência detectada</strong><br>
-      O cliente adicionou ${pedidoAtual._itens_site_pendentes.length} item(ns) no site, mas o pedido oficial não registrou. 
-      Verifique o pedido do site pela chave ou peça ao cliente reenviar.
-    </div>`;
-  }
     timelineHTML += `<div class="${cls}"><i class="fas ${icones[p]} icon"></i>${labels[p]}</div>`;
   });
   timelineHTML += '</div>';
+  
   const endereco = [pedido.cliente_endereco, pedido.cliente_numero].filter(Boolean).join(", ");
   const cidadeUf = [pedido.cliente_cidade, pedido.cliente_uf].filter(Boolean).join("/");
   let avisoPago = "";
@@ -9168,23 +9172,24 @@ function renderizarDetalhePedido() {
   } else {
     avisoPago = `<div class="aviso-pagamento pendente"><i class="fas fa-exclamation-triangle"></i><div class="txt"><div class="titulo">PENDENTE PAGAMENTO</div><div class="detalhes">Anexe o comprovante antes de despachar</div></div></div>`;
   }
+  
   let itensHTML = "";
   let totalNovos = 0;
-for (const it of itens) {
-  const subtotal = it.quantidade * it.preco_unitario;
-  const qtdNova = parseInt(it.qtd_nova) || 0;
-  totalNovos += qtdNova;
-  const estiloNovo = qtdNova > 0 ? 'background:rgba(245,158,11,0.15);border:2px solid var(--warning);' : '';
-  const badgeNovo = qtdNova > 0
-    ? `<span style="background:var(--warning);color:#000;font-size:10px;font-weight:900;padding:2px 8px;border-radius:4px;margin-left:8px">NOVO${qtdNova < it.quantidade ? " +" + qtdNova : ""}</span>`
-    : "";
-  itensHTML += `<div class="detalhe-item" style="${estiloNovo}">${it.foto_url ? `<img src="${it.foto_url}">` : `<div class="vazio"><i class="fas fa-image"></i></div>`}<div class="info"><div class="nome">${it.modelo} — ${it.cor} ${badgeNovo}</div><div class="detalhes">Nº ${it.numeracao} · ${it.codigo_barras || ""} · ${formatarMoeda(it.preco_unitario)} cada</div></div><div class="qtd">${it.quantidade}x</div><div class="subtotal">${formatarMoeda(subtotal)}</div></div>`;
-}
-    // ─── v8.2: Financeiro detalhado por preço ───
+  for (const it of itens) {
+    const subtotal = it.quantidade * it.preco_unitario;
+    const qtdNova = parseInt(it.qtd_nova) || 0;
+    totalNovos += qtdNova;
+    const estiloNovo = qtdNova > 0 ? 'background:rgba(245,158,11,0.15);border:2px solid var(--warning);' : '';
+    const badgeNovo = qtdNova > 0
+      ? `<span style="background:var(--warning);color:#000;font-size:10px;font-weight:900;padding:2px 8px;border-radius:4px;margin-left:8px">NOVO${qtdNova < it.quantidade ? " +" + qtdNova : ""}</span>`
+      : "";
+    itensHTML += `<div class="detalhe-item" style="${estiloNovo}">${it.foto_url ? `<img src="${it.foto_url}">` : `<div class="vazio"><i class="fas fa-image"></i></div>`}<div class="info"><div class="nome">${it.modelo} — ${it.cor} ${badgeNovo}</div><div class="detalhes">Nº ${it.numeracao} · ${it.codigo_barras || ""} · ${formatarMoeda(it.preco_unitario)} cada</div></div><div class="qtd">${it.quantidade}x</div><div class="subtotal">${formatarMoeda(subtotal)}</div></div>`;
+  }
+
+  // ─── v8.2: Financeiro detalhado por preço ───
   const frete = parseFloat(pedido.valor_frete) || 0;
   const totalFinal = parseFloat(pedido.total) + frete;
 
-  // Agrupa itens por preço unitário (ex: 5 x R$40,00, 8 x R$45,00)
   const gruposPreco = {};
   for (const it of itens) {
     const preco = parseFloat(it.preco_unitario) || 0;
@@ -9205,7 +9210,6 @@ for (const it of itens) {
     </div>`;
   }
 
-  // Verifica se é revendedor e tem desconto
   const temDescontoFin = pedido.desconto_aplicado && parseFloat(pedido.desconto_aplicado) > 0;
   const valorOriginalFin = parseFloat(pedido.valor_original) || parseFloat(pedido.total) || 0;
   const descontoFin = parseFloat(pedido.desconto_aplicado) || 0;
@@ -9222,8 +9226,9 @@ for (const it of itens) {
 
   financeiroHTML += `<div class="detalhe-row"><span class="label">Frete ${pedido.transportadora ? `(${pedido.transportadora})` : ""}</span><span class="valor">${formatarMoeda(frete)}</span></div>`;
   financeiroHTML += `<div class="detalhe-row" style="border-top:2px solid var(--neon);padding-top:12px;font-size:16px"><span class="label" style="color:var(--neon);font-weight:700">TOTAL</span><span class="valor" style="color:var(--neon);font-size:18px;font-weight:800">${formatarMoeda(totalFinal)}</span></div>`;
-  // ─── FIM: Financeiro detalhado ───
-   document.getElementById("modalPedidoConteudo").innerHTML = `
+  
+  // ─── MONTAGEM DO HTML COM O AVISO INCLUÍDO ───
+  document.getElementById("modalPedidoConteudo").innerHTML = `
     ${avisoInconsistencia}
     ${timelineHTML}
     ${avisoPago}
@@ -9235,12 +9240,12 @@ for (const it of itens) {
       <div class="detalhe-row"><span class="label">CEP</span><span class="valor">${pedido.cliente_cep || "—"}</span></div>
       ${pedido.cliente_ponto_referencia ? `<div class="detalhe-row"><span class="label">⭐ Ponto de Referência</span><span class="valor" style="color:var(--warning)">${pedido.cliente_ponto_referencia}</span></div>` : ''}
     </div>
-                <div class="detalhe-secao"><h5><i class="fas fa-shoe-prints"></i> Itens (${itens.length}) — ${itens.reduce((s, it) => s + (parseInt(it.quantidade) || 0), 0)} pares</h5>
+    <div class="detalhe-secao"><h5><i class="fas fa-shoe-prints"></i> Itens (${itens.length}) — ${itens.reduce((s, it) => s + (parseInt(it.quantidade) || 0), 0)} pares</h5>
       ${totalNovos > 0 ? `<div class="detalhe-site-status falta"><i class="fas fa-plus-circle"></i><span><strong>${totalNovos} par(es) NOVO(S)</strong> adicionado(s) pelo cliente neste pedido. Separe os itens destacados.</span></div>` : ""}
       ${itensHTML || '<div class="empty" style="padding:20px"><p>Nenhum item</p></div>'}
     </div>
     <div class="detalhe-secao"><h5><i class="fas fa-dollar-sign"></i> Financeiro</h5>${financeiroHTML}</div>
-        <div class="detalhe-secao">
+    <div class="detalhe-secao">
       <h5><i class="fas fa-info-circle"></i> Observações</h5>
       <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">${pedido.observacoes || "Sem observações"}</p>
       <div class="detalhe-row"><span class="label">Total de pares (confirmado)</span><span class="valor" style="color:var(--neon);font-weight:800">${itens.reduce((s, it) => s + (parseInt(it.quantidade) || 0), 0)}</span></div>
@@ -9254,10 +9259,9 @@ for (const it of itens) {
   acoesDiv.innerHTML = "";
   const status = pedido.status;
   if (totalNovos > 0 && !["despachado", "cancelado"].includes(status) && temPermissao("despacho")) {
-  acoesDiv.innerHTML += `<button class="btn btn-warning" id="btnLimparNovos" style="width:100%;margin-bottom:8px"><i class="fas fa-check"></i> Marcar ${totalNovos} par(es) novo(s) como separado(s)</button>`;
-}
+    acoesDiv.innerHTML += `<button class="btn btn-warning" id="btnLimparNovos" style="width:100%;margin-bottom:8px"><i class="fas fa-check"></i> Marcar ${totalNovos} par(es) novo(s) como separado(s)</button>`;
+  }
 
-  // Botão de Voltar Status
   const podeVoltar = ["separado", "conferido", "despachado"].includes(status);
   if (podeVoltar && temPermissao("despacho")) {
     acoesDiv.innerHTML += `<button class="btn btn-warning" id="btnVoltarStatus" style="margin-bottom: 8px; width: 100%;"><i class="fas fa-undo"></i> Voltar Status (para ${status === 'despachado' ? 'Conferido' : status === 'conferido' ? 'Separado' : 'Reservado'})</button>`;
@@ -9267,21 +9271,20 @@ for (const it of itens) {
     }, 0);
   }
 
-      if (status === "reservado") {
+  if (status === "reservado") {
     acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarWhatsReservado"><i class="fab fa-whatsapp"></i> Enviar WhatsApp</button>`;
     if (temPermissao("editar_pedido")) acoesDiv.innerHTML += `<button class="btn btn-secondary" id="btnEditarPedido"><i class="fas fa-edit"></i> Editar Pedido</button>`;
     if (pedido.valor_frete) acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarConfirmacao"><i class="fab fa-whatsapp"></i> Enviar Confirmação</button>`;
     acoesDiv.innerHTML += `<button class="btn btn-primary" id="btnMarcarPago"><i class="fas fa-money-bill-wave"></i> Registrar Pagamento</button>`;
     if (temPermissao("despacho")) acoesDiv.innerHTML += `<button class="btn btn-warning" id="btnSeparar"><i class="fas fa-box-open"></i> Separar</button>`;
     if (temPermissao("cancelar_pedido")) acoesDiv.innerHTML += `<button class="btn btn-danger" id="btnCancelarPedido"><i class="fas fa-times"></i> Cancelar</button>`;
-    
-      } else if (status === "separado") {
+  } else if (status === "separado") {
     acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarWhatsSeparado"><i class="fab fa-whatsapp"></i> Enviar WhatsApp</button>`;
     if (temPermissao("despacho")) acoesDiv.innerHTML += `<button class="btn btn-primary" id="btnConferir"><i class="fas fa-check-double"></i> Conferir</button>`;
     if (temPermissao("despacho")) acoesDiv.innerHTML += `<button class="btn btn-success" id="btnDespacharDireto"><i class="fas fa-truck"></i> Despachar Direto</button>`;
     acoesDiv.innerHTML += `<button class="btn btn-primary" id="btnMarcarPago"><i class="fas fa-money-bill-wave"></i> Registrar Pagamento</button>`;
     if (temPermissao("cancelar_pedido")) acoesDiv.innerHTML += `<button class="btn btn-danger" id="btnCancelarPedido"><i class="fas fa-times"></i> Cancelar</button>`;
-         } else if (status === "conferido") {
+  } else if (status === "conferido") {
     acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarOrcamento"><i class="fab fa-whatsapp"></i> Enviar Orçamento</button>`;
     if (temPermissao("editar_pedido")) acoesDiv.innerHTML += `<button class="btn btn-secondary" id="btnLancarFrete"><i class="fas fa-truck"></i> Lançar Frete</button>`;
     acoesDiv.innerHTML += `<button class="btn btn-primary" id="btnMarcarPago"><i class="fas fa-money-bill-wave"></i> Registrar Pagamento</button>`;
@@ -9302,6 +9305,7 @@ for (const it of itens) {
   }
 
   acoesDiv.innerHTML += `<button class="btn btn-secondary" id="btnFecharPedido"><i class="fas fa-times"></i> Fechar</button>`;
+  
   document.getElementById("btnFecharPedido").onclick = () => {
     document.getElementById("modalPedido").classList.remove("active");
     pedidoAtual = null;
