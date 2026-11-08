@@ -1,5 +1,5 @@
 // ============================================
-// MAX REPRESENTAÇÃO — SITE v5.3
+// MAX REPRESENTAÇÃO — SITE v5.4
 // script.js
 // v4.5: Auth por WhatsApp+senha; pedido em aberto; sessão em localStorage
 // v4.6: Removida duplicação de variáveis e da função validarEstoqueCarrinho
