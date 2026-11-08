@@ -1,15 +1,16 @@
 // ============================================
-// MAX REPRESENTAÇÃO — SITE v5.2
+// MAX REPRESENTAÇÃO — SITE v5.3
 // script.js
 // v4.5: Auth por WhatsApp+senha; pedido em aberto; sessão em localStorage
 // v4.6: Removida duplicação de variáveis e da função validarEstoqueCarrinho
 // v4.7: Estrutura e chaves validadas (fecharFormFechamento no lugar certo)
+// v5.3: Trata "pedido fechado" (despachado/cancelado) ao tentar adicionar itens.
 // ============================================
 
 const API_BASE = "https://max-representacao-api.maxprimefotovideo.workers.dev";
 const ATENDENTES = [
   { nome: "Max", numero: "5537991021468" },
-  { nome: "Suellen", numero: "5537991477086" }
+  { nome: "Suellen", numero: "5537991415200" }
 ];
 const WHATSAPP_MSG_PADRAO = "Olá! Vi o catálogo no site e gostaria de mais informações.";
 const MINIMO_PARES = 1; // Permite fechar pedido com 1 par
@@ -1232,8 +1233,9 @@ function cancelarModoAdicao() {
 }
 
 // ============================================
-// ADICIONAR CARRINHO AO PEDIDO — v5.1
+// ADICIONAR CARRINHO AO PEDIDO — v5.3
 // Revalida estoque antes de enviar (evita "0 pares" com 1 disponível)
+// Trata resposta "pedido_fechado" do Worker (despachado/cancelado)
 // ============================================
 async function adicionarCarrinhoAoPedido() {
   if (!modoAdicaoAtivo || !modoAdicaoChave) {
@@ -1307,6 +1309,41 @@ async function adicionarCarrinhoAoPedido() {
       body: JSON.stringify({ chave: modoAdicaoChave, whatsapp: modoAdicaoWhatsapp, itens }),
     });
     const data = await res.json();
+
+    // ─────────────────────────────────────────────
+    // v5.3: Pedido já finalizado (despachado/cancelado)
+    // ─────────────────────────────────────────────
+    if (!data.success && (data.pedido_fechado === true || (data.error || "").includes("finalizado"))) {
+      // Limpa estado de adição e carrinho
+      cancelarModoAdicao();
+      carrinho = [];
+      atualizarCarrinho();
+
+      // Substitui o conteúdo do modal do carrinho por uma tela amigável
+      const listaEl = document.getElementById("carrinhoLista");
+      const rodapeEl = document.getElementById("carrinhoRodape");
+      if (listaEl && rodapeEl) {
+        rodapeEl.style.display = "none";
+        listaEl.innerHTML = `
+          <div style="text-align:center;padding:30px 20px;">
+            <i class="fas fa-check-circle" style="font-size:56px;color:var(--verde);margin-bottom:16px;display:block"></i>
+            <h3 style="color:var(--text);margin-bottom:10px;font-size:18px">Seu pedido anterior foi finalizado!</h3>
+            <p style="color:var(--text-2);font-size:14px;line-height:1.7;margin-bottom:22px">
+              Este pedido já foi enviado e <strong>não pode mais receber novos itens</strong>.<br>
+              Para fazer um novo pedido, é só continuar navegando e adicionar produtos normalmente.
+            </p>
+            <button class="btn-fechar-sucesso" id="btnEntendiPedidoFechado" style="background:linear-gradient(135deg,var(--roxo),var(--roxo-alt));color:#fff;border-color:var(--roxo)">
+              <i class="fas fa-shopping-bag"></i> Entendido, quero fazer um novo pedido
+            </button>
+          </div>`;
+        const btnEntendi = document.getElementById("btnEntendiPedidoFechado");
+        if (btnEntendi) btnEntendi.onclick = () => fecharModalCarrinho();
+      } else {
+        alert("Seu pedido anterior foi finalizado. Para fazer um novo pedido, continue navegando normalmente.");
+        fecharModalCarrinho();
+      }
+      return;
+    }
 
     if (!data.success) {
       let msg = data.error || "Não foi possível adicionar";
