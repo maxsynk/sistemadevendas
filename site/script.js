@@ -769,11 +769,14 @@ async function fazerLoginCliente() {
         await recarregarMeuPedido();
         document.getElementById("modalMeuPedido").classList.add("active");
         document.body.style.overflow = "hidden";
-      } else {
+            } else {
         fecharModalAcessar();
-        mostrarToastAdd("✅ Login OK! Nenhum pedido em aberto.");
+        if (data.pedido_fechado_recente) {
+          alert("Seu último pedido já foi despachado e está fechado.\n\nPara comprar novamente, é só adicionar produtos ao carrinho e finalizar um NOVO pedido.");
+        } else {
+          mostrarToastAdd("✅ Login OK! Nenhum pedido em aberto.");
+        }
       }
-    }
   } catch (e) {
     erroEl.style.display = "flex";
     erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Erro: ${escapeHtml(e.message)}`;
@@ -1063,6 +1066,10 @@ function renderizarMeuPedido() {
     rejeitado: "❌ Pedido rejeitado pelo vendedor",
   };
   statusEl.textContent = statusTexto[p.status] || p.status;
+  if (p.pedido_fechado) {
+    statusEl.className = "meu-pedido-status rejeitado";
+    statusEl.textContent = "🔒 Este pedido já foi despachado e não pode mais ser alterado. Para comprar mais, faça um novo pedido.";
+  }
 
   const itensEl = document.getElementById("meuPedidoItens");
   const rodapeEl = document.getElementById("meuPedidoRodape");
@@ -1091,7 +1098,7 @@ function renderizarMeuPedido() {
           <div class="det">Nº <b>${it.numeracao}</b></div>
         </div>
         <div class="qtd">${it.quantidade}x</div>
-        ${p.status !== "rejeitado" ? `<button class="btn-remover-item" data-variacao-id="${it.variacao_id}" title="Remover"><i class="fas fa-trash"></i></button>` : ""}
+        ${(p.status !== "rejeitado" && !p.pedido_fechado) ? \ `<button class="btn-remover-item" data-variacao-id="${it.variacao_id}" title="Remover"><i class="fas fa-trash"></i></button>` : ""}
       </div>
     `;
   }
@@ -1115,7 +1122,7 @@ function renderizarMeuPedido() {
 
   document.getElementById("meuPedidoValorTotal").textContent = formatarMoeda(p.valor_estimado);
 
-  if (p.status === "rejeitado") {
+    if (p.status === "rejeitado" || p.pedido_fechado) {
     btnAdicionar.style.display = "none";
   } else {
     btnAdicionar.style.display = "flex";
