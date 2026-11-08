@@ -11922,6 +11922,8 @@ function renderizarDetalhePedidoSite(p) {
     statusBadge = `<span class="status-ped status-despachado"><i class="fas fa-check"></i> APROVADO${p.pedido_id ? ` · Pedido #${p.pedido_id}` : ""}</span>`;
   } else if (p.status === "rejeitado") {
     statusBadge = `<span class="status-ped status-cancelado"><i class="fas fa-times"></i> REJEITADO</span>`;
+  } else if (p.status === "finalizado") {
+    statusBadge = `<span class="status-ped status-despachado"><i class="fas fa-archive"></i> FINALIZADO</span>`;
   } else {
     statusBadge = `<span class="status-ped status-separado"><i class="fas fa-hourglass-half"></i> AGUARDANDO APROVAÇÃO</span>`;
   }
@@ -11931,15 +11933,14 @@ function renderizarDetalhePedidoSite(p) {
   let temFalta = false;
   let temAlgoOk = false;
 
-      for (const it of itens) {
+  for (const it of itens) {
     const estoqueAgora = it.estoque_atual_agora !== undefined ? it.estoque_atual_agora : 0;
     const temEstoque = estoqueAgora >= it.quantidade;
     if (!temEstoque) temFalta = true;
     if (estoqueAgora > 0) temAlgoOk = true;
 
     const isNovo = it.adicionado_depois === true;
-    
-    // Se for novo, aplica o fundo e uma borda laranja. Se não, mantém o padrão.
+
     let itemStyle = temEstoque ? '' : 'border-left:4px solid var(--warning);';
     if (isNovo) {
       itemStyle += ' background: rgba(245, 158, 11, 0.2); border: 2px solid var(--warning); border-radius: 10px; padding: 12px; margin-bottom: 8px;';
@@ -11963,11 +11964,11 @@ function renderizarDetalhePedidoSite(p) {
           <button style="background:transparent; border:none; color:var(--text-dim); cursor:pointer; font-size:16px; padding:8px; transition:all 0.2s;" onmouseover="this.style.color='var(--error)'; this.style.transform='scale(1.1)'" onmouseout="this.style.color='var(--text-dim)'; this.style.transform='scale(1)'" onclick="removerItemPedidoSite(${p.id}, ${it.variacao_id})" title="Remover item">
             <i class="fas fa-trash-alt"></i>
           </button>
-        ` : ''} 
+        ` : ''}
       </div>
     `;
-  }          
-  
+  }
+
   let avisoFaltaHTML = "";
   if (temFalta) {
     avisoFaltaHTML = `<div class="detalhe-site-status falta"><i class="fas fa-exclamation-triangle"></i><span>Alguns itens não têm estoque suficiente. Você pode aprovar mesmo assim — os itens faltantes serão descontados.</span></div>`;
@@ -11977,7 +11978,6 @@ function renderizarDetalhePedidoSite(p) {
     avisoFaltaHTML = `<div class="detalhe-site-status sem"><i class="fas fa-times-circle"></i><span>Nenhum item tem estoque. Não é possível aprovar.</span></div>`;
   }
 
-    // Verifica se tem desconto de revendedor
   const temDesconto = p.desconto_aplicado && parseFloat(p.desconto_aplicado) > 0;
   const valorOriginal = parseFloat(p.valor_original) || parseFloat(p.valor_estimado) || 0;
   const valorFinal = parseFloat(p.valor_estimado) || 0;
@@ -12009,7 +12009,7 @@ function renderizarDetalhePedidoSite(p) {
       ${itensHTML || '<p style="color:var(--text-dim)">Sem itens</p>'}
     </div>
 
-      <div class="detalhe-site-cliente">
+    <div class="detalhe-site-cliente">
       <h5><i class="fas fa-dollar-sign"></i> Resumo</h5>
       <div class="detalhe-row"><span class="label">Total de pares</span><span class="valor">${p.total_pares}</span></div>
       ${temDesconto ? `
@@ -12021,10 +12021,11 @@ function renderizarDetalhePedidoSite(p) {
       `}
       ${avisoFaltaHTML}
     </div>
-  `;  
+  `;
 
-   acoes.innerHTML = "";
+  acoes.innerHTML = "";
 
+  // ---- BOTÕES DE AÇÃO PRINCIPAIS ----
   if (p.status === "pendente") {
     acoes.innerHTML += `<button class="btn btn-danger" id="btnRejeitarPedidoSite"><i class="fas fa-times"></i> Rejeitar</button>`;
     if (temAlgoOk) {
@@ -12032,58 +12033,48 @@ function renderizarDetalhePedidoSite(p) {
     }
   }
 
-  // Botão Excluir (com ID para o JS achar)
-  acoes.innerHTML += `<button class="btn btn-danger" id="btnExcluirPedidoSite"><i class="fas fa-trash"></i> Excluir Pedido</button>`;
-
   if (p.status === "aprovado") {
-  acoes.innerHTML += `<button class="btn btn-secondary" id="btnFinalizarPedidoSite"><i class="fas fa-archive"></i> Finalizar Pedido</button>`;
-}
-  
-  // Botão Fechar
+    acoes.innerHTML += `<button class="btn btn-secondary" id="btnFinalizarPedidoSite"><i class="fas fa-archive"></i> Finalizar Pedido</button>`;
+  }
+
+  acoes.innerHTML += `<button class="btn btn-danger" id="btnExcluirPedidoSite"><i class="fas fa-trash"></i> Excluir Pedido</button>`;
   acoes.innerHTML += `<button class="btn btn-secondary" id="btnFecharDetalheSite"><i class="fas fa-times"></i> Fechar</button>`;
 
-  // --- AQUI ESTÁ O SEGREDO: Amarrando os cliques ---
-  
+  // ---- LISTENERS ----
   const btnAprovar = document.getElementById("btnAprovarPedidoSite");
   if (btnAprovar) btnAprovar.onclick = () => aprovarPedidoSite(p.id);
-  
+
   const btnRejeitar = document.getElementById("btnRejeitarPedidoSite");
   if (btnRejeitar) btnRejeitar.onclick = () => rejeitarPedidoSite(p.id);
 
   const btnExcluir = document.getElementById("btnExcluirPedidoSite");
-  if (btnExcluir) {
-    btnExcluir.onclick = () => {
-      excluirPedidoSiteCompleto(p.id);
+  if (btnExcluir) btnExcluir.onclick = () => excluirPedidoSiteCompleto(p.id);
+
+  const btnFinalizar = document.getElementById("btnFinalizarPedidoSite");
+  if (btnFinalizar) {
+    btnFinalizar.onclick = async () => {
+      if (!confirm(`Tem certeza que deseja finalizar o pedido ${p.chave}?\n\nO cliente não poderá mais adicionar itens a este pedido.`)) return;
+
+      const btnOriginal = btnFinalizar.innerHTML;
+      btnFinalizar.disabled = true;
+      btnFinalizar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Finalizando...';
+
+      try {
+        const res = await api(`/pedidos-site/${p.id}/finalizar`, { method: "POST" });
+        const d = await res.json();
+        if (!d.success) throw new Error(d.error);
+
+        toast("Pedido finalizado! O cliente não poderá mais editá-lo.");
+        document.getElementById("modalDetalhePedidoSite").classList.remove("active");
+        await carregarListaPedidosSite();
+        await verificarPedidosSite();
+      } catch (e) {
+        toast("Erro ao finalizar: " + e.message, "error");
+        btnFinalizar.disabled = false;
+        btnFinalizar.innerHTML = btnOriginal;
+      }
     };
   }
-
-  // --- INÍCIO DA CORREÇÃO ---
-// Listener para o botão Finalizar
-const btnFinalizar = document.getElementById("btnFinalizarPedidoSite");
-if (btnFinalizar) {
-  btnFinalizar.onclick = async () => {
-    if (!confirm(`Tem certeza que deseja finalizar o pedido ${p.chave}?\n\nO cliente não poderá mais adicionar itens a este pedido.`)) return;
-
-    const btnOriginal = btnFinalizar.innerHTML;
-    btnFinalizar.disabled = true;
-    btnFinalizar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Finalizando...';
-
-    try {
-      const res = await api(`/pedidos-site/${p.id}/finalizar`, { method: "POST" });
-      const d = await res.json();
-      if (!d.success) throw new Error(d.error);
-
-      toast("Pedido finalizado! O cliente não poderá mais editá-lo.");
-      document.getElementById("modalDetalhePedidoSite").classList.remove("active");
-      await carregarListaPedidosSite(); // Atualiza a lista de fundo
-      await verificarPedidosSite(); // Atualiza o alerta
-    } catch (e) {
-      toast("Erro ao finalizar: " + e.message, "error");
-      btnFinalizar.disabled = false;
-      btnFinalizar.innerHTML = btnOriginal;
-    }
-  };
-}
 
   const btnFecharDetalhe = document.getElementById("btnFecharDetalheSite");
   if (btnFecharDetalhe) {
