@@ -12034,6 +12034,10 @@ function renderizarDetalhePedidoSite(p) {
 
   // Botão Excluir (com ID para o JS achar)
   acoes.innerHTML += `<button class="btn btn-danger" id="btnExcluirPedidoSite"><i class="fas fa-trash"></i> Excluir Pedido</button>`;
+
+  if (p.status === "aprovado") {
+  acoes.innerHTML += `<button class="btn btn-secondary" id="btnFinalizarPedidoSite"><i class="fas fa-archive"></i> Finalizar Pedido</button>`;
+}
   
   // Botão Fechar
   acoes.innerHTML += `<button class="btn btn-secondary" id="btnFecharDetalheSite"><i class="fas fa-times"></i> Fechar</button>`;
@@ -12052,6 +12056,34 @@ function renderizarDetalhePedidoSite(p) {
       excluirPedidoSiteCompleto(p.id);
     };
   }
+
+  // --- INÍCIO DA CORREÇÃO ---
+// Listener para o botão Finalizar
+const btnFinalizar = document.getElementById("btnFinalizarPedidoSite");
+if (btnFinalizar) {
+  btnFinalizar.onclick = async () => {
+    if (!confirm(`Tem certeza que deseja finalizar o pedido ${p.chave}?\n\nO cliente não poderá mais adicionar itens a este pedido.`)) return;
+
+    const btnOriginal = btnFinalizar.innerHTML;
+    btnFinalizar.disabled = true;
+    btnFinalizar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Finalizando...';
+
+    try {
+      const res = await api(`/pedidos-site/${p.id}/finalizar`, { method: "POST" });
+      const d = await res.json();
+      if (!d.success) throw new Error(d.error);
+
+      toast("Pedido finalizado! O cliente não poderá mais editá-lo.");
+      document.getElementById("modalDetalhePedidoSite").classList.remove("active");
+      await carregarListaPedidosSite(); // Atualiza a lista de fundo
+      await verificarPedidosSite(); // Atualiza o alerta
+    } catch (e) {
+      toast("Erro ao finalizar: " + e.message, "error");
+      btnFinalizar.disabled = false;
+      btnFinalizar.innerHTML = btnOriginal;
+    }
+  };
+}
 
   const btnFecharDetalhe = document.getElementById("btnFecharDetalheSite");
   if (btnFecharDetalhe) {
