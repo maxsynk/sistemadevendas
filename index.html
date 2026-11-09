@@ -9230,7 +9230,7 @@ function renderizarDetalhePedido() {
     acoesDiv.innerHTML += `<button class="btn btn-warning" id="btnLimparNovos" style="width:100%;margin-bottom:8px"><i class="fas fa-check"></i> Marcar ${totalNovos} par(es) novo(s) como separado(s)</button>`;
   }
 
-  const podeVoltar = ["separado", "conferido", "despachado"].includes(status);
+  const podeVoltar = ["separado", "conferido", "despachado"].includes(status) && !pedido.finalizado; // v5.7: finalizado trava
   if (podeVoltar && temPermissao("despacho")) {
     acoesDiv.innerHTML += `<button class="btn btn-warning" id="btnVoltarStatus" style="margin-bottom: 8px; width: 100%;"><i class="fas fa-undo"></i> Voltar Status (para ${status === 'despachado' ? 'Conferido' : status === 'conferido' ? 'Separado' : 'Reservado'})</button>`;
     setTimeout(() => {
@@ -9267,6 +9267,13 @@ function renderizarDetalhePedido() {
     }
     acoesDiv.innerHTML += `<button class="btn btn-primary" id="btnImprimirEtiqueta"><i class="fas fa-tag"></i> Imprimir Etiqueta</button>`;
     acoesDiv.innerHTML += `<button class="btn btn-secondary" id="btnImprimirRomaneio"><i class="fas fa-print"></i> Imprimir Romaneio</button>`;
+    // >>> INÍCIO — BOTÃO FINALIZAR PEDIDO (despachado v5.7) <<<
+    if (pedido.finalizado) {
+      acoesDiv.innerHTML += `<span style="color:var(--success);font-weight:700;padding:12px"><i class="fas fa-lock"></i> PEDIDO FINALIZADO</span>`;
+    } else if (temPermissao("despacho")) {
+      acoesDiv.innerHTML += `<button class="btn btn-success" id="btnFinalizarPedidoOficial"><i class="fas fa-flag-checkered"></i> FINALIZAR PEDIDO</button>`;
+    }
+    // <<< FIM — BOTÃO FINALIZAR PEDIDO (despachado v5.7) >>>
   } else if (status === "cancelado") {
     acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarWhatsCancelado"><i class="fab fa-whatsapp"></i> Enviar WhatsApp</button>`;
     acoesDiv.innerHTML += `<span style="color:var(--error);font-weight:700;padding:12px"><i class="fas fa-ban"></i> PEDIDO CANCELADO</span>`;
@@ -9298,7 +9305,27 @@ function renderizarDetalhePedido() {
   if (document.getElementById("btnEnviarWhatsDespachado")) document.getElementById("btnEnviarWhatsDespachado").onclick = () => enviarNotificacaoWhatsApp("despachado");
   if (document.getElementById("btnEnviarWhatsCancelado")) document.getElementById("btnEnviarWhatsCancelado").onclick = () => enviarNotificacaoWhatsApp("cancelado");
   if (document.getElementById("btnLimparNovos")) document.getElementById("btnLimparNovos").onclick = limparItensNovos;
+  if (document.getElementById("btnFinalizarPedidoOficial")) document.getElementById("btnFinalizarPedidoOficial").onclick = finalizarPedidoOficial; // v5.7
 }
+
+// >>> INÍCIO — FUNÇÃO finalizarPedidoOficial (v5.7) <<<
+async function finalizarPedidoOficial() {
+  if (!pedidoAtual) return;
+  const id = pedidoAtual.pedido.id;
+  if (!confirm(`FINALIZAR o pedido #${id}?\n\n• O cliente NÃO terá mais acesso a ele (nem por código, nem por login).\n• Não será mais possível voltar status nem alterar o pedido.\n\nEsta ação é definitiva.`)) return;
+  try {
+    const res = await api(`/pedidos/${id}/finalizar`, { method: "POST" });
+    const d = await res.json();
+    if (!d.success) throw new Error(d.error);
+    toast(d.mensagem || "Pedido finalizado!");
+    await abrirDetalhePedido(id);
+    await carregarPedidos();
+  } catch (e) {
+    toast("Erro: " + e.message, "error");
+  }
+}
+// <<< FIM — FUNÇÃO finalizarPedidoOficial (v5.7) >>>
+
 async function editarPedidoAtual() {
   if (!pedidoAtual) return;
   const { pedido, itens } = pedidoAtual;
@@ -11823,7 +11850,7 @@ async function carregarListaPedidosSite() {
         p.status === "pendente" || (p.status === "aprovado" && p.edicao_nao_vista === 1)
       );
     } else if (filtroStatusPedidosSite === "aprovado") {
-      pedidos = pedidos.filter(p => p.status === "aprovado" && p.edicao_nao_vista === 0);
+      pedidos = pedidos.filter(p => p.status === "aprovado" && p.edicao_nao_vista !== 1);
     } else if (filtroStatusPedidosSite === "rejeitado") {
       pedidos = pedidos.filter(p => p.status === "rejeitado");
     }
@@ -12445,4 +12472,4 @@ document.addEventListener("DOMContentLoaded", observarModaisSistema);
   
 </script>
 </body>
-</html>  
+</html>
