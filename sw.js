@@ -1,9 +1,9 @@
 // ============================================
-// MAX REPRESENTAÇÃO — SERVICE WORKER v9.2
+// MAX REPRESENTAÇÃO — SERVICE WORKER v9.3
 // PWA: cache da interface pra funcionar offline
 // ============================================
 
-const CACHE_NOME = "max-representacao-v9.2";
+const CACHE_NOME = "max-representacao-v9.3";
 const ARQUIVOS_CACHE = [
   "./",
   "./index.html",
