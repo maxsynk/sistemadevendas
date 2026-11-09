@@ -1195,6 +1195,58 @@ async function recarregarMeuPedido() {
       body: JSON.stringify({ chave: meuPedidoChave, whatsapp: meuPedidoWhatsapp }),
     });
     const data = await res.json();
+    
+    // Se o pedido estiver finalizado, o Worker retorna erro 404 (não encontrado)
+    if (!data.success && (data.error === "Pedido não encontrado. Confira o código." || (data.error || "").includes("finalizado"))) {
+      // Limpa o estado local para o cliente não ficar preso
+      meuPedidoAtual = null;
+      meuPedidoChave = null;
+      meuPedidoWhatsapp = null;
+      modoAdicaoAtivo = false;
+      modoAdicaoChave = null;
+      modoAdicaoWhatsapp = null;
+
+      const modal = document.getElementById("modalMeuPedido");
+      const itensEl = document.getElementById("meuPedidoItens");
+      const rodapeEl = document.getElementById("meuPedidoRodape");
+      const vazioEl = document.getElementById("meuPedidoVazio");
+      const chaveEl = document.getElementById("meuPedidoChave");
+      const statusEl = document.getElementById("meuPedidoStatus");
+
+      if (modal && itensEl && rodapeEl) {
+        if (chaveEl) chaveEl.textContent = "";
+        if (statusEl) statusEl.textContent = "";
+        vazioEl.style.display = "none";
+        rodapeEl.style.display = "none";
+        
+        itensEl.innerHTML = `
+          <div style="text-align:center; padding: 20px 10px;">
+            <i class="fas fa-lock" style="font-size: 56px; color: var(--amarelo, #f59e0b); margin-bottom: 16px; display: block;"></i>
+            <h3 style="color: var(--text, #fff); margin-bottom: 12px; font-size: 20px;">Pedido Finalizado</h3>
+            <p style="color: var(--text-2, #aaa); font-size: 14px; line-height: 1.7; margin-bottom: 24px;">
+              Este pedido já foi <strong style="color: var(--amarelo, #f59e0b);">despachado</strong> e <strong style="color: var(--amarelo, #f59e0b);">finalizado</strong> pela loja.<br>
+              Ele não está mais disponível para consulta ou alteração.
+            </p>
+            <p style="color: var(--text-2, #aaa); font-size: 13px; line-height: 1.6; margin-bottom: 24px;">
+              Para fazer um novo pedido, é só continuar navegando no catálogo.
+            </p>
+            <button class="carrinho-btn-enviar" id="btnEntendiFinalizado" style="background:linear-gradient(135deg,var(--roxo),var(--roxo-alt));color:#fff;border:none;margin-top:10px">
+              <i class="fas fa-shopping-bag"></i> Entendi
+            </button>
+          </div>
+        `;
+
+        document.getElementById("btnEntendiFinalizado").onclick = () => {
+          modal.classList.remove("active");
+        };
+
+        modal.classList.add("active");
+        document.body.style.overflow = "hidden";
+      }
+      return;
+    }
+
+    // Fluxo normal se o pedido ainda existe e não está finalizado
     if (data.success) {
       meuPedidoAtual = data.pedido;
       renderizarMeuPedido();
