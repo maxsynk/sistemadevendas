@@ -9083,14 +9083,13 @@ async function excluirPedidoCompleto(id) {
   if (!confirm("TEM CERTEZA? Essa ação não pode ser desfeita.")) return;
 
   try {
-    // A API DELETE /pedidos/:id já está configurada no Worker para devolver o estoque e mudar o status para cancelado
     const res = await api(`/pedidos/${id}`, { method: "DELETE" });
     const d = await res.json();
     if (!d.success) throw new Error(d.error);
     
     toast("Pedido excluído e estoque devolvido!");
     
-    // Se o modal estiver aberto com esse pedido, fecha ele
+    // CORREÇÃO AQUI: Fecha o modal ANTES de tentar recarregar para evitar erro.
     if (pedidoAtual && pedidoAtual.pedido.id === id) {
       document.getElementById("modalPedido").classList.remove("active");
       pedidoAtual = null;
@@ -9100,10 +9099,11 @@ async function excluirPedidoCompleto(id) {
     await carregarPedidos();
     await carregarProdutos();
     await carregarDashboard();
+    await verificarPedidosSite();
   } catch (e) {
     toast("Erro ao excluir: " + e.message, "error");
   }
-}  
+}
 function renderizarDetalhePedido() {
   const { pedido, itens } = pedidoAtual;
   document.getElementById("modalPedidoNum").textContent = "#" + pedido.id;
@@ -12214,7 +12214,7 @@ async function rejeitarPedidoSite(id) {
   }
 }
 
-  async function excluirPedidoSiteCompleto(id) {
+async function excluirPedidoSiteCompleto(id) {
   if (!confirm(`⚠️ ATENÇÃO!\n\nDeseja EXCLUIR DEFINITIVAMENTE o pedido do site #${id}?\n\nSe ele já tiver sido aprovado, o pedido oficial e o estoque também serão apagados/devolvidos.`)) return;
   if (!confirm("TEM CERTEZA? Essa ação não pode ser desfeita.")) return;
 
@@ -12226,11 +12226,10 @@ async function rejeitarPedidoSite(id) {
 
     toast("Pedido excluído com sucesso!");
     
-    // Fecha o modal de detalhes e o de listagem se estiverem abertos
+    // Fecha os modais ANTES de atualizar as listas
     document.getElementById("modalDetalhePedidoSite").classList.remove("active");
     document.getElementById("modalPedidosSite").classList.remove("active");
     
-    // Atualiza as listas
     await verificarPedidosSite();
     await carregarPedidos();
     await carregarProdutos();
