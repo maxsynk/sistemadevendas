@@ -11841,20 +11841,22 @@ async function carregarListaPedidosSite() {
   wrap.innerHTML = '<div class="loader"></div>';
 
   try {
-    // Puxa todos os pedidos do site
     const res = await api("/pedidos-site");
     const data = await res.json();
     if (!data.success) throw new Error(data.error);
 
     let pedidos = data.pedidos || [];
 
-    // Se o filtro for "pendente", mostra os novos E os aprovados com itens novos
+    // Regra de filtro corrigida:
     if (filtroStatusPedidosSite === "pendente") {
+      // Mostra TUDO que ainda não foi finalizado/limpo (inclui aprovados que o cliente ainda pode mexer)
       pedidos = pedidos.filter(p => 
-        p.status === "pendente" || (p.status === "aprovado" && p.edicao_nao_vista === 1)
+        p.status === "pendente" || 
+        p.status === "aprovado"
       );
     } else if (filtroStatusPedidosSite === "aprovado") {
-      pedidos = pedidos.filter(p => p.status === "aprovado" && p.edicao_nao_vista !== 1);
+      // Filtro de aprovados puro
+      pedidos = pedidos.filter(p => p.status === "aprovado");
     } else if (filtroStatusPedidosSite === "rejeitado") {
       pedidos = pedidos.filter(p => p.status === "rejeitado");
     }
@@ -11878,11 +11880,14 @@ async function carregarListaPedidosSite() {
     wrap.innerHTML = "";
     for (const p of lista) {
       const temEdicao = p.edicao_nao_vista === 1;
-      
-      // Força o destaque amarelo se for edição de pedido aprovado
-      const classeStatus = (p.status === "aprovado" && temEdicao) ? "pendente" : p.status;
+      const classeStatus = p.status; 
       
       const badgeEdicao = temEdicao ? `<span style="background:var(--warning); color:#000; font-size:10px; font-weight:900; padding:2px 8px; border-radius:4px; margin-left:8px; text-transform:uppercase;">Itens Novos</span>` : "";
+      
+      let badgeStatus = "";
+      if (p.status === "aprovado") {
+        badgeStatus = `<span style="background:var(--success); color:#fff; font-size:10px; font-weight:900; padding:2px 8px; border-radius:4px; margin-left:8px; text-transform:uppercase;">Aprovado</span>`;
+      }
 
       const div = document.createElement("div");
       div.className = "pre-pedido-item " + classeStatus;
@@ -11892,7 +11897,7 @@ async function carregarListaPedidosSite() {
           <div class="val">${p.chave}</div>
         </div>
         <div class="info">
-          <h4>${escapeHtml(p.nome_cliente)} ${badgeEdicao}</h4>
+          <h4>${escapeHtml(p.nome_cliente)} ${badgeEdicao} ${badgeStatus}</h4>
           <div class="det"><i class="fas fa-phone"></i> ${escapeHtml(p.telefone_cliente)}</div>
           ${p.cidade_estado ? `<div class="det"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(p.cidade_estado)}</div>` : ""}
           <div class="det" style="margin-top:6px">
@@ -11919,7 +11924,6 @@ async function carregarListaPedidosSite() {
     wrap.innerHTML = `<div class="empty"><h2>Erro</h2><p>${e.message}</p></div>`;
   }
 }
-
 async function abrirDetalhePedidoSite(id) {
   const modal = document.getElementById("modalDetalhePedidoSite");
   const conteudo = document.getElementById("modalDetalhePedidoSiteConteudo");
@@ -11930,12 +11934,18 @@ async function abrirDetalhePedidoSite(id) {
   modal.classList.add("active");
 
   try {
-    const res = await api("/pedidos-site/buscar?chave=" + encodeURIComponent(pedidosSiteCache.find(x => x.id === id)?.chave || ""));
+    // CORREÇÃO: Busca o pedido na lista que já temos em cache, sem depender da chave.
+    const pedidoAchado = pedidosSiteCache.find(x => x.id === id);
+    if (!pedidoAchado) throw new Error("Pedido não encontrado na lista local.");
+
+    const res = await api("/pedidos-site/buscar?chave=" + encodeURIComponent(pedidoAchado.chave));
     const data = await res.json();
     if (!data.success) throw new Error(data.error);
+    
     pedidoSiteDetalheAtual = data.pedido;
     renderizarDetalhePedidoSite(data.pedido);
-        // Avisa o Worker que o admin já viu essa edição
+
+    // Avisa o Worker que o admin já viu (mas não some da lista por causa da Correção 1)
     if (data.pedido.edicao_nao_vista === 1) {
       api(`/pedidos-site/${data.pedido.id}/marcar-edicao-vista`, { method: "POST" }).catch(() => {});
     }
