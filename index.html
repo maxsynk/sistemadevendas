@@ -11847,17 +11847,15 @@ async function carregarListaPedidosSite() {
 
     let pedidos = data.pedidos || [];
 
-    // Regra de filtro corrigida:
+    // Filtro rigoroso conforme solicitado
     if (filtroStatusPedidosSite === "pendente") {
-      // Mostra TUDO que ainda não foi finalizado/limpo (inclui aprovados que o cliente ainda pode mexer)
-      pedidos = pedidos.filter(p => 
-        p.status === "pendente" || 
-        p.status === "aprovado"
-      );
+      // Mostra APENAS os pedidos que estão aguardando aprovação
+      pedidos = pedidos.filter(p => p.status === "pendente");
     } else if (filtroStatusPedidosSite === "aprovado") {
-      // Filtro de aprovados puro
+      // Mostra APENAS os pedidos que já foram aprovados
       pedidos = pedidos.filter(p => p.status === "aprovado");
     } else if (filtroStatusPedidosSite === "rejeitado") {
+      // Mostra APENAS os rejeitados
       pedidos = pedidos.filter(p => p.status === "rejeitado");
     }
 
@@ -11882,8 +11880,10 @@ async function carregarListaPedidosSite() {
       const temEdicao = p.edicao_nao_vista === 1;
       const classeStatus = p.status; 
       
+      // A etiqueta amarela de "Itens Novos" só aparece se a edição não foi vista
       const badgeEdicao = temEdicao ? `<span style="background:var(--warning); color:#000; font-size:10px; font-weight:900; padding:2px 8px; border-radius:4px; margin-left:8px; text-transform:uppercase;">Itens Novos</span>` : "";
       
+      // Etiqueta verde só para os aprovados (útil na aba "Todos")
       let badgeStatus = "";
       if (p.status === "aprovado") {
         badgeStatus = `<span style="background:var(--success); color:#fff; font-size:10px; font-weight:900; padding:2px 8px; border-radius:4px; margin-left:8px; text-transform:uppercase;">Aprovado</span>`;
