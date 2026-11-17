@@ -9330,26 +9330,84 @@ async function finalizarPedidoOficial() {
 }
 // <<< FIM — FUNÇÃO finalizarPedidoOficial (v5.7) >>>
 
+
 async function editarPedidoAtual() {
   if (!pedidoAtual) return;
+
   const { pedido, itens } = pedidoAtual;
-  if (pedido.status !== "reservado") return toast("Só edita pedido RESERVADO", "error");
+
+  if (pedido.status !== "reservado") {
+    return toast("Só edita pedido RESERVADO", "error");
+  }
+
+  // Carrega os itens atuais do pedido no carrinho
   carrinho = itens.map(it => ({
-    variacao_id: it.variacao_id, numeracao: it.numeracao, quantidade: it.quantidade,
-    preco_unitario: it.preco_unitario, produto_id: null,
-    modelo: it.modelo, cor: it.cor, foto_url: it.foto_url || null,
+    variacao_id: it.variacao_id,
+    numeracao: it.numeracao,
+    quantidade: it.quantidade,
+    preco_unitario: it.preco_unitario,
+    produto_id: null,
+    modelo: it.modelo,
+    cor: it.cor,
+    foto_url: it.foto_url || null,
     estoque_disponivel: (it.estoque_atual || 0) + it.quantidade,
   }));
+
+  // Ativa o modo edição
   editandoPedido = pedido;
   clienteSelecionadoId = pedido.cliente_id;
+
   comboClienteBusca.value = pedido.cliente_nome || "";
-  document.getElementById("pedidoObs").value = pedido.observacoes || "";
-  document.getElementById("btnFinalizarPedido").innerHTML = '<i class="fas fa-save"></i> Salvar Alterações';
+
+  document.getElementById("pedidoObs").value =
+    pedido.observacoes || "";
+
+  // Altera o botão para salvar as alterações
+  document.getElementById("btnFinalizarPedido").innerHTML =
+    '<i class="fas fa-save"></i> Salvar Alterações';
+
+  // Abre automaticamente o painel Novo Pedido
+  const cardNovoPedido = document.querySelector(
+    '.card-collapsible[data-collapse-id="novo_pedido"]'
+  );
+
+  if (cardNovoPedido) {
+    cardNovoPedido.classList.add("open");
+
+    const abertos = JSON.parse(
+      localStorage.getItem("max_config_abertos") || "[]"
+    );
+
+    if (!abertos.includes("novo_pedido")) {
+      abertos.push("novo_pedido");
+    }
+
+    localStorage.setItem(
+      "max_config_abertos",
+      JSON.stringify(abertos)
+    );
+  }
+
+  // Atualiza o carrinho
   renderizarCarrinho();
+
+  // Fecha o detalhe do pedido
   document.getElementById("modalPedido").classList.remove("active");
-  document.querySelector('.tab[data-aba="pedidos"]').scrollIntoView({ behavior: "smooth" });
-  toast("Modo edição ativado.", "info");
+
+  // Leva o usuário até a área de edição
+  if (cardNovoPedido) {
+    cardNovoPedido.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  }
+
+  toast(
+    `Editando pedido #${pedido.id}. Remova ou altere os itens e clique em Salvar Alterações.`,
+    "success"
+  );
 }
+
 async function voltarStatusPedido() {
   if (!pedidoAtual) return;
   const id = pedidoAtual.pedido.id;
