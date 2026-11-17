@@ -487,6 +487,82 @@
     max-height: 5000px;
     padding: 0 24px 24px 24px;
   }
+  
+/* EDIÇÃO DE PEDIDO: libera a altura e a rolagem de todos os itens */
+.card-collapsible.editando-pedido {
+  overflow: visible !important;
+}
+
+.card-collapsible.editando-pedido .card-body {
+  max-height: none !important;
+  height: auto !important;
+  overflow: visible !important;
+  transition: none !important;
+}
+
+/* Mantém o resumo e o botão Salvar acessíveis durante a rolagem */
+.card-collapsible.editando-pedido #carrinhoWrap .barra-total {
+  position: sticky;
+  bottom: 10px;
+  z-index: 30;
+  background: var(--bg-card);
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+}
+
+/* Área de recuperação de produtos removidos */
+.itens-removidos-edicao {
+  margin-top: 18px;
+  padding: 14px;
+  border: 1px dashed var(--warning);
+  border-radius: 12px;
+  background: rgba(245,158,11,0.06);
+}
+
+.item-removido-edicao {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  margin-top: 8px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.20);
+}
+
+.item-removido-edicao .nome {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.btn-restaurar-item {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--success);
+  background: rgba(34,197,94,0.12);
+  color: var(--success);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+@media (max-width: 700px) {
+  .item-removido-edicao {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .btn-restaurar-item {
+    width: 100%;
+  }
+
+  .card-collapsible.editando-pedido #carrinhoWrap .barra-total {
+    bottom: 5px;
+  }
+}
+
 
   .form-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
   .form-row label {
@@ -5685,6 +5761,7 @@ let produtoEditando = null;
 let clienteEditando = null;
 let clientesCache = [];
 let carrinho = [];
+let itensRemovidosEdicao = [];
 let fotoCadastroFile = null;
 let fotoEditFile = null;
 let fotoEditRemover = false;
@@ -8843,56 +8920,233 @@ function adicionarAoCarrinho(item) {
   else carrinho.push({ ...item });
   renderizarCarrinho();
 }
+
 function renderizarCarrinho() {
   const wrap = document.getElementById("carrinhoWrap");
   const lista = document.getElementById("carrinhoLista");
-  if (carrinho.length === 0) { wrap.style.display = "none"; return; }
+  const emEdicao = !!editandoPedido;
+
+  // Em edição, mantém o painel visível mesmo que todos
+  // os itens tenham sido temporariamente removidos.
+  if (
+    carrinho.length === 0 &&
+    itensRemovidosEdicao.length === 0 &&
+    !emEdicao
+  ) {
+    wrap.style.display = "none";
+    return;
+  }
+
   wrap.style.display = "block";
   lista.innerHTML = "";
+
   let total = 0;
+
+  // Renderiza os itens ativos do pedido
   for (let i = 0; i < carrinho.length; i++) {
     const it = carrinho[i];
     const subtotal = it.quantidade * it.preco_unitario;
+
     total += subtotal;
+
     const div = document.createElement("div");
     div.className = "carrinho-item";
+
     div.innerHTML = `
       <div class="foto-mini">
-        ${it.foto_url ? `<img src="${it.foto_url}" onerror="this.parentNode.innerHTML='<span class=\\'vazio\\'><i class=\\'fas fa-image\\'></i></span>'">` : `<span class="vazio"><i class="fas fa-image"></i></span>`}
+        ${it.foto_url
+          ? `<img src="${it.foto_url}" onerror="this.parentNode.innerHTML='<span class=\\\\'vazio\\\\'><i class=\\\\'fas fa-image\\\\'></i></span>'">`
+          : `<span class="vazio"><i class="fas fa-image"></i></span>`
+        }
       </div>
+
       <div class="info">
-        <div class="nome">${it.modelo} — ${it.cor} · Nº ${it.numeracao}</div>
-        <div class="detalhes">${formatarMoeda(it.preco_unitario)} cada${it.estoque_disponivel ? ` · Disp: ${it.estoque_disponivel}` : ""}</div>
+        <div class="nome">
+          ${it.modelo} — ${it.cor} · Nº ${it.numeracao}
+        </div>
+        <div class="detalhes">
+          ${formatarMoeda(it.preco_unitario)} cada
+          ${it.estoque_disponivel ? ` · Disp: ${it.estoque_disponivel}` : ""}
+        </div>
       </div>
-      <input type="number" min="1" value="${it.quantidade}" data-idx="${i}" class="qtd-carrinho">
+
+      <input
+        type="number"
+        min="1"
+        value="${it.quantidade}"
+        data-idx="${i}"
+        class="qtd-carrinho"
+      >
+
       <div class="preco">${formatarMoeda(subtotal)}</div>
-      <button class="btn-lixeira" data-remover="${i}"><i class="fas fa-trash"></i></button>
+
+      <button
+        class="btn-lixeira"
+        data-remover="${i}"
+        title="Remover item"
+      >
+        <i class="fas fa-trash"></i>
+      </button>
     `;
+
     lista.appendChild(div);
   }
+
+  // Alteração de quantidade
   lista.querySelectorAll("[data-idx]").forEach(inp => {
     inp.onchange = () => {
       const i = parseInt(inp.dataset.idx);
       const q = parseInt(inp.value) || 0;
-      if (q <= 0) { inp.value = 1; carrinho[i].quantidade = 1; toast("Mínimo 1", "info"); renderizarCarrinho(); }
-      else { carrinho[i].quantidade = q; renderizarCarrinho(); }
+
+      if (q <= 0) {
+        inp.value = 1;
+        carrinho[i].quantidade = 1;
+        toast("Mínimo 1", "info");
+      } else {
+        carrinho[i].quantidade = q;
+      }
+
+      renderizarCarrinho();
     };
+
     inp.onkeydown = (e) => {
-      if (e.key === "ArrowDown" && parseInt(inp.value) <= 1) { e.preventDefault(); inp.value = 1; }
+      if (
+        e.key === "ArrowDown" &&
+        parseInt(inp.value) <= 1
+      ) {
+        e.preventDefault();
+        inp.value = 1;
+      }
     };
   });
+
+  // Remoção com recuperação exclusiva no modo edição
   lista.querySelectorAll("[data-remover]").forEach(btn => {
-    btn.onclick = () => { carrinho.splice(parseInt(btn.dataset.remover), 1); renderizarCarrinho(); };
+    btn.onclick = () => {
+      const indice = parseInt(btn.dataset.remover);
+      const item = carrinho[indice];
+
+      if (!item) return;
+
+      if (editandoPedido) {
+        // Não apaga definitivamente: guarda para possível restauração.
+        itensRemovidosEdicao.push({
+          ...item,
+          indiceOriginal: indice
+        });
+
+        carrinho.splice(indice, 1);
+
+        toast(
+          "Item removido temporariamente. Você pode recuperá-lo abaixo.",
+          "info"
+        );
+      } else {
+        // Fora da edição, mantém o comportamento anterior.
+        carrinho.splice(indice, 1);
+      }
+
+      renderizarCarrinho();
+    };
   });
-  document.getElementById("carrinhoItens").textContent = carrinho.reduce((s, c) => s + c.quantidade, 0);
-  document.getElementById("carrinhoTotal").textContent = formatarMoeda(total);
+
+  // Área de itens removidos e opção de recuperar
+  if (emEdicao && itensRemovidosEdicao.length > 0) {
+    const removidos = document.createElement("div");
+    removidos.className = "itens-removidos-edicao";
+
+    removidos.innerHTML = `
+      <strong style="color:var(--warning)">
+        <i class="fas fa-undo"></i>
+        ITENS REMOVIDOS — ${itensRemovidosEdicao.length}
+      </strong>
+      <p style="font-size:12px;color:var(--text-secondary);margin-top:6px">
+        Se removeu algum produto por engano, clique em Recuperar.
+        Ele voltará ao pedido antes de salvar.
+      </p>
+    `;
+
+    itensRemovidosEdicao.forEach((it, indice) => {
+      const linha = document.createElement("div");
+      linha.className = "item-removido-edicao";
+
+      const nome = document.createElement("div");
+      nome.className = "nome";
+      nome.textContent =
+        `${it.modelo} — ${it.cor} · Nº ${it.numeracao} | ` +
+        `${it.quantidade} par(es)`;
+
+      const botao = document.createElement("button");
+      botao.className = "btn-restaurar-item";
+      botao.innerHTML =
+        '<i class="fas fa-undo"></i> Recuperar';
+
+      botao.onclick = () => {
+        const removido = itensRemovidosEdicao.splice(indice, 1)[0];
+
+        if (!removido) return;
+
+        const itemRestaurado = { ...removido };
+        const posicao = Math.max(
+          0,
+          Math.min(itemRestaurado.indiceOriginal, carrinho.length)
+        );
+
+        delete itemRestaurado.indiceOriginal;
+
+        carrinho.splice(posicao, 0, itemRestaurado);
+
+        toast("Produto recuperado no pedido!", "success");
+        renderizarCarrinho();
+      };
+
+      linha.appendChild(nome);
+      linha.appendChild(botao);
+      removidos.appendChild(linha);
+    });
+
+    lista.appendChild(removidos);
+  }
+
+  // Atualiza os totais somente com os itens ativos
+  document.getElementById("carrinhoItens").textContent =
+    carrinho.reduce((s, c) => s + c.quantidade, 0);
+
+  document.getElementById("carrinhoTotal").textContent =
+    formatarMoeda(total);
 }
+
+
 document.getElementById("btnLimparCarrinho").onclick = () => {
   if (carrinho.length === 0) return;
+
+  if (editandoPedido) {
+    if (!confirm(
+      "Mover todos os itens para a lista de removidos?\n\n" +
+      "Você poderá recuperar qualquer produto antes de salvar."
+    )) return;
+
+    carrinho.forEach((item, indice) => {
+      itensRemovidosEdicao.push({
+        ...item,
+        indiceOriginal: indice
+      });
+    });
+
+    carrinho = [];
+
+    renderizarCarrinho();
+
+    toast("Itens movidos para a lista de recuperação.", "info");
+    return;
+  }
+
   if (!confirm("Limpar carrinho?")) return;
+
   carrinho = [];
   renderizarCarrinho();
 };
+
 
 document.getElementById("btnFinalizarPedido").onclick = async () => {
   if (!clienteSelecionadoId) {
@@ -8936,9 +9190,20 @@ document.getElementById("btnFinalizarPedido").onclick = async () => {
     if (editandoPedido) toast(`✅ Pedido #${editandoPedido.id} atualizado!`);
     else toast(`✅ Pedido #${d.id} criado! Reservado.`);
 
-    carrinho = [];
-    editandoPedido = null;
-    clienteSelecionadoId = null;
+    // Encerra o modo edição e limpa a lista temporária
+const cardEdicao = document.querySelector(
+  '.card-collapsible[data-collapse-id="novo_pedido"]'
+);
+
+if (cardEdicao) {
+  cardEdicao.classList.remove("editando-pedido");
+}
+
+itensRemovidosEdicao = [];
+
+carrinho = [];
+editandoPedido = null;
+clienteSelecionadoId = null;
     produtoSelecionadoId = null;
     comboClienteBusca.value = "";
     comboProdutoBusca.value = "";
@@ -9331,6 +9596,7 @@ async function finalizarPedidoOficial() {
 // <<< FIM — FUNÇÃO finalizarPedidoOficial (v5.7) >>>
 
 
+
 async function editarPedidoAtual() {
   if (!pedidoAtual) return;
 
@@ -9340,7 +9606,10 @@ async function editarPedidoAtual() {
     return toast("Só edita pedido RESERVADO", "error");
   }
 
-  // Carrega os itens atuais do pedido no carrinho
+  // Inicia uma edição limpa
+  itensRemovidosEdicao = [];
+
+  // Carrega todos os produtos do pedido
   carrinho = itens.map(it => ({
     variacao_id: it.variacao_id,
     numeracao: it.numeracao,
@@ -9353,7 +9622,6 @@ async function editarPedidoAtual() {
     estoque_disponivel: (it.estoque_atual || 0) + it.quantidade,
   }));
 
-  // Ativa o modo edição
   editandoPedido = pedido;
   clienteSelecionadoId = pedido.cliente_id;
 
@@ -9362,17 +9630,17 @@ async function editarPedidoAtual() {
   document.getElementById("pedidoObs").value =
     pedido.observacoes || "";
 
-  // Altera o botão para salvar as alterações
   document.getElementById("btnFinalizarPedido").innerHTML =
     '<i class="fas fa-save"></i> Salvar Alterações';
 
-  // Abre automaticamente o painel Novo Pedido
+  // Abre o painel
   const cardNovoPedido = document.querySelector(
     '.card-collapsible[data-collapse-id="novo_pedido"]'
   );
 
   if (cardNovoPedido) {
     cardNovoPedido.classList.add("open");
+    cardNovoPedido.classList.add("editando-pedido");
 
     const abertos = JSON.parse(
       localStorage.getItem("max_config_abertos") || "[]"
@@ -9388,25 +9656,27 @@ async function editarPedidoAtual() {
     );
   }
 
-  // Atualiza o carrinho
   renderizarCarrinho();
 
-  // Fecha o detalhe do pedido
+  // Fecha o modal de detalhes
   document.getElementById("modalPedido").classList.remove("active");
 
-  // Leva o usuário até a área de edição
-  if (cardNovoPedido) {
-    cardNovoPedido.scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
-  }
+  // Aguarda a atualização visual e leva ao começo da edição
+  requestAnimationFrame(() => {
+    if (cardNovoPedido) {
+      cardNovoPedido.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    }
+  });
 
   toast(
-    `Editando pedido #${pedido.id}. Remova ou altere os itens e clique em Salvar Alterações.`,
+    `Editando pedido #${pedido.id}. Todos os ${itens.length} itens foram carregados.`,
     "success"
   );
 }
+
 
 async function voltarStatusPedido() {
   if (!pedidoAtual) return;
