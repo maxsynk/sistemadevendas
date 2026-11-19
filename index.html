@@ -4570,6 +4570,13 @@
         <div class="toggle-icon"><i class="fas fa-chevron-down"></i></div>
       </div>
       <div class="card-body">
+<div id="avisoAcrescimo" style="display:none;margin-bottom:16px;padding:14px 16px;background:rgba(245,158,11,0.12);border:2px solid var(--warning);border-radius:12px;align-items:center;gap:12px;flex-wrap:wrap">
+  <div style="flex:1;min-width:220px;font-size:13px;color:var(--text-primary)">
+    <strong style="color:var(--warning)"><i class="fas fa-plus-circle"></i> Acrescentando itens ao Pedido #<span id="avisoAcrescimoNum"></span></strong><br>
+    <span style="font-size:12px;color:var(--text-secondary)">Bipe ou adicione os produtos abaixo e clique em <strong>Adicionar ao Pedido</strong>. O estoque será baixado na hora.</span>
+  </div>
+  <button class="btn btn-secondary btn-sm" id="btnCancelarAcrescimo" type="button"><i class="fas fa-times"></i> Cancelar</button>
+</div>  
       <div class="form-grid">
         <div class="form-row">
           <label>Cliente *</label>
@@ -9149,6 +9156,7 @@ document.getElementById("btnLimparCarrinho").onclick = () => {
 
 
 document.getElementById("btnFinalizarPedido").onclick = async () => {
+  if (acrescentandoPedido) { await finalizarAcrescimoPedido(); return; }
   if (!clienteSelecionadoId) {
     const nome = comboClienteBusca.value.trim().toLowerCase();
     const c = clientesCache.find(x => x.nome.toLowerCase() === nome);
@@ -9507,6 +9515,12 @@ function renderizarDetalhePedido() {
       if (btn) btn.onclick = voltarStatusPedido;
     }, 0);
   }
+  
+  const podeAcrescentar = ["reservado", "separado", "conferido"].includes(status) && !pedido.finalizado && !pedido.tem_pedido_site;
+  if (podeAcrescentar && temPermissao("editar_pedido")) {
+    acoesDiv.innerHTML += `<button class="btn btn-warning" id="btnAcrescentarItens"><i class="fas fa-plus-circle"></i> Acrescentar Itens</button>`;
+    acoesDiv.innerHTML += `<button class="btn btn-secondary" id="btnJuntarPedido"><i class="fas fa-object-group"></i> Juntar com outro pedido</button>`;
+  }
 
   if (status === "reservado") {
     acoesDiv.innerHTML += `<button class="btn btn-whatsapp" id="btnEnviarWhatsReservado"><i class="fab fa-whatsapp"></i> Enviar WhatsApp</button>`;
@@ -9575,6 +9589,8 @@ function renderizarDetalhePedido() {
   if (document.getElementById("btnEnviarWhatsCancelado")) document.getElementById("btnEnviarWhatsCancelado").onclick = () => enviarNotificacaoWhatsApp("cancelado");
   if (document.getElementById("btnLimparNovos")) document.getElementById("btnLimparNovos").onclick = limparItensNovos;
   if (document.getElementById("btnFinalizarPedidoOficial")) document.getElementById("btnFinalizarPedidoOficial").onclick = finalizarPedidoOficial; // v5.7
+  if (document.getElementById("btnAcrescentarItens")) document.getElementById("btnAcrescentarItens").onclick = acrescentarItensPedido;
+  if (document.getElementById("btnJuntarPedido")) document.getElementById("btnJuntarPedido").onclick = juntarPedidoAtual;
 }
 
 // >>> INÍCIO — FUNÇÃO finalizarPedidoOficial (v5.7) <<<
@@ -9599,6 +9615,7 @@ async function finalizarPedidoOficial() {
 
 async function editarPedidoAtual() {
   if (!pedidoAtual) return;
+    if (acrescentandoPedido) return toast("Termine ou cancele o acréscimo em andamento.", "error");
 
   const { pedido, itens } = pedidoAtual;
 
@@ -9723,6 +9740,130 @@ async function limparItensNovos() {
     await carregarPedidos();
   } catch (e) { toast("Erro: " + e.message, "error"); }
 }
+ // >>> INÍCIO — ACRESCENTAR ITENS / JUNTAR PEDIDOS (v6.0) <<<
+let acrescentandoPedido = null;
+
+function acrescentarItensPedido() {
+  if (!pedidoAtual) return;
+  if (editandoPedido) return toast("Termine ou cancele a edição do pedido antes.", "error");
+  if (carrinho.length > 0 && !confirm("O carrinho atual será limpo para acrescentar itens ao pedido. Continuar?")) return;
+
+  const { pedido } = pedidoAtual;
+  carrinho = [];
+  itensRemovidosEdicao = [];
+  acrescentandoPedido = pedido;
+  clienteSelecionadoId = pedido.cliente_id;
+
+  comboClienteBusca.value = pedido.cliente_nome || "";
+  comboClienteBusca.disabled = true;
+  document.getElementById("pedidoObs").value = "";
+  document.getElementById("avisoAcrescimoNum").textContent = pedido.id;
+  document.getElementById("avisoAcrescimo").style.display = "flex";
+  document.getElementById("btnFinalizarPedido").innerHTML = '<i class="fas fa-plus-circle"></i> Adicionar ao Pedido #' + pedido.id;
+
+  const card = document.querySelector('.card-collapsible[data-collapse-id="novo_pedido"]');
+  if (card) card.classList.add("open");
+
+  renderizarCarrinho();
+  document.getElementById("modalPedido").classList.remove("active");
+  requestAnimationFrame(() => { if (card) card.scrollIntoView({ behavior: "smooth", block: "start" }); });
+  toast(`Modo acréscimo: pedido #${pedido.id}. Adicione os produtos.`, "info");
+}
+
+function sairModoAcrescimo() {
+  acrescentandoPedido = null;
+  carrinho = [];
+  clienteSelecionadoId = null;
+  produtoSelecionadoId = null;
+  comboClienteBusca.disabled = false;
+  comboClienteBusca.value = "";
+  comboProdutoBusca.value = "";
+  document.getElementById("pedidoGradeWrap").style.display = "none";
+  document.getElementById("avisoAcrescimo").style.display = "none";
+  document.getElementById("btnFinalizarPedido").innerHTML = '<i class="fas fa-save"></i> Gravar Pedido';
+  fotoBipada.classList.remove("show");
+  renderizarCarrinho();
+}
+
+async function finalizarAcrescimoPedido() {
+  if (!acrescentandoPedido) return;
+  if (carrinho.length === 0) return toast("Carrinho vazio", "error");
+
+  const id = acrescentandoPedido.id;
+  const pares = carrinho.reduce((s, c) => s + c.quantidade, 0);
+  const valor = carrinho.reduce((s, c) => s + c.quantidade * c.preco_unitario, 0);
+  if (!confirm(`Acrescentar ${pares} par(es) (${formatarMoeda(valor)}) ao pedido #${id}?\n\nO estoque será baixado agora.`)) return;
+
+  const btn = document.getElementById("btnFinalizarPedido");
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
+  try {
+    const res = await api(`/pedidos/${id}/adicionar-itens`, {
+      method: "POST",
+      body: JSON.stringify({
+        itens: carrinho.map(c => ({ variacao_id: c.variacao_id, quantidade: c.quantidade, preco_unitario: c.preco_unitario })),
+      }),
+    });
+    const d = await res.json();
+    if (!d.success) throw new Error(d.error);
+
+    toast(`✅ ${d.pares_adicionados} par(es) acrescentados ao pedido #${id}!`);
+    sairModoAcrescimo();
+    await carregarPedidos();
+    await carregarProdutos();
+    await carregarDashboard();
+    await abrirDetalhePedido(id);
+  } catch (e) {
+    toast("Erro: " + e.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = acrescentandoPedido
+      ? '<i class="fas fa-plus-circle"></i> Adicionar ao Pedido #' + acrescentandoPedido.id
+      : '<i class="fas fa-save"></i> Gravar Pedido';
+  }
+}
+
+async function juntarPedidoAtual() {
+  if (!pedidoAtual) return;
+  const destino = pedidoAtual.pedido;
+
+  const resp = prompt(
+    `JUNTAR PEDIDOS\n\nEste é o pedido #${destino.id} de ${destino.cliente_nome || "cliente"} (ele continua existindo).\n\n` +
+    `Digite o NÚMERO do outro pedido do mesmo cliente que será ABSORVIDO por este (o outro deixa de existir):`
+  );
+  if (resp === null) return;
+  const origemId = parseInt(resp.replace(/\D/g, ""));
+  if (!origemId) return toast("Número de pedido inválido", "error");
+  if (origemId === destino.id) return toast("Escolha outro pedido", "error");
+
+  if (!confirm(
+    `Confirma juntar o pedido #${origemId} DENTRO do pedido #${destino.id}?\n\n` +
+    `• Os itens do #${origemId} passam para o #${destino.id}\n` +
+    `• O pedido #${origemId} será removido\n` +
+    `• O estoque NÃO muda (já estava baixado)\n\nEsta ação não pode ser desfeita.`
+  )) return;
+
+  try {
+    const res = await api(`/pedidos/${destino.id}/juntar`, {
+      method: "POST",
+      body: JSON.stringify({ origem_id: origemId }),
+    });
+    const d = await res.json();
+    if (!d.success) throw new Error(d.error);
+    toast(`✅ ${d.mensagem}`);
+    await carregarPedidos();
+    await carregarProdutos();
+    await carregarDashboard();
+    await abrirDetalhePedido(destino.id);
+  } catch (e) { toast("Erro: " + e.message, "error"); }
+}
+
+document.getElementById("btnCancelarAcrescimo").onclick = () => {
+  if (carrinho.length > 0 && !confirm("Descartar os itens que você já adicionou ao carrinho?")) return;
+  sairModoAcrescimo();
+  toast("Acréscimo cancelado", "info");
+};
+// <<< FIM — ACRESCENTAR ITENS / JUNTAR PEDIDOS (v6.0) >>> 
     
 async function mudarStatusPedido(acao, sucessoMsg) {
   if (!pedidoAtual) return;
