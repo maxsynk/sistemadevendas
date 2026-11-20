@@ -2754,6 +2754,7 @@ const observerModais = new MutationObserver((muts) => {
   }
 });
 
+// === INICIO: fim DOMContentLoaded corrigido ===
 document.addEventListener("DOMContentLoaded", () => {
   MODAIS_SITE.forEach(id => {
     const el = document.getElementById(id);
@@ -2769,4 +2770,5 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnVoltarEsc = document.getElementById("btnVoltarEscolha");
   if (btnVoltarEsc) btnVoltarEsc.addEventListener("click", voltarDaEscolha);
 });
+// === FIM: fim DOMContentLoaded corrigido ===
 });
