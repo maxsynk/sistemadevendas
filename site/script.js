@@ -1687,6 +1687,281 @@ async function continuarIdentificacao() {
   }
 }
 
+// ============================================
+// v5.6 — PEDIDO EM ABERTO: ADICIONAR AO EXISTENTE OU CRIAR NOVO
+// ============================================
+let pedidoPendenteEscolha = null;   // { chave, whatsapp, dadosCliente }
+let pedidoAntesAdicao = null;       // pedido como estava antes de adicionar
+let forcarNovoPedido = false;       // cliente escolheu "criar novo" mesmo tendo pedido aberto
+
+const chaveItemPedido = (it) => `${it.modelo}|${it.cor}|${it.numeracao}`;
+
+async function mostrarEscolhaPedido() {
+  document.getElementById("fpIdentificacao").style.display = "none";
+  document.getElementById("fpEscolha").style.display = "block";
+  document.getElementById("fpErroEscolha").style.display = "none";
+  document.getElementById("fpEscolhaChave").textContent = pedidoPendenteEscolha.chave;
+  document.getElementById("fpEscolhaResumo").textContent = "";
+  pedidoAntesAdicao = null;
+
+  // Busca o pedido atual (serve de base pra marcar o que for acrescentado)
+  try {
+    const res = await fetch(API_BASE + "/publico/meu-pedido", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Site-Token": "max-site-2026" },
+      body: JSON.stringify({ chave: pedidoPendenteEscolha.chave, whatsapp: pedidoPendenteEscolha.whatsapp }),
+    });
+    const data = await res.json();
+    if (data.success && data.pedido) {
+      pedidoAntesAdicao = data.pedido;
+      const n = data.pedido.total_pares || 0;
+      document.getElementById("fpEscolhaResumo").textContent =
+        `(${n} ${n === 1 ? "par" : "pares"} · ${formatarMoeda(data.pedido.valor_estimado)})`;
+    }
+  } catch (e) {
+    console.warn("[mostrarEscolhaPedido] não foi possível carregar o pedido atual:", e.message);
+  }
+}
+
+function voltarDaEscolha() {
+  document.getElementById("fpEscolha").style.display = "none";
+  document.getElementById("fpIdentificacao").style.display = "block";
+}
+
+// Opção "Criar novo pedido" → segue o fluxo normal de dados/confirmar
+function escolherCriarNovoPedido() {
+  forcarNovoPedido = true;
+  document.getElementById("fpEscolha").style.display = "none";
+  irParaEtapaDados({
+    novoCliente: false,
+    senhaNova: false,
+    cadastroIncompleto: pedidoPendenteEscolha?.dadosCliente?.cadastro_incompleto || [],
+    cliente: pedidoPendenteEscolha?.dadosCliente || null,
+  });
+}
+
+// Calcula quanto de cada item foi acrescentado (diferença antes × depois)
+function calcularMarcasAdicao(antes, depois, snapshotCarrinho) {
+  const marcas = {};
+  if (antes && Array.isArray(antes.itens)) {
+    const mapaAntes = {};
+    for (const it of antes.itens) mapaAntes[chaveItemPedido(it)] = it.quantidade || 0;
+    for (const it of (depois.itens || [])) {
+      const dif = (it.quantidade || 0) - (mapaAntes[chaveItemPedido(it)] || 0);
+      if (dif > 0) marcas[chaveItemPedido(it)] = dif;
+    }
+  } else {
+    // Fallback: usa o que estava no carrinho
+    for (const it of snapshotCarrinho) {
+      const k = chaveItemPedido(it);
+      marcas[k] = (marcas[k] || 0) + it.qtd;
+    }
+  }
+  return marcas;
+}
+
+// Opção "Adicionar ao pedido existente"
+async function adicionarAoPedidoExistente() {
+  const pend = pedidoPendenteEscolha;
+  if (!pend) return;
+
+  const erroEl = document.getElementById("fpErroEscolha");
+  const btn = document.getElementById("btnAdicionarExistente");
+  const btnOriginal = btn.innerHTML;
+  erroEl.style.display = "none";
+
+  if (!carrinho || carrinho.length === 0) {
+    erroEl.style.display = "flex";
+    erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Seu carrinho está vazio`;
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adicionando...';
+
+  try {
+    // 1) Estoque em tempo real
+    const semEstoque = await validarEstoqueCarrinho();
+    if (semEstoque) {
+      let msg = "Alguns itens não têm estoque suficiente: ";
+      msg += carrinho
+        .filter(i => i.estoque_atual !== undefined && i.estoque_atual < i.qtd)
+        .map(i => `${i.modelo} (Nº ${i.numeracao}) — restam ${i.estoque_atual}`)
+        .join("; ");
+      erroEl.style.display = "flex";
+      erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${escapeHtml(msg)}`;
+      return;
+    }
+
+    // 2) Snapshot do carrinho + envio
+    const snapshot = carrinho.map(it => ({ ...it }));
+    const itens = carrinho.map(it => ({
+      produto_id: it.produto_id,
+      numeracao: it.numeracao,
+      quantidade: it.qtd,
+    }));
+
+    const res = await fetch(API_BASE + "/publico/meu-pedido/adicionar-itens", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Site-Token": "max-site-2026" },
+      body: JSON.stringify({ chave: pend.chave, whatsapp: pend.whatsapp, itens }),
+    });
+    const data = await res.json();
+
+    // Pedido foi despachado/cancelado enquanto o cliente decidia → cai em NOVO PEDIDO
+    if (!data.success && (data.pedido_fechado === true || (data.error || "").includes("finalizado"))) {
+      const dadosCliente = pend.dadosCliente;
+      pedidoPendenteEscolha = null;
+      alert("Seu pedido anterior já foi despachado e não aceita mais itens. Vamos criar um NOVO pedido com o seu carrinho.");
+      document.getElementById("fpEscolha").style.display = "none";
+      irParaEtapaDados({
+        novoCliente: false,
+        senhaNova: false,
+        cadastroIncompleto: dadosCliente?.cadastro_incompleto || [],
+        cliente: dadosCliente,
+      });
+      return;
+    }
+
+    if (!data.success) {
+      let msg = data.error || "Não foi possível adicionar";
+      if (data.itens_com_erro && data.itens_com_erro.length > 0) {
+        msg += " — " + data.itens_com_erro.map(e => e.motivo).join("; ");
+      }
+      erroEl.style.display = "flex";
+      erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${escapeHtml(msg)}`;
+      return;
+    }
+
+    // 3) Itens já estão no pedido → limpa o carrinho agora (evita duplicar)
+    carrinho = [];
+    atualizarCarrinho();
+    limparCarrinhoLocal();
+    fecharModalCarrinho();
+
+    // 4) Recarrega o pedido atualizado
+    const res2 = await fetch(API_BASE + "/publico/meu-pedido", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Site-Token": "max-site-2026" },
+      body: JSON.stringify({ chave: pend.chave, whatsapp: pend.whatsapp }),
+    });
+    const data2 = await res2.json();
+    if (!data2.success || !data2.pedido) {
+      document.getElementById("fpEscolha").style.display = "none";
+      fecharFormFechamento();
+      mostrarToastAdd("✅ Itens adicionados! Abra 'Acessar meus pedidos' pra conferir.");
+      return;
+    }
+
+    const marcas = calcularMarcasAdicao(pedidoAntesAdicao, data2.pedido, snapshot);
+    mostrarTelaPedidoAtualizado(data2.pedido, marcas, data.itens_com_erro || []);
+  } catch (e) {
+    erroEl.style.display = "flex";
+    erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Erro: ${escapeHtml(e.message)}`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = btnOriginal;
+  }
+}
+
+// Tela: pedido atualizado, com os itens novos destacados + botão OK
+function mostrarTelaPedidoAtualizado(p, marcas, itensComErro) {
+  document.getElementById("formFechamento").style.display = "none";
+  const tela = document.getElementById("telaSucesso");
+  tela.style.display = "block";
+
+  const itensHTML = (p.itens || []).map(it => {
+    const add = marcas[chaveItemPedido(it)] || 0;
+    const novo = add > 0;
+    return `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px;margin-bottom:6px;border-radius:10px;
+        ${novo ? "background:rgba(34,197,94,0.12);border-left:4px solid var(--verde);" : "background:rgba(128,128,128,0.06);"}">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:13px">${escapeHtml(it.modelo)} — ${escapeHtml(it.cor)}</div>
+          <div style="font-size:12px;color:var(--text-dim)">Nº <b>${it.numeracao}</b>
+            ${novo ? `<span style="color:var(--verde);font-weight:800;margin-left:6px">🆕 +${add} ${add === 1 ? "par" : "pares"} adicionado${add === 1 ? "" : "s"}</span>` : ""}
+          </div>
+        </div>
+        <div style="font-weight:800">${it.quantidade}x</div>
+      </div>`;
+  }).join("");
+
+  const erroHTML = (itensComErro && itensComErro.length > 0)
+    ? `<div class="busca-erro" style="display:flex;margin-bottom:10px"><i class="fas fa-exclamation-circle"></i>
+        ${itensComErro.length} item(ns) não foi/foram adicionado(s): ${escapeHtml(itensComErro.map(e => e.motivo).join("; "))}</div>`
+    : "";
+
+  const descontoHTML = (p.desconto_aplicado && p.desconto_aplicado > 0)
+    ? `<div style="display:flex;justify-content:space-between;color:var(--verde);font-weight:700"><span>💼 Desconto</span><span>- ${formatarMoeda(p.desconto_aplicado)}</span></div>`
+    : "";
+
+  tela.innerHTML = `
+    <div class="sucesso-chave" style="text-align:left">
+      <div style="text-align:center">
+        <div class="icon-ok"><i class="fas fa-check"></i></div>
+        <h3>Itens adicionados ao pedido!</h3>
+        <p class="sub">Pedido <strong>${escapeHtml(p.chave)}</strong> — confira abaixo (itens novos em verde).</p>
+      </div>
+      ${erroHTML}
+      <div style="max-height:40vh;overflow:auto;margin:14px 0">${itensHTML}</div>
+      <div style="border-top:1px solid var(--border);padding-top:10px;font-size:14px;line-height:1.8">
+        <div style="display:flex;justify-content:space-between"><span>Total de pares</span><strong>${p.total_pares}</strong></div>
+        ${descontoHTML}
+        <div style="display:flex;justify-content:space-between;font-weight:900;font-size:16px;color:var(--roxo)">
+          <span>Valor total</span><span>${formatarMoeda(p.valor_estimado)}</span>
+        </div>
+      </div>
+      <button class="btn-enviar-zap" id="btnOkPedidoAtualizado" style="margin-top:16px">
+        <i class="fas fa-check"></i> OK
+      </button>
+    </div>
+  `;
+
+  document.getElementById("btnOkPedidoAtualizado").onclick = () => {
+    dadosUltimoPedido = {
+      chave: p.chave,
+      titulo: "Pedido atualizado!",
+      msg: montarMsgPedidoAtualizado(p, marcas),
+    };
+    mostrarTelaSucesso(); // fluxo normal: chave + "Enviar para o vendedor"
+  };
+}
+
+// Mensagem de WhatsApp com os itens acrescentados marcados
+function montarMsgPedidoAtualizado(p, marcas) {
+  const brl = (v) => "R$ " + (parseFloat(v) || 0).toFixed(2).replace(".", ",");
+  let msg = `*PEDIDO ATUALIZADO — Site MAX Representação*\n\n`;
+  msg += `Chave: *${p.chave}*\n`;
+  msg += `Nome: ${p.nome_cliente || "—"}\n`;
+  msg += `WhatsApp: ${p.telefone_cliente || "—"}\n\n`;
+  msg += `ITENS DO PEDIDO:\n`;
+
+  const novos = [];
+  for (const it of (p.itens || [])) {
+    const add = marcas[chaveItemPedido(it)] || 0;
+    const linha = `${it.modelo} — ${it.cor} · Nº ${it.numeracao} · ${it.quantidade} ${it.quantidade === 1 ? "par" : "pares"}`;
+    if (add > 0) {
+      msg += `🆕 ${linha}  ➜ *+${add} ${add === 1 ? "par adicionado" : "pares adicionados"}*\n`;
+      novos.push(`• ${it.modelo} — ${it.cor} · Nº ${it.numeracao}: +${add}`);
+    } else {
+      msg += `• ${linha}\n`;
+    }
+  }
+
+  if (novos.length > 0) {
+    msg += `\n➕ *ACRESCENTADOS AGORA:*\n${novos.join("\n")}\n`;
+  }
+
+  msg += `\n*Total de pares: ${p.total_pares}*\n`;
+  if (p.desconto_aplicado && p.desconto_aplicado > 0) {
+    msg += `Valor original: ${brl(p.valor_original)}\n`;
+    msg += `Desconto: -${brl(p.desconto_aplicado)}\n`;
+  }
+  msg += `*Total: ${brl(p.valor_estimado)}*\n\n`;
+  msg += `Informe esta chave para o vendedor conferir.\n\nQualquer dúvida, estamos à disposição! 😊`;
+  return msg;
+}
+
 function irParaEtapaDados(opts) {
   document.getElementById("fpIdentificacao").style.display = "none";
   document.getElementById("fpDados").style.display = "block";
