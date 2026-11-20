@@ -242,7 +242,26 @@
         </button>
       </div>
 
-      <!-- Etapa 2: dados do cliente + resumo -->
+<div id="fpEscolha" style="display:none">
+  <div class="form-aviso">
+    <strong><i class="fas fa-info-circle"></i> Você já tem um pedido em aberto</strong><br>
+    Pedido <strong id="fpEscolhaChave"></strong> <span id="fpEscolhaResumo"></span><br><br>
+    Deseja <strong>adicionar ao pedido existente</strong> ou <strong>criar um novo pedido</strong>?
+  </div>
+
+  <div class="busca-erro" id="fpErroEscolha" style="display:none"></div>
+
+  <button class="btn-fechar-sucesso" id="btnAdicionarExistente" style="background:linear-gradient(135deg,var(--roxo),var(--roxo-alt));color:#fff;border-color:var(--roxo);padding:16px;font-size:13px;">
+    <i class="fas fa-plus-circle"></i> Adicionar ao pedido existente
+  </button>
+  <button class="carrinho-btn-limpar" id="btnCriarNovoPedido" style="margin-top:10px">
+    <i class="fas fa-file-circle-plus"></i> Criar novo pedido
+  </button>
+  <button class="carrinho-btn-limpar" id="btnVoltarEscolha" style="margin-top:10px">
+    <i class="fas fa-arrow-left"></i> Voltar
+  </button>
+</div>
+        
       <div id="fpDados" style="display:none">
         <div class="campo">
           <label>Nome completo *</label>
