@@ -2771,4 +2771,3 @@ document.addEventListener("DOMContentLoaded", () => {
   if (btnVoltarEsc) btnVoltarEsc.addEventListener("click", voltarDaEscolha);
 });
 // === FIM: fim DOMContentLoaded corrigido ===
-});
