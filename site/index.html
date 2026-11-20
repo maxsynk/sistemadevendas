@@ -19,6 +19,37 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="style.css">
+<!-- === INICIO: destaque botao "Adicionar ao pedido existente" (v5.7) === -->
+<style>
+  #fpEscolha .fp-escolha-acoes { display:flex; flex-direction:column; gap:10px; margin-top:4px; }
+  #btnAdicionarExistente.fp-btn-principal {
+    position:relative; width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+    padding:20px 16px 16px; font-size:16px; font-weight:800; letter-spacing:.3px; text-transform:uppercase;
+    color:#fff; background:linear-gradient(135deg,var(--roxo),var(--roxo-alt)); border:2px solid var(--roxo);
+    border-radius:12px; cursor:pointer; box-shadow:0 0 0 0 rgba(168,85,247,.7), 0 8px 24px rgba(168,85,247,.35);
+    animation:fpPulsoDestaque 1.8s ease-out infinite; transition:transform .15s ease;
+  }
+  #btnAdicionarExistente.fp-btn-principal:hover { transform:translateY(-2px) scale(1.01); }
+  #btnAdicionarExistente.fp-btn-principal:disabled { animation:none; opacity:.8; cursor:wait; }
+  #btnAdicionarExistente .fp-btn-sub { font-size:11px; font-weight:500; text-transform:none; letter-spacing:0; opacity:.9; }
+  #btnAdicionarExistente .fp-selo-recomendado {
+    position:absolute; top:-11px; left:50%; transform:translateX(-50%);
+    background:#22c55e; color:#fff; font-size:10px; font-weight:800; letter-spacing:.8px;
+    padding:3px 10px; border-radius:999px; white-space:nowrap; box-shadow:0 2px 8px rgba(34,197,94,.5);
+  }
+  #btnCriarNovoPedido.fp-btn-secundario {
+    width:100%; margin-top:6px !important; padding:8px; font-size:11px; opacity:.6;
+    background:transparent !important; border:1px dashed currentColor !important; box-shadow:none !important;
+  }
+  #btnCriarNovoPedido.fp-btn-secundario:hover { opacity:1; }
+  @keyframes fpPulsoDestaque {
+    0%   { box-shadow:0 0 0 0 rgba(168,85,247,.7), 0 8px 24px rgba(168,85,247,.35); }
+    70%  { box-shadow:0 0 0 14px rgba(168,85,247,0), 0 8px 24px rgba(168,85,247,.35); }
+    100% { box-shadow:0 0 0 0 rgba(168,85,247,0), 0 8px 24px rgba(168,85,247,.35); }
+  }
+  @media (prefers-reduced-motion: reduce) { #btnAdicionarExistente.fp-btn-principal { animation:none; } }
+</style>
+<!-- === FIM: destaque botao "Adicionar ao pedido existente" (v5.7) === -->
 </head>
 <body>
 
@@ -242,25 +273,32 @@
         </button>
       </div>
 
+<!-- === INICIO: bloco fpEscolha (v5.7 - destaque em "Adicionar ao existente") === -->
 <div id="fpEscolha" style="display:none">
   <div class="form-aviso">
     <strong><i class="fas fa-info-circle"></i> Você já tem um pedido em aberto</strong><br>
     Pedido <strong id="fpEscolhaChave"></strong> <span id="fpEscolhaResumo"></span><br><br>
-    Deseja <strong>adicionar ao pedido existente</strong> ou <strong>criar um novo pedido</strong>?
+    Recomendamos <strong>adicionar estes itens ao pedido existente</strong> para não gerar um pedido duplicado.
   </div>
 
   <div class="busca-erro" id="fpErroEscolha" style="display:none"></div>
 
-  <button class="btn-fechar-sucesso" id="btnAdicionarExistente" style="background:linear-gradient(135deg,var(--roxo),var(--roxo-alt));color:#fff;border-color:var(--roxo);padding:16px;font-size:13px;">
-    <i class="fas fa-plus-circle"></i> Adicionar ao pedido existente
-  </button>
-  <button class="carrinho-btn-limpar" id="btnCriarNovoPedido" style="margin-top:10px">
-    <i class="fas fa-file-circle-plus"></i> Criar novo pedido
-  </button>
-  <button class="carrinho-btn-limpar" id="btnVoltarEscolha" style="margin-top:10px">
-    <i class="fas fa-arrow-left"></i> Voltar
-  </button>
+  <div class="fp-escolha-acoes">
+    <button class="btn-fechar-sucesso fp-btn-principal" id="btnAdicionarExistente">
+      <span class="fp-selo-recomendado"><i class="fas fa-star"></i> RECOMENDADO</span>
+      <span><i class="fas fa-plus-circle"></i> Adicionar ao pedido existente</span>
+      <span class="fp-btn-sub">Junta tudo em um só pedido, sem duplicar</span>
+    </button>
+    <button class="carrinho-btn-limpar fp-btn-secundario" id="btnCriarNovoPedido">
+      <i class="fas fa-file-circle-plus"></i> Criar novo pedido separado
+    </button>
+    <button class="carrinho-btn-limpar" id="btnVoltarEscolha" style="margin-top:4px">
+      <i class="fas fa-arrow-left"></i> Voltar
+    </button>
+  </div>
 </div>
+<!-- === FIM: bloco fpEscolha (v5.7) === -->
+
         
       <div id="fpDados" style="display:none">
         <div class="campo">

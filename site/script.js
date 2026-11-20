@@ -1705,6 +1705,7 @@ async function mostrarEscolhaPedido() {
   document.getElementById("fpEscolhaChave").textContent = pedidoPendenteEscolha.chave;
   document.getElementById("fpEscolhaResumo").textContent = "";
   pedidoAntesAdicao = null;
+  document.getElementById("btnAdicionarExistente")?.focus(); // v5.7: botão recomendado já vem selecionado
 
   // Busca o pedido atual (serve de base pra marcar o que for acrescentado)
   try {
@@ -1732,6 +1733,18 @@ function voltarDaEscolha() {
 
 // Opção "Criar novo pedido" → segue o fluxo normal de dados/confirmar
 function escolherCriarNovoPedido() {
+  // === INICIO v5.7: confirmação antes de criar pedido duplicado ===
+  const chaveAberta = pedidoPendenteEscolha?.chave || "";
+  const confirmou = confirm(
+    `Você já tem o pedido ${chaveAberta} em aberto.\n\n` +
+    `Tem certeza que quer criar um NOVO pedido separado?\n\n` +
+    `Clique em "Cancelar" para voltar e adicionar os itens ao pedido existente (recomendado).`
+  );
+  if (!confirmou) {
+    document.getElementById("btnAdicionarExistente")?.focus();
+    return;
+  }
+  // === FIM v5.7 ===
   forcarNovoPedido = true;
   document.getElementById("fpEscolha").style.display = "none";
   irParaEtapaDados({
