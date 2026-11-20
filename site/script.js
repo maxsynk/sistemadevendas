@@ -1651,6 +1651,7 @@ async function continuarIdentificacao() {
       return;
     }
 
+  // === INICIO: auth_ok continuarIdentificacao v5.6 ===
     if (data.auth_ok) {
       salvarSessaoCliente({
         whatsapp: data.telefone || whatsapp,
@@ -1659,7 +1660,6 @@ async function continuarIdentificacao() {
         is_revendedor: data.is_revendedor,
       });
 
-      // === INICIO: verificacao pedido pendente v5.6 ===
       // v5.6: tem pedido em aberto → pergunta se adiciona ou cria novo
       if (data.tem_pedido_pendente && data.pedido_pendente) {
         pedidoPendenteEscolha = {
@@ -1668,12 +1668,6 @@ async function continuarIdentificacao() {
           dadosCliente: data,
         };
         await mostrarEscolhaPedido();
-        return;
-      }
-// === FIM: verificacao pedido pendente v5.6 ===
-        
-        // Envia o carrinho atual direto para o pedido que já existe
-        await adicionarCarrinhoAoPedido();
         return;
       }
 
@@ -1685,6 +1679,7 @@ async function continuarIdentificacao() {
         cliente: data,
       });
     }
+// === FIM: auth_ok continuarIdentificacao v5.6 === 
   } catch (e) {
     erroEl.style.display = "flex";
     erroEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Erro: ${escapeHtml(e.message)}`;
