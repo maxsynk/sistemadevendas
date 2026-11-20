@@ -1,12 +1,28 @@
+// === INICIO: sw.js ===
 // MAX REPRESENTAÇÃO — SERVICE WORKER
 // Mude a versão sempre que publicar uma atualização.
-const CACHE_NOME = "max-representacao-v32";
-const ARQUIVOS_CACHE = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
+const CACHE_NOME = "max-representacao-v33";
+const ARQUIVOS_CACHE = ["./", "./index.html", "./manifest.json"];
+const ICONES_OPCIONAIS = ["./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NOME)
-      .then((cache) => cache.addAll(ARQUIVOS_CACHE))
+      .then(async (cache) => {
+        await cache.addAll(ARQUIVOS_CACHE);
+        await Promise.all(
+          ICONES_OPCIONAIS.map(async (url) => {
+            try {
+              const res = await fetch(url);
+              if (res && res.ok) {
+                await cache.put(url, res);
+              }
+            } catch (_) {
+              // Ignora ícone inexistente sem quebrar o cache principal
+            }
+          })
+        );
+      })
       .then(() => self.skipWaiting())
       .catch((err) => console.error("[SW] Erro no cache:", err))
   );
@@ -68,3 +84,4 @@ self.addEventListener("fetch", (event) => {
 self.addEventListener("message", (event) => {
   if (event.data && event.data.tipo === "SKIP_WAITING") self.skipWaiting();
 });
+// === FIM: sw.js ===
