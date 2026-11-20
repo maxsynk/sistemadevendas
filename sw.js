@@ -1,103 +1,87 @@
-// ============================================
-// MAX REPRESENTAÇÃO — SERVICE WORKER v9.3
-// PWA: cache da interface pra funcionar offline
-// ============================================
+// === INICIO: sw.js ===
+// MAX REPRESENTAÇÃO — SERVICE WORKER
+// Mude a versão sempre que publicar uma atualização.
+const CACHE_NOME = "max-representacao-v33";
+const ARQUIVOS_CACHE = ["./", "./index.html", "./manifest.json"];
+const ICONES_OPCIONAIS = ["./icon-192.png", "./icon-512.png"];
 
-const CACHE_NOME = "max-representacao-v9.3";
-const ARQUIVOS_CACHE = [
-  "./",
-  "./index.html",
-  "./manifest.json",
-  "./icon-192.png",
-  "./icon-512.png"
-];
-
-// INSTALL — pré-carrega os arquivos no cache
 self.addEventListener("install", (event) => {
-  console.log("[SW] Instalando...");
   event.waitUntil(
     caches.open(CACHE_NOME)
-      .then((cache) => {
-        console.log("[SW] Fazendo cache dos arquivos");
-        return cache.addAll(ARQUIVOS_CACHE);
+      .then(async (cache) => {
+        await cache.addAll(ARQUIVOS_CACHE);
+        await Promise.all(
+          ICONES_OPCIONAIS.map(async (url) => {
+            try {
+              const res = await fetch(url);
+              if (res && res.ok) {
+                await cache.put(url, res);
+              }
+            } catch (_) {
+              // Ignora ícone inexistente sem quebrar o cache principal
+            }
+          })
+        );
       })
       .then(() => self.skipWaiting())
       .catch((err) => console.error("[SW] Erro no cache:", err))
   );
 });
 
-// ACTIVATE — limpa caches antigos
 self.addEventListener("activate", (event) => {
-  console.log("[SW] Ativando...");
   event.waitUntil(
-    caches.keys().then((nomes) => {
-      return Promise.all(
-        nomes.map((nome) => {
-          if (nome !== CACHE_NOME) {
-            console.log("[SW] Removendo cache antigo:", nome);
-            return caches.delete(nome);
-          }
-        })
-      );
-    }).then(() => self.clients.claim())
+    caches.keys()
+      .then((nomes) => Promise.all(nomes.filter((n) => n !== CACHE_NOME).map((n) => caches.delete(n))))
+      .then(() => self.clients.claim())
   );
 });
 
-// FETCH — responde com cache primeiro, depois rede
 self.addEventListener("fetch", (event) => {
-  const url = new URL(event.request.url);
+  const req = event.request;
+  const url = new URL(req.url);
 
-  // NÃO cacheia chamadas da API
-  if (url.pathname.startsWith("/login") ||
-      url.pathname.startsWith("/produtos") ||
-      url.pathname.startsWith("/variacoes") ||
-      url.pathname.startsWith("/pedidos") ||
-      url.pathname.startsWith("/clientes") ||
-      url.pathname.startsWith("/dashboard") ||
-      url.pathname.startsWith("/relatorios") ||
-      url.pathname.startsWith("/backup") ||
-      url.pathname.startsWith("/ping") ||
-      url.pathname.startsWith("/me") ||
-      url.pathname.startsWith("/foto/") ||
-      url.pathname.startsWith("/etiqueta/") ||
-      url.hostname !== self.location.hostname) {
+  // Só GET e só do mesmo domínio (API e CDNs passam direto)
+  if (req.method !== "GET" || url.hostname !== self.location.hostname) return;
+
+  const ehPagina =
+    req.mode === "navigate" ||
+    url.pathname.endsWith(".html") ||
+    url.pathname.endsWith("/") ||
+    url.pathname.endsWith(".js") ||
+    url.pathname.endsWith(".css");
+
+  if (ehPagina) {
+    // REDE PRIMEIRO: sempre pega a versão nova; cache só se estiver offline
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          if (res && res.status === 200) {
+            const copia = res.clone();
+            caches.open(CACHE_NOME).then((c) => c.put(req, copia));
+          }
+          return res;
+        })
+        .catch(() => caches.match(req).then((c) => c || caches.match("./index.html")))
+    );
     return;
   }
 
-  // Estratégia cache-first para o resto
+  // Imagens/ícones: cache primeiro
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) {
-        fetch(event.request).then((response) => {
-          if (response && response.status === 200) {
-            caches.open(CACHE_NOME).then((cache) => {
-              cache.put(event.request, response.clone());
-            });
-          }
-        }).catch(() => {});
-        return cached;
-      }
-
-      return fetch(event.request).then((response) => {
-        if (event.request.method === "GET" && response.status === 200) {
-          const responseClone = response.clone();
-          caches.open(CACHE_NOME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
+    caches.match(req).then((cached) => {
+      if (cached) return cached;
+      return fetch(req).then((res) => {
+        if (res && res.status === 200) {
+          const copia = res.clone();
+          caches.open(CACHE_NOME).then((c) => c.put(req, copia));
         }
-        return response;
-      }).catch(() => {
-        if (event.request.mode === "navigate") {
-          return caches.match("./index.html");
-        }
+        return res;
       });
     })
   );
 });
 
-// MENSAGEM — permite forçar atualização pelo app
 self.addEventListener("message", (event) => {
-  if (event.data && event.data.tipo === "SKIP_WAITING") {
-    self.skipWaiting();
-  }
+  if (event.data && event.data.tipo === "SKIP_WAITING") self.skipWaiting();
 });
+// === FIM: sw.js ===
