@@ -1541,6 +1541,10 @@ async function abrirFormFechamento() {
   chavePedidoGerada = null;
   dadosUltimoPedido = null;
   descontoRevendedor = null;
+  forcarNovoPedido = false;
+  pedidoPendenteEscolha = null;
+  pedidoAntesAdicao = null;
+  document.getElementById("fpEscolha").style.display = "none";
 
   document.getElementById("formFechamento").style.display = "flex";
   document.getElementById("telaSucesso").style.display = "none";
@@ -1655,15 +1659,18 @@ async function continuarIdentificacao() {
         is_revendedor: data.is_revendedor,
       });
 
-      // NOVO: Se tem pedido aberto, adiciona o carrinho nele automaticamente!
+      // === INICIO: verificacao pedido pendente v5.6 ===
+      // v5.6: tem pedido em aberto → pergunta se adiciona ou cria novo
       if (data.tem_pedido_pendente && data.pedido_pendente) {
-        const chave = data.pedido_pendente.chave;
-        meuPedidoChave = chave;
-        meuPedidoWhatsapp = data.telefone || whatsapp;
-        modoAdicaoChave = chave;
-        modoAdicaoWhatsapp = data.telefone || whatsapp;
-        modoAdicaoAtivo = true;
-        fecharFormFechamento();
+        pedidoPendenteEscolha = {
+          chave: data.pedido_pendente.chave,
+          whatsapp: data.telefone || whatsapp,
+          dadosCliente: data,
+        };
+        await mostrarEscolhaPedido();
+        return;
+      }
+// === FIM: verificacao pedido pendente v5.6 ===
         
         // Envia o carrinho atual direto para o pedido que já existe
         await adicionarCarrinhoAoPedido();
@@ -2248,6 +2255,7 @@ async function confirmarFechamento() {
         itens,
         chave_revendedor: chaveRevendedor || null,
         cpf, cep, endereco, numero, bairro, cidade, uf,
+        novo_pedido: forcarNovoPedido,
       }),
     });
     const data = await res.json();
@@ -2330,7 +2338,7 @@ function mostrarTelaSucesso() {
   tela.innerHTML = `
     <div class="sucesso-chave">
       <div class="icon-ok"><i class="fas fa-check"></i></div>
-      <h3>Pedido enviado!</h3>
+            <h3>${d.titulo || "Pedido enviado!"}</h3>
       <p class="sub">Agora envie o código para o vendedor confirmar seu pedido.</p>
 
       <div class="caixa-chave">
@@ -2753,4 +2761,12 @@ document.addEventListener("DOMContentLoaded", () => {
       observerModais.observe(el, { attributes: true, attributeFilter: ["class"], attributeOldValue: true });
     }
   });
+
+  const btnAddExist = document.getElementById("btnAdicionarExistente");
+  if (btnAddExist) btnAddExist.addEventListener("click", adicionarAoPedidoExistente);
+  const btnNovoPed = document.getElementById("btnCriarNovoPedido");
+  if (btnNovoPed) btnNovoPed.addEventListener("click", escolherCriarNovoPedido);
+  const btnVoltarEsc = document.getElementById("btnVoltarEscolha");
+  if (btnVoltarEsc) btnVoltarEsc.addEventListener("click", voltarDaEscolha);
+});
 });
