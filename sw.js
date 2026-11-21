@@ -1,7 +1,7 @@
 // === INICIO: sw.js ===
 // MAX REPRESENTAÇÃO — SERVICE WORKER
 // Mude a versão sempre que publicar uma atualização.
-const CACHE_NOME = "max-representacao-v33";
+const CACHE_NOME = "max-representacao-v34";
 const ARQUIVOS_CACHE = ["./", "./index.html", "./manifest.json"];
 const ICONES_OPCIONAIS = ["./icon-192.png", "./icon-512.png"];
 
